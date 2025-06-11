@@ -1,0 +1,25 @@
+# Wall of Caffie
+
+ease_types = ["in", "out", "in-out"]
+eases = ["cubic", "quad", "quart", "quint", "circ", "back", "elastic", "bounce", "expo"]
+
+new_scene = scenes.scene(screen, "test")
+new_camera = cameras.camera("top", 1)
+
+i = 0
+for trans in eases:
+    x = 0
+    for ease in ease_types:
+        new_image = objects.image(f"{trans}_{ease}", "images/fuck.png")
+        new_image.set_property("size", [50,50])
+        new_image.set_property("position", [50 + (400*x),50+(60*i)])
+        new_camera.add_item(new_image)
+
+        new_camera.do_tween(f"{trans}_{ease}_tween", f"{trans}_{ease}", "position:x", (50 + (400*x) + 300), 1, trans, ease, ((i * 3) + x) * 1.1)
+        x += 1
+    i += 1
+
+
+new_scene.add_camera(new_camera)
+
+current_scene = new_scene
