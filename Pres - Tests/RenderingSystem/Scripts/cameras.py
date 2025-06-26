@@ -1,4 +1,4 @@
-import pygame, time, easing
+import pygame, time, RMS.easing
 
 pygame.font.init()
 
@@ -10,7 +10,7 @@ class camera():
         self.ordered = []
         self.items = {}
 
-        self.images = {}
+        self.textures = {}
         self.fonts = {}
 
         self.scale = [1,1]
@@ -27,8 +27,8 @@ class camera():
 
         match item.get_type():
             case "image":
-                if item.get_property("image_location") not in self.images.keys():
-                    self.images[item.get_property("image_location")] = pygame.image.load(item.get_property("image_location")).convert_alpha()
+                if item.get_property("image_location") not in self.textures.keys():
+                    self.textures[item.get_property("image_location")] = pygame.image.load(item.get_property("image_location")).convert_alpha()
             case "text":
                 if (f"{item.get_property("font")}_{item.get_property("font_size")}") not in self.fonts.keys():
                     self.fonts[(f"{item.get_property("font")}_{item.get_property("font_size")}")] = pygame.font.Font(item.get_property("font"), item.get_property("font_size"))
@@ -96,7 +96,7 @@ class camera():
             item = self.items[tag]
             match item.get_type():
                 case "image":
-                    to_blit = self.images[item.get_property("image_location")]
+                    to_blit = self.textures[item.get_property("image_location")]
                     to_blit = pygame.transform.scale(to_blit, [item.get_property("size")[0] * self.scale[0], item.get_property("size")[1] * self.scale[1]])
                     to_blit = pygame.transform.rotate(to_blit, item.get_property("rotation"))
 

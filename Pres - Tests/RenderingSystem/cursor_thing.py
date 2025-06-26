@@ -1,4 +1,4 @@
-import pygame, RMS.scenes, RMS.cameras, RMS.objects, math, time
+import pygame, scenes, cameras, objects, math, time
 
 pygame.init()
 screen = pygame.display.set_mode((1280,720), pygame.RESIZABLE | pygame.HWSURFACE | pygame.DOUBLEBUF)
@@ -11,9 +11,9 @@ fps_cap = 0
 
 #
 
-scene = RMS.scenes.scene(screen, "test")
-camera = RMS.cameras.camera("top", 1)
-fps_counter = RMS.objects.text("text", "0 FPS")
+scene = scenes.scene(screen, "test")
+camera = cameras.camera("top", 1)
+fps_counter = objects.text("text", "0 FPS")
 
 fps_counter.set_property("font", "comic.ttf")
 fps_counter.set_property("font_size", 14)
@@ -23,7 +23,7 @@ fps_counter.set_property("position", [5,5])
 scene.add_camera(camera)
 camera.add_item(fps_counter)
 
-image = RMS.objects.image("jibby", "images/jibby.jpg")
+image = objects.image("jibby", "images/jibby.jpg")
 image.set_property("size", [50,50])
 camera.add_item(image)
 
