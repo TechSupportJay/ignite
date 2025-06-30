@@ -1,0 +1,136 @@
+class object():
+    type = ""
+
+    def __init__(self, tag, input_data):
+        self.tag = tag
+
+        self.position = [0,0]
+        self.size = [0,0]
+        self.rotation = 0.0
+        self.opacity = 1
+
+        self.priority = 1
+
+    def set_property(self, property, value):
+        match property:
+            case "position:x": self.position[0] = value
+            case "position:y": self.position[1] = value
+            case "position": self.position = value
+            case "size": self.size = value
+            case "size:x": self.size[0] = value
+            case "size:y": self.size[1] = value
+            case "opacity": self.opacity = value
+            case "rotation": self.rotation = value
+            case _: print(f"Couldn't find property '{property}' in {self.tag} ({self.type})")
+    
+    def get_property(self, property):
+        match property:
+            case "tag": return self.tag
+            case "position": return self.position
+            case "position:x": return self.position[0]
+            case "position:y": return self.position[1]
+            case "size": return self.size
+            case "size:x": return self.size[0]
+            case "size:y": return self.size[1]
+            case "opacity": return self.opacity
+            case "rotation": return self.rotation
+            case _: print(f"Couldn't find property '{property}' in {self.tag} ({self.type})")
+    
+    def get_type(self):
+        return self.type
+
+class image(object):
+    def __init__(self, tag, location):
+        self.tag = tag
+        self.image_location = location
+
+        self.position = [0,0]
+        self.size = [0,0]
+        self.opacity = 1
+        self.rotation = 0.0
+
+        self.priority = 1
+
+        self.type = "image"
+
+    def set_property(self, property, value):
+        match property:
+            case "priority": self.priority = value
+            case "image_location": self.image_location = value
+            case "position": self.position = value
+            case "position:x": self.position[0] = value
+            case "position:y": self.position[1] = value
+            case "size": self.size = value
+            case "size:x": self.size[0] = value
+            case "size:y": self.size[1] = value
+            case "opacity": self.opacity = value
+            case "rotation": self.rotation = value
+            case _: print(f"Couldn't find property '{property}' in {self.tag} ({self.type})")
+    
+    def get_property(self, property):
+        match property:
+            case "priority": return self.priority
+            case "tag": return self.tag
+            case "image_location": return self.image_location
+            case "position": return self.position
+            case "position:x": return self.position[0]
+            case "position:y": return self.position[1]
+            case "size": return self.size
+            case "size:x": return self.size[0]
+            case "size:y": return self.size[1]
+            case "opacity": return self.opacity
+            case "rotation": return self.rotation
+            case _: print(f"Couldn't find property '{property}' in {self.tag} ({self.type})")
+
+class text(object):
+    def __init__(self, tag, text):
+        self.tag = tag
+
+        self.text = text
+        self.font = "default"
+        self.text_size = 16
+        self.color = "#FFFFFF"
+
+        self.position = [0,0]
+        self.size = [1,1]
+        self.opacity = 1
+        self.rotation = 0.0
+
+        self.priority = 1
+
+        self.type = "text"
+
+    def set_property(self, property, value):
+        match property:
+            case "priority": self.priority = value
+            case "text": self.text = value
+            case "position": self.position = value
+            case "position:x": self.position[0] = value
+            case "position:y": self.position[1] = value
+            case "size": self.size = value
+            case "size:x": self.size[0] = value
+            case "size:y": self.size[1] = value
+            case "opacity": self.opacity = value
+            case "rotation": self.rotation = value
+            case "font": self.font = value
+            case "font_size": self.text_size = value
+            case "color": self.color = value
+            case _: print(f"Couldn't find property '{property}' in {self.tag} ({self.type})")
+    
+    def get_property(self, property):
+        match property:
+            case "priority": return self.priority
+            case "tag": return self.tag
+            case "text": return self.text
+            case "position": return self.position
+            case "position:x": return self.position[0]
+            case "position:y": return self.position[1]
+            case "size": return self.size
+            case "size:x": return self.size[0]
+            case "size:y": return self.size[1]
+            case "opacity": return self.opacity
+            case "rotation": return self.rotation
+            case "font": return self.font
+            case "font_size": return self.text_size
+            case "color": return self.color
+            case _: print(f"Couldn't find property '{property}' in {self.tag} ({self.type})")
