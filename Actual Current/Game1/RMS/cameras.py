@@ -19,7 +19,14 @@ class camera():
         self.screen_size = [1280,720]
 
         self.tween_man = tween_manager()
+
+    def cache_image(self, path):
+        if path not in self.textures.keys():
+            self.textures[path] = pygame.image.load(path).convert_alpha()
     
+    def cache_image_bulk(self, path_list):
+        for item in path_list: self.cache_image(item)
+
     def add_item(self, item):
         tag = item.get_property("tag")
         if tag not in self.items.keys(): self.items[tag] = item
@@ -66,6 +73,9 @@ class camera():
         if tag in self.items.keys():
             if not self.items[tag] == None:
                 return self.items[tag]
+
+    def item_exists(self, tag):
+        return tag in self.items.keys()
     
     # Methods
     
@@ -88,6 +98,7 @@ class camera():
     
     def render(self, screen):
         if self.tween_man.return_size() > 0:
+            self.tween_man.set_valid()
             for tag in self.tween_man.valid_tweens:
                 tween = self.tween_man.tweens[tag]
                 if tween.complete: tween = None; self.tween_man.set_valid()
@@ -108,6 +119,8 @@ class camera():
                     new_pos_x = (orig_pos[0] - self.screen_size[0]/2) * self.scale[0] + self.screen_size[0]/2
                     new_pos_y = (orig_pos[1] - self.screen_size[1]/2) * self.scale[1] + self.screen_size[1]/2
                     new_pos = (new_pos_x, new_pos_y)
+
+                    to_blit.set_alpha(int(item.get_property("opacity")))
                     
                     screen.blit(to_blit, new_pos)
                 case "text":
@@ -119,10 +132,18 @@ class camera():
                     to_blit = pygame.transform.rotate(to_blit, item.get_property("rotation"))
 
                     orig_pos = item.get_property("position")
+
                     new_pos_x = (orig_pos[0] - self.screen_size[0]/2) * self.scale[0] + self.screen_size[0]/2
                     new_pos_y = (orig_pos[1] - self.screen_size[1]/2) * self.scale[1] + self.screen_size[1]/2
+
                     new_pos = (new_pos_x, new_pos_y)
+
+                    match item.get_property("text_align"):
+                        case "center": new_pos = (new_pos[0] - (to_blit.get_rect().w / 2), new_pos[1])
+                        case "right": new_pos = (new_pos[0] - to_blit.get_rect().w, new_pos[1])
                     
+                    to_blit.set_alpha(int(item.get_property("opacity")))
+
                     screen.blit(to_blit, new_pos)
                 case "_": pass
     
@@ -162,8 +183,8 @@ class tween_instance():
         self.item = item
         self.property = property
 
-        self.start_prop = self.item.get_property(property)
-        self.end_prop = end_result
+        self.start_prop = float(self.item.get_property(property))
+        self.end_prop = float(end_result)
         
         self.start_time = time.perf_counter() + delay
         self.end_time = duration

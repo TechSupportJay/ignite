@@ -7,7 +7,7 @@ class object():
         self.position = [0,0]
         self.size = [0,0]
         self.rotation = 0.0
-        self.opacity = 1
+        self.opacity = 255
 
         self.priority = 1
 
@@ -46,7 +46,7 @@ class image(object):
 
         self.position = [0,0]
         self.size = [0,0]
-        self.opacity = 1
+        self.opacity = 255
         self.rotation = 0.0
 
         self.priority = 1
@@ -93,12 +93,14 @@ class text(object):
 
         self.position = [0,0]
         self.size = [1,1]
-        self.opacity = 1
+        self.opacity = 255
         self.rotation = 0.0
 
         self.priority = 1
 
         self.type = "text"
+
+        self.text_align = "left"
 
     def set_property(self, property, value):
         match property:
@@ -115,6 +117,7 @@ class text(object):
             case "font": self.font = value
             case "font_size": self.text_size = value
             case "color": self.color = value
+            case "text_align": self.text_align = value
             case _: print(f"Couldn't find property '{property}' in {self.tag} ({self.type})")
     
     def get_property(self, property):
@@ -133,4 +136,5 @@ class text(object):
             case "font": return self.font
             case "font_size": return self.text_size
             case "color": return self.color
+            case "text_align": return self.text_align
             case _: print(f"Couldn't find property '{property}' in {self.tag} ({self.type})")
