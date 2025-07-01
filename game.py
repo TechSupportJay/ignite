@@ -1,6 +1,6 @@
 import pygame.locals
 import RMS.scenes, RMS.cameras, RMS.objects
-import pygame, os, math, time, json
+import pygame, os, math, time, json, random
 
 pygame.init()
 screen = pygame.display.set_mode((1280,720), pygame.RESIZABLE | pygame.HWSURFACE)
@@ -88,26 +88,13 @@ pass_pointers = []
 for i in range(note_count): pass_pointers.append(0)
 
 class user_script_class_template():
-    def __init__(self):
-        pass
-
-    def create(self):
-        pass
-
-    def update(self):
-        pass
-    
-    def step_hit(self):
-        pass
-
-    def beat_hit(self):
-        pass
-
-    def note_hit(self, lane, time_diff):
-        pass
-
-    def note_miss(self, lane):
-        pass
+    def __init__(self): pass
+    def create(self): pass
+    def update(self, dt): pass
+    def step_hit(self): pass
+    def beat_hit(self): pass
+    def note_hit(self, lane, time_diff): pass
+    def note_miss(self, lane): pass
 
 user_scripts = []
 
@@ -125,9 +112,9 @@ def invoke_script_function(tag, data = []):
     for script in user_scripts:
         match tag:
             case "create": script.create()
-            case "update": script.update()
+            case "update": script.update(data[0])
             case "step": script.step_hit()
-            case "beat": script.step_hit()
+            case "beat": script.beat_hit()
             case "note_hit": script.note_hit(data[0], data[1])
             case "note_miss": script.note_miss(data[0])
 
@@ -151,7 +138,7 @@ cur_step = 0
 cur_beat = 0
 
 cur_time = 0.0
-start_time = time.time_ns() + (1 * 1000 * 1000000)
+start_time = time.time_ns() + (1000 * 1000000)
 next_step = 0.0
 
 # Generate UI
@@ -241,7 +228,6 @@ del i
 ### Other
 
 rating = RMS.objects.image("rating", f"{skin_dir}/Ratings/perf.png")
-rating.set_property("size", [225,75])
 rating.set_property("position", (1280/2, 720/2))
 rating.set_property("opacity", 0)
 camera.add_item(rating)
@@ -255,11 +241,13 @@ def show_rating(texture):
     for t in ["rating_size", "rating_size_y", "rating_opacity"]: camera.cancel_tween(t)
 
     rating.set_property("image_location", f"{skin_dir}/Ratings/{texture}.png")
-    rating.set_property("size", [225*1.1,75*1.1])
+    img_size = camera.get_image_size(f"{skin_dir}/Ratings/{texture}.png")
+    rating.set_property("size", img_size)
+    rating.set_property("scale", [1.1,1.1])
     rating.set_property("opacity", 255)
 
-    camera.do_tween("rating_size_x", rating, "size:x", 225, 0.5, "back", "out")
-    camera.do_tween("rating_size_y", rating, "size:y", 75, 0.5, "back", "out")
+    camera.do_tween("rating_size_x", rating, "scale:x", 1, 0.5, "back", "out")
+    camera.do_tween("rating_size_y", rating, "scale:y", 1, 0.5, "back", "out")
     camera.do_tween("rating_opacity", rating, "opacity", 0, 0.5, "cubic", "in")
 
 def strum_handle(index, down):
@@ -367,8 +355,13 @@ def update_hud_texts():
 
 ### Time Functions
 
+dt = cur_time
+
 def conduct(time_in):
-    global next_step, cur_step, music_playing
+    global next_step, cur_step, music_playing, dt, last_time
+
+    dt = last_time - time_in
+    last_time = time_in
 
     if not music_playing and time_in >= 0.0:
         pygame.mixer.music.play()
@@ -408,6 +401,7 @@ def update_accuracy():
     global player_stats
 
     player_stats["accuracy"] = player_stats["score"] / perf_score
+    if player_stats["accuracy"] < 0: player_stats["accuracy"] = 0
 
     for rank in profile_options["Gameplay"]["ranks"].keys():
         r = profile_options["Gameplay"]["ranks"][rank]
@@ -441,6 +435,7 @@ hitsound.set_volume(profile_options["Audio"]["hitsound"] * profile_options["Audi
 # Main Loop
 
 last_score = 0
+last_time = time.time_ns() / 1000 / 1000000
 
 invoke_script_function("create")
 
@@ -486,7 +481,7 @@ while True:
 
     # Script
 
-    invoke_script_function("update")
+    invoke_script_function("update", [dt])
 
     # Render
     

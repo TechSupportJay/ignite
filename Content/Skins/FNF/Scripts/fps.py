@@ -6,7 +6,7 @@ def create(self):
     self.framerate = 0
 
     self.fps_counter = RMS.objects.text("fps_counter", "FPS: X")
-    self.fps_counter.set_property("font", "Content/Fonts/arial.ttf")
+    self.fps_counter.set_property("font", f"{skin_dir}/Fonts/arial.ttf")
     self.fps_counter.set_property("font_size", 12)
     self.fps_counter.set_property("color", "#FFFFFF")
     self.fps_counter.set_property("position", [5,5])

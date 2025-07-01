@@ -27,6 +27,10 @@ class camera():
     
     def cache_image_bulk(self, path_list):
         for item in path_list: self.cache_image(item)
+    
+    def get_image_size(self, path):
+        if path not in self.textures.keys(): return
+        return [self.textures[path].get_width(),self.textures[path].get_height()]
 
     def add_item(self, item):
         tag = item.get_property("tag")
@@ -43,7 +47,7 @@ class camera():
         self.order_items()
     
     def remove_item(self, tag):
-        self.items[tag] = None
+        self.items.pop(tag)
         self.order_items()
     
     def set_property(self, property, value):
@@ -101,8 +105,11 @@ class camera():
             self.tween_man.set_valid()
             for tag in self.tween_man.valid_tweens:
                 tween = self.tween_man.tweens[tag]
-                if tween.complete: tween = None; self.tween_man.set_valid()
-                else: tween.item.set_property(tween.property, tween.return_tween_value())
+                if tween.complete:
+                    self.tween_man.tweens.pop(tag)
+                    self.tween_man.set_valid()
+                else:
+                    tween.item.set_property(tween.property, tween.return_tween_value())
 
         for tag in self.ordered:
             item = self.items[tag]
@@ -110,11 +117,11 @@ class camera():
                 case "image":
                     if item.get_property("opacity") > 0:
                         to_blit = self.textures[item.get_property("image_location")]
-                        to_blit = pygame.transform.scale(to_blit, [item.get_property("size")[0] * self.scale[0], item.get_property("size")[1] * self.scale[1]])
+                        to_blit = pygame.transform.scale(to_blit, [(item.get_property("size")[0] * item.get_property("scale")[0]) * self.scale[0], (item.get_property("size")[1] * item.get_property("scale")[1]) * self.scale[1]])
                         to_blit = pygame.transform.rotate(to_blit, item.get_property("rotation"))
 
-                        orig_pos_x = (item.get_property("position")[0] - item.get_property("size")[0]/2)
-                        orig_pos_y = (item.get_property("position")[1] - item.get_property("size")[1]/2)
+                        orig_pos_x = (item.get_property("position")[0] - (item.get_property("size")[0] * item.get_property("scale")[0])/2)
+                        orig_pos_y = (item.get_property("position")[1] - (item.get_property("size")[1] * item.get_property("scale")[1])/2)
                         orig_pos = (orig_pos_x, orig_pos_y)
 
                         new_pos_x = (orig_pos[0] - self.screen_size[0]/2) * self.scale[0] + self.screen_size[0]/2
@@ -130,7 +137,7 @@ class camera():
 
                         to_blit = pre_blit.render(item.get_property("text"), True, item.get_property("color"))
 
-                        to_blit = pygame.transform.scale_by(to_blit, [item.get_property("size")[0] * self.scale[0], item.get_property("size")[1] * self.scale[1]])
+                        to_blit = pygame.transform.scale_by(to_blit, [(item.get_property("size")[0] * item.get_property("scale")[0]) * self.scale[0], (item.get_property("size")[1] * item.get_property("scale")[1]) * self.scale[1]])
                         to_blit = pygame.transform.rotate(to_blit, item.get_property("rotation"))
 
                         orig_pos = item.get_property("position")
@@ -141,8 +148,8 @@ class camera():
                         new_pos = (new_pos_x, new_pos_y)
 
                         match item.get_property("text_align"):
-                            case "center": new_pos = (new_pos[0] - (to_blit.get_rect().w / 2), new_pos[1])
-                            case "right": new_pos = (new_pos[0] - to_blit.get_rect().w, new_pos[1])
+                            case "center": new_pos = (new_pos[0] - ((to_blit.get_rect().w * item.get_property("scale")[0]) / 2), new_pos[1])
+                            case "right": new_pos = (new_pos[0] - (to_blit.get_rect().w * item.get_property("scale")[0]), new_pos[1])
                         
                         to_blit.set_alpha(int(item.get_property("opacity")))
 
@@ -157,8 +164,7 @@ class camera():
     def cancel_tween(self, tween_tag):
         if not tween_tag in self.tween_man.tweens: return
         self.tween_man.tweens[tween_tag] = None
-        self.tween_man.set_valid()
-        
+        self.tween_man.set_valid()        
 
 class tween_manager():
     def __init__(self):
@@ -178,6 +184,7 @@ class tween_manager():
             if tween != None:
                 if tween.start_time <= (time.time_ns() / 1000000 / 1000):
                     self.valid_tweens[tween.tag] = tween
+                    if not tween.processed: tween.grab_start()
 
 class tween_instance():
     def __init__(self, camera, tween_tag, item, property, end_result, duration, ease, trans, delay):
@@ -194,8 +201,13 @@ class tween_instance():
         self.easing = ease
         self.trans = RMS.easing.eases[trans.lower()]
 
+        self.processed = False
         self.complete = False
     
+    def grab_start(self):
+        self.start_prop = float(self.item.get_property(self.property))
+        self.processed = True
+
     def return_tween_value(self):
         if not (time.time_ns() / 1000000 / 1000) >= self.start_time: pos = 0
         else: pos = (((time.time_ns() / 1000000 / 1000) - self.start_time) / self.end_time)

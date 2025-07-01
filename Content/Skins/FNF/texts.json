@@ -1,0 +1,13 @@
+{
+    "Gameplay": {
+        "ranks": {
+            "s+": "Perfect!!",
+            "s": "Sick!",
+            "a": "Great",
+            "b": "Good",
+            "c": "Meh",
+            "d": "Bruh",
+            "f": "You Suck!"
+        }
+    }
+}

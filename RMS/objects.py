@@ -46,6 +46,7 @@ class image(object):
 
         self.position = [0,0]
         self.size = [0,0]
+        self.scale = [1,1]
         self.opacity = 255
         self.rotation = 0.0
 
@@ -63,6 +64,9 @@ class image(object):
             case "size": self.size = value
             case "size:x": self.size[0] = value
             case "size:y": self.size[1] = value
+            case "scale": self.scale = value
+            case "scale:x": self.scale[0] = value
+            case "scale:y": self.scale[1] = value
             case "opacity": self.opacity = value
             case "rotation": self.rotation = value
             case _: print(f"Couldn't find property '{property}' in {self.tag} ({self.type})")
@@ -78,6 +82,9 @@ class image(object):
             case "size": return self.size
             case "size:x": return self.size[0]
             case "size:y": return self.size[1]
+            case "scale": return self.scale
+            case "scale:x": return self.scale[0]
+            case "scale:y": return self.scale[1]
             case "opacity": return self.opacity
             case "rotation": return self.rotation
             case _: print(f"Couldn't find property '{property}' in {self.tag} ({self.type})")
@@ -93,6 +100,7 @@ class text(object):
 
         self.position = [0,0]
         self.size = [1,1]
+        self.scale = [1,1]
         self.opacity = 255
         self.rotation = 0.0
 
@@ -112,6 +120,9 @@ class text(object):
             case "size": self.size = value
             case "size:x": self.size[0] = value
             case "size:y": self.size[1] = value
+            case "scale": self.scale = value
+            case "scale:x": self.scale[0] = value
+            case "scale:y": self.scale[1] = value
             case "opacity": self.opacity = value
             case "rotation": self.rotation = value
             case "font": self.font = value
@@ -131,6 +142,9 @@ class text(object):
             case "size": return self.size
             case "size:x": return self.size[0]
             case "size:y": return self.size[1]
+            case "scale": return self.scale
+            case "scale:x": return self.scale[0]
+            case "scale:y": return self.scale[1]
             case "opacity": return self.opacity
             case "rotation": return self.rotation
             case "font": return self.font

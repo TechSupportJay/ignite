@@ -12,7 +12,8 @@ def create(self):
     camera.add_item(self.fc_indicator)
 
 def note_miss(self, lane):
-    self.fcing = False
+    if self.fcing:
+        self.fcing = False
 
-    camera.cancel_tween("fc_move")
-    camera.remove_item("fc_indicator")
+        camera.cancel_tween("fc_move")
+        camera.remove_item("fc_indicator")
