@@ -7,45 +7,45 @@
     "text": {
         "score": {
             "text": "%s",
-            "font": "fugaz.ttf",
+            "font": "default.ttf",
             "size": 50,
             "position": [20,10]
         },
         "accuracy": {
             "text": "%s%",
-            "font": "fugaz.ttf",
+            "font": "default.ttf",
             "size": 32,
             "position": [20,65]
         },
         "misses_label": {
             "text": "MISSES",
-            "font": "fugaz.ttf",
+            "font": "default.ttf",
             "size": 32,
             "position": [20,610]
         },
         "misses": {
             "text": "%s",
-            "font": "fugaz.ttf",
+            "font": "default.ttf",
             "size": 50,
             "position": [20,640]
         },
         "combo_label": {
             "text": "COMBO",
-            "font": "fugaz.ttf",
+            "font": "default.ttf",
             "size": 32,
             "position": [1260,610],
             "text_align": "right"
         },
         "combo": {
             "text": "%s",
-            "font": "fugaz.ttf",
+            "font": "default.ttf",
             "size": 50,
             "position": [1260,640],
             "text_align": "right"
         },
         "rank": {
             "text": "%s RANK",
-            "font": "fugaz.ttf",
+            "font": "default.ttf",
             "size": 50,
             "position": [1260,10],
             "text_align": "right"

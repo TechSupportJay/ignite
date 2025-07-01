@@ -1,9 +1,9 @@
 import pygame.locals
-import RMS.easing, RMS.scenes, RMS.cameras, RMS.objects
+import RMS.scenes, RMS.cameras, RMS.objects
 import pygame, os, math, time, json
 
 pygame.init()
-screen = pygame.display.set_mode((1280,720), pygame.RESIZABLE | pygame.HWSURFACE | pygame.DOUBLEBUF)
+screen = pygame.display.set_mode((1280,720), pygame.RESIZABLE | pygame.HWSURFACE)
 pygame.display.gl_set_attribute(pygame.GL_ACCELERATED_VISUAL, 1)
 
 pygame.display.set_caption("Ignite")
@@ -68,11 +68,78 @@ for i in range(note_count): chart.append([])
 
 for combo in chart_notes: chart[combo["p"]-1].append(combo)
 
+##### Sort
+
+chart_unsorted = True
+while chart_unsorted:
+    chart_unsorted = False
+    for lane in chart:
+        for i in range(len(lane)-1):
+            if lane[i]["t"] > lane[i+1]["t"]:
+                temp = lane[i+1]
+                lane[i+1] = lane[i]
+                lane[i] = temp
+                chart_unsorted = True
+
 chart_pointers = []
 for i in range(note_count): chart_pointers.append(0)
 
 pass_pointers = []
 for i in range(note_count): pass_pointers.append(0)
+
+class user_script_class_template():
+    def __init__(self):
+        pass
+
+    def create(self):
+        pass
+
+    def update(self):
+        pass
+    
+    def step_hit(self):
+        pass
+
+    def beat_hit(self):
+        pass
+
+    def note_hit(self, lane, time_diff):
+        pass
+
+    def note_miss(self, lane):
+        pass
+
+user_scripts = []
+
+def add_script(tag, path):
+    global user_scripts
+
+    to_exec = f"class user_script_{tag}(user_script_class_template):\n"
+    for line in open((path), "r").readlines():
+        to_exec += f"    {line}"
+    exec(f"{to_exec}\nsong_script_{tag} = user_script_{tag}()\nuser_scripts.append(song_script_{tag})")
+
+def invoke_script_function(tag, data = []):
+    if len(user_scripts) == 0: return
+
+    for script in user_scripts:
+        match tag:
+            case "create": script.create()
+            case "update": script.update()
+            case "step": script.step_hit()
+            case "beat": script.step_hit()
+            case "note_hit": script.note_hit(data[0], data[1])
+            case "note_miss": script.note_miss(data[0])
+
+if os.path.isfile(f"{songs_dir}/{song_name}/script.py"): add_script("song", f"{songs_dir}/{song_name}/script.py")
+if len(os.listdir(f"Content/Scripts")) > 0:
+    for script in os.listdir(f"Content/Scripts"): add_script(f"scr_{script.replace(".py", "")}", f"Content/Scripts/{script}")
+if os.path.isdir((f"{skin_dir}/Scripts")):
+    if len(os.listdir(f"{skin_dir}/Scripts")) > 0:
+        for script in os.listdir(f"{skin_dir}/Scripts"): add_script(f"skn_{script.replace(".py", "")}", f"{skin_dir}/Scripts/{script}")
+
+def set_global(prop, val):
+    globals()[prop] = val
 
 # Conductor
 
@@ -224,7 +291,7 @@ def process_notes(time_in):
     global pass_pointers, player_stats, perf_score
 
     for l in range(4):
-        if chart[l][chart_pointers[l]]["t"] - time_in <= note_speed*2:
+        while chart[l][chart_pointers[l]]["t"] - time_in <= note_speed*2:
             create_note(chart[l][chart_pointers[l]]["p"]-1)
         
         for i in range(pass_pointers[l], chart_pointers[l]):
@@ -241,6 +308,8 @@ def process_notes(time_in):
                 perf_score += 500
 
                 show_rating("miss")
+
+                invoke_script_function("note_miss", [l])
                 continue
 
 def process_hits(lane, time_in):
@@ -251,9 +320,15 @@ def process_hits(lane, time_in):
             if chart[l][i]["p"] == lane:
                 if in_range(chart[l][i]["t"], time_in, hit_window):
                     process_time(abs(time_in - chart[l][i]["t"]))
+
                     pass_pointers[l] += 1
                     camera.remove_item(f"note_{l}_{i}")
                     camera.get_item(f"strum_{l}").set_property("image_location", f"{grab_dir}/confirm_{lane}.png")
+
+                    if profile_options["Audio"]["hitsound"] > 0:
+                        hitsound.play()
+
+                    invoke_script_function("note_hit", [l, abs(time_in - chart[l][i]["t"])])
                 return
 
 def process_time(difference):
@@ -293,25 +368,30 @@ def update_hud_texts():
 ### Time Functions
 
 def conduct(time_in):
-    global next_step, cur_step, cur_beat, music_playing
+    global next_step, cur_step, music_playing
 
-    if not music_playing and time_in >= 0:
+    if not music_playing and time_in >= 0.0:
         pygame.mixer.music.play()
         music_playing = True
-
-    if time_in >= next_step:
-        next_step += step_time
-        cur_step += 1
-        step_hit()
-        if cur_step % 4 == 0:
-            cur_beat += 1
-            beat_hit()
+    else:
+        if time_in >= next_step:
+            next_step += step_time
+            cur_step += 1
+            step_hit()
 
 def step_hit():
-    pass
+    global cur_beat
+
+    if cur_step % 4 == 0 or cur_step == 0:
+        cur_beat += 1
+        beat_hit()
+    
+    invoke_script_function("step")
+
+cam_bump_mod = 4
 
 def beat_hit():
-    if cur_beat % 4 == 0:
+    if cur_beat % cam_bump_mod == 0 or cur_beat == 0:
         camera.cancel_tween("cam_bump_x")
         camera.cancel_tween("cam_bump_y")
 
@@ -319,6 +399,8 @@ def beat_hit():
 
         camera.do_tween("cam_bump_x", camera, "scale:x", 1.0, 0.85, "quad", "out")
         camera.do_tween("cam_bump_y", camera, "scale:y", 1.0, 0.85, "quad", "out")
+    
+    invoke_script_function("beat")
 
 # Score
 
@@ -349,13 +431,22 @@ for ex in exts:
 music_playing = False
 
 pygame.mixer.music.load(f"{songs_dir}/{song_name}/audio{song_ext}")
-pygame.mixer.music.set_volume(0.5)
+pygame.mixer.music.set_volume(profile_options["Audio"]["music"] * profile_options["Audio"]["master"])
+
+# SFX
+
+hitsound = pygame.mixer.Sound(f"{skin_dir}/SFX/hitsound.ogg")
+hitsound.set_volume(profile_options["Audio"]["hitsound"] * profile_options["Audio"]["master"])
 
 # Main Loop
 
 last_score = 0
 
+invoke_script_function("create")
+
 while True:
+    clock.tick(fps_cap)
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             exit()
@@ -380,7 +471,7 @@ while True:
 
     # Time
 
-    cur_time = (time.time_ns() - start_time) / 1000000 / 1000
+    cur_time = (time.time_ns() - start_time) / 1000000.0 / 1000.0
 
     process_notes(cur_time)
     conduct(cur_time)
@@ -392,6 +483,10 @@ while True:
     # UI
 
     update_hud_texts()
+
+    # Script
+
+    invoke_script_function("update")
 
     # Render
     

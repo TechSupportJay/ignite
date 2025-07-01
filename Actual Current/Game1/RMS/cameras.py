@@ -15,6 +15,7 @@ class camera():
 
         self.scale = [1,1]
         self.position = [0,0]
+        self.rotation = 0
         
         self.screen_size = [1280,720]
 
@@ -34,8 +35,7 @@ class camera():
 
         match item.get_type():
             case "image":
-                if item.get_property("image_location") not in self.textures.keys():
-                    self.textures[item.get_property("image_location")] = pygame.image.load(item.get_property("image_location")).convert_alpha()
+               self. cache_image(item.get_property("image_location"))
             case "text":
                 if (f"{item.get_property("font")}_{item.get_property("font_size")}") not in self.fonts.keys():
                     self.fonts[(f"{item.get_property("font")}_{item.get_property("font_size")}")] = pygame.font.Font(item.get_property("font"), item.get_property("font_size"))
@@ -108,43 +108,45 @@ class camera():
             item = self.items[tag]
             match item.get_type():
                 case "image":
-                    to_blit = self.textures[item.get_property("image_location")]
-                    to_blit = pygame.transform.scale(to_blit, [item.get_property("size")[0] * self.scale[0], item.get_property("size")[1] * self.scale[1]])
-                    to_blit = pygame.transform.rotate(to_blit, item.get_property("rotation"))
+                    if item.get_property("opacity") > 0:
+                        to_blit = self.textures[item.get_property("image_location")]
+                        to_blit = pygame.transform.scale(to_blit, [item.get_property("size")[0] * self.scale[0], item.get_property("size")[1] * self.scale[1]])
+                        to_blit = pygame.transform.rotate(to_blit, item.get_property("rotation"))
 
-                    orig_pos_x = (item.get_property("position")[0] - item.get_property("size")[0]/2)
-                    orig_pos_y = (item.get_property("position")[1] - item.get_property("size")[1]/2)
-                    orig_pos = (orig_pos_x, orig_pos_y)
+                        orig_pos_x = (item.get_property("position")[0] - item.get_property("size")[0]/2)
+                        orig_pos_y = (item.get_property("position")[1] - item.get_property("size")[1]/2)
+                        orig_pos = (orig_pos_x, orig_pos_y)
 
-                    new_pos_x = (orig_pos[0] - self.screen_size[0]/2) * self.scale[0] + self.screen_size[0]/2
-                    new_pos_y = (orig_pos[1] - self.screen_size[1]/2) * self.scale[1] + self.screen_size[1]/2
-                    new_pos = (new_pos_x, new_pos_y)
+                        new_pos_x = (orig_pos[0] - self.screen_size[0]/2) * self.scale[0] + self.screen_size[0]/2
+                        new_pos_y = (orig_pos[1] - self.screen_size[1]/2) * self.scale[1] + self.screen_size[1]/2
+                        new_pos = (new_pos_x, new_pos_y)
 
-                    to_blit.set_alpha(int(item.get_property("opacity")))
-                    
-                    screen.blit(to_blit, new_pos)
+                        to_blit.set_alpha(int(item.get_property("opacity")))
+                        
+                        screen.blit(to_blit, new_pos)
                 case "text":
-                    pre_blit = self.fonts[(f"{item.get_property("font")}_{item.get_property("font_size")}")]
+                    if item.get_property("opacity") > 0:
+                        pre_blit = self.fonts[(f"{item.get_property("font")}_{item.get_property("font_size")}")]
 
-                    to_blit = pre_blit.render(item.get_property("text"), True, item.get_property("color"))
+                        to_blit = pre_blit.render(item.get_property("text"), True, item.get_property("color"))
 
-                    to_blit = pygame.transform.scale_by(to_blit, [item.get_property("size")[0] * self.scale[0], item.get_property("size")[1] * self.scale[1]])
-                    to_blit = pygame.transform.rotate(to_blit, item.get_property("rotation"))
+                        to_blit = pygame.transform.scale_by(to_blit, [item.get_property("size")[0] * self.scale[0], item.get_property("size")[1] * self.scale[1]])
+                        to_blit = pygame.transform.rotate(to_blit, item.get_property("rotation"))
 
-                    orig_pos = item.get_property("position")
+                        orig_pos = item.get_property("position")
 
-                    new_pos_x = (orig_pos[0] - self.screen_size[0]/2) * self.scale[0] + self.screen_size[0]/2
-                    new_pos_y = (orig_pos[1] - self.screen_size[1]/2) * self.scale[1] + self.screen_size[1]/2
+                        new_pos_x = (orig_pos[0] - self.screen_size[0]/2) * self.scale[0] + self.screen_size[0]/2
+                        new_pos_y = (orig_pos[1] - self.screen_size[1]/2) * self.scale[1] + self.screen_size[1]/2
 
-                    new_pos = (new_pos_x, new_pos_y)
+                        new_pos = (new_pos_x, new_pos_y)
 
-                    match item.get_property("text_align"):
-                        case "center": new_pos = (new_pos[0] - (to_blit.get_rect().w / 2), new_pos[1])
-                        case "right": new_pos = (new_pos[0] - to_blit.get_rect().w, new_pos[1])
-                    
-                    to_blit.set_alpha(int(item.get_property("opacity")))
+                        match item.get_property("text_align"):
+                            case "center": new_pos = (new_pos[0] - (to_blit.get_rect().w / 2), new_pos[1])
+                            case "right": new_pos = (new_pos[0] - to_blit.get_rect().w, new_pos[1])
+                        
+                        to_blit.set_alpha(int(item.get_property("opacity")))
 
-                    screen.blit(to_blit, new_pos)
+                        screen.blit(to_blit, new_pos)
                 case "_": pass
     
     def do_tween(self, tween_tag, item, property, value, duration, trans, easing, delay = 0):
@@ -174,7 +176,7 @@ class tween_manager():
         for tag in self.tweens.keys():
             tween = self.tweens[tag]
             if tween != None:
-                if tween.start_time <= time.perf_counter():
+                if tween.start_time <= (time.time_ns() / 1000000 / 1000):
                     self.valid_tweens[tween.tag] = tween
 
 class tween_instance():
@@ -186,7 +188,7 @@ class tween_instance():
         self.start_prop = float(self.item.get_property(property))
         self.end_prop = float(end_result)
         
-        self.start_time = time.perf_counter() + delay
+        self.start_time = (time.time_ns() / 1000000 / 1000) + delay
         self.end_time = duration
 
         self.easing = ease
@@ -195,8 +197,8 @@ class tween_instance():
         self.complete = False
     
     def return_tween_value(self):
-        if not time.perf_counter() >= self.start_time: pos = 0
-        else: pos = ((time.perf_counter() - self.start_time) / self.end_time)
+        if not (time.time_ns() / 1000000 / 1000) >= self.start_time: pos = 0
+        else: pos = (((time.time_ns() / 1000000 / 1000) - self.start_time) / self.end_time)
 
         if pos >= 1:
             self.complete = True

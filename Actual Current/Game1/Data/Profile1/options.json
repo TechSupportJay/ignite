@@ -22,5 +22,10 @@
     },
     "Customisation": {
         "skin": "default"
+    },
+    "Audio": {
+        "master": 0.7,
+        "music": 0.5,
+        "hitsound": 1
     }
 }
