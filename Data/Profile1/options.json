@@ -1,0 +1,31 @@
+{
+    "Gameplay": {
+        "downscroll": true,
+        "scroll_time": 0.4,
+        "timings": {
+            "hit_window": 0.1,
+            "perfect": 0.035,
+            "okay": 0.075
+        },
+        "ranks": {
+            "s+": 1,
+            "s": 0.95,
+            "a": 0.90,
+            "b": 0.80,
+            "c": 0.65,
+            "d": 0.50,
+            "f": 0
+        }
+    },
+    "Binds": {
+        "4": ["d", "f", "j", "k"]
+    },
+    "Customisation": {
+        "skin": "default"
+    },
+    "Audio": {
+        "master": 0.7,
+        "music": 0.5,
+        "hitsound": 1
+    }
+}
