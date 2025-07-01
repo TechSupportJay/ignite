@@ -50,7 +50,7 @@ player_stats = {
     "combo": 0,
     "misses": 0,
     "accuracy": 0.0,
-    "rank": "fc"
+    "rank": "s+"
 }
 
 perf_score = 0
