@@ -137,7 +137,7 @@ class camera():
 
                         to_blit = pre_blit.render(item.get_property("text"), True, item.get_property("color"))
 
-                        to_blit = pygame.transform.scale_by(to_blit, [(item.get_property("size")[0] * item.get_property("scale")[0]) * self.scale[0], (item.get_property("size")[1] * item.get_property("scale")[1]) * self.scale[1]])
+                        to_blit = pygame.transform.scale_by(to_blit, [(item.get_property("size")[0]) * self.scale[0], (item.get_property("size")[1]) * self.scale[1]])
                         to_blit = pygame.transform.rotate(to_blit, item.get_property("rotation"))
 
                         orig_pos = item.get_property("position")
@@ -148,15 +148,15 @@ class camera():
                         new_pos = (new_pos_x, new_pos_y)
 
                         match item.get_property("text_align"):
-                            case "center": new_pos = (new_pos[0] - ((to_blit.get_rect().w * item.get_property("scale")[0]) / 2), new_pos[1])
-                            case "right": new_pos = (new_pos[0] - (to_blit.get_rect().w * item.get_property("scale")[0]), new_pos[1])
+                            case "center": new_pos = (new_pos[0] - ((to_blit.get_rect().w / 2) - (item.get_property("size")[0] / 2)), new_pos[1])
+                            case "right": new_pos = (new_pos[0] - (to_blit.get_rect().w * item.get_property("size")[0]), new_pos[1])
                         
                         to_blit.set_alpha(int(item.get_property("opacity")))
 
                         screen.blit(to_blit, new_pos)
                 case "_": pass
     
-    def do_tween(self, tween_tag, item, property, value, duration, trans, easing, delay = 0):
+    def do_tween(self, tween_tag, item, property, value, duration, trans = "linear", easing = "out", delay = 0):
         tween = tween_instance(self, tween_tag, item, property, value, duration, easing, trans, delay)
         self.tween_man.tweens[tween_tag] = tween
         self.tween_man.set_valid()

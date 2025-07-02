@@ -15,7 +15,7 @@ def slap_some_tweens_on_it(self, obj):
     camera.do_tween(f"rating_{self.rating_count}_y1", obj, "position:y", pos_1, 0.35, "cubic", "out")
     camera.do_tween(f"rating_{self.rating_count}_y2", obj, "position:y", pos_2, 0.65, "cubic", "in", 0.35)
     camera.do_tween(f"rating_{self.rating_count}_x", obj, "position:x", (1280/2 + random.randint(-50,50)), 1, "cubic", "out")
-    camera.do_tween(f"rating_{self.rating_count}_alpha", obj, "opacity", 0, 1, "cubic", "in")
+    camera.do_tween(f"rating_{self.rating_count}_alpha", obj, "opacity", 0, 0.8, "linear", "out", 0.2)
 
 def note_hit(self, lane, diff):
     new_rating = RMS.objects.image(f"rating_{self.rating_count}", f"{skin_dir}/Ratings/{self.get_rating(diff)}.png")

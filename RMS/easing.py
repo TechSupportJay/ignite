@@ -159,6 +159,11 @@ class bounce(ease):
         if x < 0.5: return (1 - self.tween_out(1 - 2 * x)) / 2
         else: return (1 + self.tween_out(2 * x - 1)) / 2
 
+
+class linear(ease):
+    def process_ease(self, x, d):
+        return x
+
 eases = {
     "cubic": cubic(),
     "quad": quad(),
@@ -168,5 +173,6 @@ eases = {
     "back": back(),
     "elastic": elastic(),
     "bounce": bounce(),
-    "expo": expo()
+    "expo": expo(),
+    "linear": linear()
 }

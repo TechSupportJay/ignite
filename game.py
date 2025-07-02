@@ -138,7 +138,7 @@ cur_step = 0
 cur_beat = 0
 
 cur_time = 0.0
-start_time = time.time_ns() + (1000 * 1000000)
+start_time = time.time_ns() + ((step_time*16) * 1000 * 1000000)
 next_step = 0.0
 
 # Generate UI
@@ -271,7 +271,7 @@ def create_note(lane):
 
     new_note = RMS.objects.image(f"note_{lane}_{chart_pointers[lane]}", f"{grab_dir}/regular_{lane+1}.png")
     new_note.set_property("size", [note_size,note_size])
-    new_note.set_property("position", [strum_origin[0] + ((note_size + strum_seperation) * lane), -note_size])
+    new_note.set_property("position", [camera.get_item(f"strum_{lane}").get_property("position:x"), -note_size])
     camera.add_item(new_note)
     chart_pointers[lane] += 1
 
@@ -284,7 +284,7 @@ def process_notes(time_in):
         
         for i in range(pass_pointers[l], chart_pointers[l]):
             if camera.get_item(f"note_{l}_{i}") is None: continue
-            camera.get_item(f"note_{l}_{i}").set_property("position:y", strum_origin[1] - ((720-(720-strum_origin[1])) * ((chart[l][i]["t"] - time_in) / note_speed)))
+            camera.get_item(f"note_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") - ((720-(720-strum_origin[1])) * ((chart[l][i]["t"] - time_in) / note_speed)))
 
             if time_in > chart[l][i]["t"] and not in_range(chart[l][i]["t"], time_in, hit_window):
                 pass_pointers[l] += 1
