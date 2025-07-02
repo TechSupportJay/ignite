@@ -17,8 +17,6 @@ fps_cap = 0
 
 note_count = 4
 
-songs_dir = "Content/Songs"
-
 pressed = []
 for i in range(note_count): pressed.append(False)
 
@@ -33,7 +31,8 @@ def pygame_get_key(key):
 current_profile = "Profile1"
 profile_options = json.load(open(f"Data/{current_profile}/options.json"))
 
-skin_dir = f"Content/Skins/{profile_options["Customisation"]["skin"]}"
+songs_dir = f"{profile_options["Customisation"]["content_folder"]}/Songs"
+skin_dir = f"{profile_options["Customisation"]["content_folder"]}/Skins/{profile_options["Customisation"]["skin"]}"
 grab_dir = f"{skin_dir}/Notes_{note_count}K"
 
 note_speed = profile_options["Gameplay"]["scroll_time"]
@@ -119,8 +118,8 @@ def invoke_script_function(tag, data = []):
             case "note_miss": script.note_miss(data[0])
 
 if os.path.isfile(f"{songs_dir}/{song_name}/script.py"): add_script("song", f"{songs_dir}/{song_name}/script.py")
-if len(os.listdir(f"Content/Scripts")) > 0:
-    for script in os.listdir(f"Content/Scripts"): add_script(f"scr_{script.replace(".py", "")}", f"Content/Scripts/{script}")
+if len(os.listdir(f"{profile_options["Customisation"]["content_folder"]}/Scripts")) > 0:
+    for script in os.listdir(f"{profile_options["Customisation"]["content_folder"]}/Scripts"): add_script(f"scr_{script.replace(".py", "")}", f"{profile_options["Customisation"]["content_folder"]}/Scripts/{script}")
 if os.path.isdir((f"{skin_dir}/Scripts")):
     if len(os.listdir(f"{skin_dir}/Scripts")) > 0:
         for script in os.listdir(f"{skin_dir}/Scripts"): add_script(f"skn_{script.replace(".py", "")}", f"{skin_dir}/Scripts/{script}")
@@ -313,7 +312,7 @@ def process_hits(lane, time_in):
                     camera.remove_item(f"note_{l}_{i}")
                     camera.get_item(f"strum_{l}").set_property("image_location", f"{grab_dir}/confirm_{lane}.png")
 
-                    if profile_options["Audio"]["hitsound"] > 0:
+                    if profile_options["Audio"]["volume"]["hitsound"] > 0:
                         hitsound.play()
 
                     invoke_script_function("note_hit", [l, abs(time_in - chart[l][i]["t"])])
@@ -425,12 +424,12 @@ for ex in exts:
 music_playing = False
 
 pygame.mixer.music.load(f"{songs_dir}/{song_name}/audio{song_ext}")
-pygame.mixer.music.set_volume(profile_options["Audio"]["music"] * profile_options["Audio"]["master"])
+pygame.mixer.music.set_volume(profile_options["Audio"]["volume"]["music"] * profile_options["Audio"]["volume"]["master"])
 
 # SFX
 
 hitsound = pygame.mixer.Sound(f"{skin_dir}/SFX/hitsound.ogg")
-hitsound.set_volume(profile_options["Audio"]["hitsound"] * profile_options["Audio"]["master"])
+hitsound.set_volume(profile_options["Audio"]["volume"]["hitsound"] * profile_options["Audio"]["volume"]["master"])
 
 # Main Loop
 
@@ -466,7 +465,7 @@ while True:
 
     # Time
 
-    cur_time = (time.time_ns() - start_time) / 1000000.0 / 1000.0
+    cur_time = (time.time_ns() - start_time) / 1000000.0 / 1000.0 - (profile_options["Audio"]["offset"] / 1000)
 
     process_notes(cur_time)
     conduct(cur_time)
