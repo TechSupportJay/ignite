@@ -15,14 +15,16 @@
             "c": 0.65,
             "d": 0.50,
             "f": 0
-        }
+        },
+        "back_trans": 0.5,
+        "botplay": true
     },
     "Binds": {
         "4": ["d", "f", "j", "k"]
     },
     "Customisation": {
         "content_folder": "/mnt/3C1C05611C051792/Programming/Python/Ignite/ContentFolder",
-        "skin": "default"
+        "skin": "FNF"
     },
     "Audio": {
         "volume": {
@@ -30,6 +32,6 @@
             "music": 0.5,
             "hitsound": 1
         },
-        "offset": 80
+        "offset": 0
     }
 }

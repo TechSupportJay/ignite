@@ -18,7 +18,11 @@ fps_cap = 0
 note_count = 4
 
 pressed = []
-for i in range(note_count): pressed.append(False)
+is_sus = []
+
+for i in range(note_count):
+    pressed.append(False)
+    is_sus.append([False,0])
 
 def pygame_get_key(key):
     try:
@@ -56,16 +60,23 @@ perf_score = 0
 
 ### Instance Variables
 
-song_name = "censored"
-song_difficulty = "exhaust"
+song_name = "beancore"
+song_difficulty = "hard"
 
 chart_raw = json.load(open(f"{songs_dir}/{song_name}/charts/{song_difficulty}.json"))
 chart_notes = chart_raw["notes"]
 
+chart_len = 0
+processed_notes = 0
+
 chart = []
 for i in range(note_count): chart.append([])
 
-for combo in chart_notes: chart[combo["p"]-1].append(combo)
+for sec in chart_notes:
+    chart[sec["p"]-1].append(sec)
+    chart_len += 1
+
+for i in range(note_count): chart.append([])
 
 ##### Sort
 
@@ -89,11 +100,15 @@ for i in range(note_count): pass_pointers.append(0)
 class user_script_class_template():
     def __init__(self): pass
     def create(self): pass
+    def destroy(self): pass
     def update(self, dt): pass
     def step_hit(self): pass
     def beat_hit(self): pass
     def note_hit(self, lane, time_diff): pass
     def note_miss(self, lane): pass
+    def song_start(self): pass
+    def key_down(self, index): pass
+    def key_up(self, index): pass
 
 user_scripts = []
 
@@ -105,24 +120,42 @@ def add_script(tag, path):
         to_exec += f"    {line}"
     exec(f"{to_exec}\nsong_script_{tag} = user_script_{tag}()\nuser_scripts.append(song_script_{tag})")
 
+    print(f"[i] Added Script: {tag}")
+
 def invoke_script_function(tag, data = []):
     if len(user_scripts) == 0: return
 
     for script in user_scripts:
         match tag:
             case "create": script.create()
+            case "destroy": script.destroy()
             case "update": script.update(data[0])
             case "step": script.step_hit()
             case "beat": script.beat_hit()
             case "note_hit": script.note_hit(data[0], data[1])
             case "note_miss": script.note_miss(data[0])
+            case "song_start": script.song_start()
+            case "key_down": script.key_down(data[0])
+            case "key_up": script.key_up(data[0]) 
 
-if os.path.isfile(f"{songs_dir}/{song_name}/script.py"): add_script("song", f"{songs_dir}/{song_name}/script.py")
-if len(os.listdir(f"{profile_options["Customisation"]["content_folder"]}/Scripts")) > 0:
-    for script in os.listdir(f"{profile_options["Customisation"]["content_folder"]}/Scripts"): add_script(f"scr_{script.replace(".py", "")}", f"{profile_options["Customisation"]["content_folder"]}/Scripts/{script}")
-if os.path.isdir((f"{skin_dir}/Scripts")):
-    if len(os.listdir(f"{skin_dir}/Scripts")) > 0:
-        for script in os.listdir(f"{skin_dir}/Scripts"): add_script(f"skn_{script.replace(".py", "")}", f"{skin_dir}/Scripts/{script}")
+def load_scripts(mid_song = True):
+    print("[i] Loading Scripts...")
+
+    if mid_song: invoke_script_function("destroy")
+
+    global user_scripts
+    user_scripts = []
+
+    if os.path.isfile(f"{songs_dir}/{song_name}/script.py"): add_script("song", f"{songs_dir}/{song_name}/script.py")
+    if len(os.listdir(f"{profile_options["Customisation"]["content_folder"]}/Scripts")) > 0:
+        for script in os.listdir(f"{profile_options["Customisation"]["content_folder"]}/Scripts"): add_script(f"scr_{script.replace(".py", "")}", f"{profile_options["Customisation"]["content_folder"]}/Scripts/{script}")
+    if os.path.isdir((f"{skin_dir}/Scripts")):
+        if len(os.listdir(f"{skin_dir}/Scripts")) > 0:
+            for script in os.listdir(f"{skin_dir}/Scripts"): add_script(f"skn_{script.replace(".py", "")}", f"{skin_dir}/Scripts/{script}")
+    
+    if mid_song: invoke_script_function("create")
+
+load_scripts(False)
 
 def set_global(prop, val):
     globals()[prop] = val
@@ -146,10 +179,10 @@ scene = RMS.scenes.scene(screen, "Game")
 camera = RMS.cameras.camera("HUD", 1)
 scene.add_camera(camera)
 
-camera.set_property("scale", [1.1, 1.1])
+camera.set_property("zoom", [1.1, 1.1])
 
-camera.do_tween("cam_bump_x", camera, "scale:x", 1.0, 1, "quad", "out")
-camera.do_tween("cam_bump_y", camera, "scale:y", 1.0, 1, "quad", "out")
+camera.do_tween("cam_bump_x", camera, "zoom:x", 1.0, 1, "quad", "out")
+camera.do_tween("cam_bump_y", camera, "zoom:y", 1.0, 1, "quad", "out")
 
 # Background
 
@@ -181,10 +214,22 @@ skin_texts = json.load(open(f"{skin_dir}/texts.json"))
 
 strum_origin = skin_hud["strumline"]["origin"]
 strum_seperation = skin_hud["strumline"]["spacing"]
+
 note_size = skin_hud["strumline"]["size"]
+sus_size = skin_hud["sustain"]["width"]
+tip_size = skin_hud["sustain"]["tip"]
+
+# Note Background
+
+note_bg = RMS.objects.rectangle("note_bg", "#000000")
+note_bg.set_property("opacity", int(profile_options["Gameplay"]["back_trans"] * 255))
+note_bg.set_property("size", [(note_size * (note_count) + (strum_seperation * (note_count-1))), 720])
+note_bg.set_property("position", [1280/2,720/2])
+camera.add_item(note_bg)
+
+# Strums
 
 for i in range(note_count):
-    ### Strum
     new_note = RMS.objects.image(f"strum_{i}", f"{grab_dir}/strum_{i+1}.png")
     new_note.set_property("size", [note_size,note_size])
     new_note.set_property("position", [strum_origin[0] + ((note_size + strum_seperation) * i), strum_origin[1]])
@@ -255,60 +300,98 @@ def strum_handle(index, down):
     end_val = 1
     if down: end_val = 0.9
 
-    end_val *= note_size
-
     camera.cancel_tween(f"strum_input_{index}_x")
     camera.cancel_tween(f"strum_input_{index}_y")
 
-    camera.do_tween(f"strum_input_{index}_x", to_grab, "size:x", end_val, 0.15, "back", "out")
-    camera.do_tween(f"strum_input_{index}_y", to_grab, "size:y", end_val, 0.15, "back", "out")
+    camera.do_tween(f"strum_input_{index}_x", to_grab, "scale:x", end_val, 0.15, "back", "out")
+    camera.do_tween(f"strum_input_{index}_y", to_grab, "scale:y", end_val, 0.15, "back", "out")
 
     if not down: to_grab.set_property("image_location", f"{grab_dir}/strum_{index+1}.png")
 
 def create_note(lane):
-    global chart_pointers
+    global chart_pointers, processed_notes
 
     new_note = RMS.objects.image(f"note_{lane}_{chart_pointers[lane]}", f"{grab_dir}/regular_{lane+1}.png")
     new_note.set_property("size", [note_size,note_size])
     new_note.set_property("position", [camera.get_item(f"strum_{lane}").get_property("position:x"), -note_size])
     camera.add_item(new_note)
     chart_pointers[lane] += 1
+    
+    processed_notes += 1
+
+def create_sustain(lane, length):
+    sus_tip = RMS.objects.image(f"tip_{lane}_{chart_pointers[lane]}", f"{grab_dir}/tip_{lane+1}.png")
+    sus_tip.set_property("size", tip_size)
+    sus_tip.set_property("position", [camera.get_item(f"strum_{lane}").get_property("position:x"), -note_size])
+    camera.add_item(sus_tip)
+
+    sus_length = RMS.objects.image(f"sus_{lane}_{chart_pointers[lane]}", f"{grab_dir}/sus_{lane+1}.png")
+    sus_length.set_property("size:x", sus_size)
+    sus_length.set_property("size:y", ((((720-(720-strum_origin[1]))) * (length / note_speed))))
+    sus_length.set_property("position:x", camera.get_item(f"strum_{lane}").get_property("position:x"))
+    sus_length.set_property("position:y", -sus_length.get_property("size:y"))
+    camera.add_item(sus_length)
 
 def process_notes(time_in):
-    global pass_pointers, player_stats, perf_score
+    global pass_pointers, player_stats, perf_score, continue_notes
 
-    for l in range(4):
-        while chart[l][chart_pointers[l]]["t"] - time_in <= note_speed*2:
+    for l in range(note_count):
+        if processed_notes >= chart_len: continue_notes = False
+
+        while chart[l][chart_pointers[l]]["t"] - time_in <= note_speed*2 and processed_notes < chart_len and continue_notes:
+            if chart_pointers[l] >= len(chart[l]): continue_notes = False; break
+            if chart[l][chart_pointers[l]]["l"] > 0: create_sustain(chart[l][chart_pointers[l]]["p"]-1, chart[l][chart_pointers[l]]["l"])
             create_note(chart[l][chart_pointers[l]]["p"]-1)
-        
+         
         for i in range(pass_pointers[l], chart_pointers[l]):
+            if chart[l][i]["l"] > 0:
+                if time_in > chart[l][i]["t"]:
+                    camera.get_item(f"sus_{l}_{i}").set_property("size:y", (((((720-(720-strum_origin[1]))) * ((chart[l][i]["l"] - (time_in - chart[l][i]["t"])) / note_speed))) - tip_size[1]))
+                    if camera.get_item(f"sus_{l}_{i}").get_property("size:y") < 0: camera.get_item(f"sus_{l}_{i}").set_property("size:y", 0)
+                    camera.get_item(f"sus_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") - (camera.get_item(f"sus_{l}_{i}").get_property("size:y") / 2))
+                else:
+                    camera.get_item(f"sus_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") - (((720-(720-strum_origin[1])) * ((chart[l][i]["t"] - time_in)) / note_speed)) - (camera.get_item(f"sus_{l}_{i}").get_property("size:y")/2))
+                camera.get_item(f"tip_{l}_{i}").set_property("position:y", camera.get_item(f"sus_{l}_{i}").get_property("position:y") - (camera.get_item(f"sus_{l}_{i}").get_property("size:y")/2) - (camera.get_item(f"tip_{l}_{i}").get_property("size:y")/2) + 2)
+                if camera.get_item(f"tip_{l}_{i}").get_property("position:y") >= strum_origin[1]: camera.get_item(f"tip_{l}_{i}").set_property("opacity", 0)
             if camera.get_item(f"note_{l}_{i}") is None: continue
             camera.get_item(f"note_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") - ((720-(720-strum_origin[1])) * ((chart[l][i]["t"] - time_in) / note_speed)))
 
+            if profile_options["Gameplay"]["botplay"]:
+                if time_in >= chart[l][i]["t"] and not pressed[l]:
+                    pressed[l] = True
+                    key_handle(l, True)
+                      
             if time_in > chart[l][i]["t"] and not in_range(chart[l][i]["t"], time_in, hit_window):
-                pass_pointers[l] += 1
+                if chart[l][i]["l"] > 0:
+                    camera.remove_item(f"sus_{l}_{i}")
+                    camera.remove_item(f"tip_{l}_{i}")
                 camera.remove_item(f"note_{l}_{i}")
+
+                perf_score += int(10000*(cur_time-(chart[l][i]["t"] + chart[l][i]["l"])))
 
                 player_stats["misses"] += 1
                 player_stats["combo"] = 0
                 player_stats["score"] -= 100
                 perf_score += 500
 
+                pass_pointers[l] += 1
+                
                 show_rating("miss")
-
                 invoke_script_function("note_miss", [l])
                 continue
 
 def process_hits(lane, time_in):
-    global pass_pointers
+    global pass_pointers, pressed
 
-    for l in range(4):
+    for l in range(note_count):
         for i in range(pass_pointers[l], chart_pointers[l]):
             if chart[l][i]["p"] == lane:
                 if in_range(chart[l][i]["t"], time_in, hit_window):
                     process_time(abs(time_in - chart[l][i]["t"]))
+                    
+                    if chart[l][i]["l"] == 0: pass_pointers[l] += 1
+                    else: is_sus[l] = [True, chart[l][i]["t"] + chart[l][i]["l"]]
 
-                    pass_pointers[l] += 1
                     camera.remove_item(f"note_{l}_{i}")
                     camera.get_item(f"strum_{l}").set_property("image_location", f"{grab_dir}/confirm_{lane}.png")
 
@@ -316,6 +399,10 @@ def process_hits(lane, time_in):
                         hitsound.play()
 
                     invoke_script_function("note_hit", [l, abs(time_in - chart[l][i]["t"])])
+
+                    if profile_options["Gameplay"]["botplay"] and chart[l][i]["l"] == 0:
+                        key_handle(lane-1, False)
+                        pressed[lane-1] = False
                 return
 
 def process_time(difference):
@@ -336,7 +423,52 @@ def process_time(difference):
 
 def key_handle(index, down):
     strum_handle(index, down)
-    if down: process_hits(index+1, cur_time)
+    if down:
+        invoke_script_function("key_down", [index])
+        process_hits(index+1, cur_time)
+    else:
+        invoke_script_function("key_up", [index])
+
+def handle_current_sus(time_in, dt):
+    global pass_pointers, player_stats, is_sus, perf_score
+
+    for i in range(note_count):
+        if is_sus[i][0]:
+            if is_sus[i][1] <= time_in:
+                is_sus[i] = [False,0]
+                camera.remove_item(f"sus_{i}_{pass_pointers[i]}")
+                camera.remove_item(f"tip_{i}_{pass_pointers[i]}")
+                
+                if profile_options["Gameplay"]["botplay"]:
+                    key_handle(i, False)
+                    pressed[i] = False
+
+                pass_pointers[i] += 1
+            else:
+                if pressed[i]:
+                    player_stats["score"] += int(10000*dt)
+                    perf_score += int(10000*dt)
+                else:
+                    if in_range(cur_time, chart[i][pass_pointers[i]]["t"] + chart[i][pass_pointers[i]]["l"], hit_window):
+                        is_sus[i] = [False,0]
+                        camera.remove_item(f"sus_{i}_{pass_pointers[i]}")
+                        camera.remove_item(f"tip_{i}_{pass_pointers[i]}")
+                        
+                        pass_pointers[i] += 1
+                    else:
+                        is_sus[i] = [False,0]
+                        
+                        camera.remove_item(f"sus_{i}_{pass_pointers[i]}")
+                        camera.remove_item(f"tip_{i}_{pass_pointers[i]}")
+
+                        player_stats["score"] -= 100
+                        perf_score += int(10000*(cur_time/(chart[i][pass_pointers[i]]["t"] + chart[i][pass_pointers[i]]["l"])))
+
+                        pass_pointers[i] += 1
+                        show_rating("miss")
+
+                        invoke_script_function("note_miss", [i])
+                    continue
 
 # UI
 
@@ -359,12 +491,13 @@ dt = cur_time
 def conduct(time_in):
     global next_step, cur_step, music_playing, dt, last_time
 
-    dt = last_time - time_in
+    dt = time_in - last_time
     last_time = time_in
 
     if not music_playing and time_in >= 0.0:
         pygame.mixer.music.play()
         music_playing = True
+        invoke_script_function("song_start")
     else:
         if time_in >= next_step:
             next_step += step_time
@@ -387,10 +520,10 @@ def beat_hit():
         camera.cancel_tween("cam_bump_x")
         camera.cancel_tween("cam_bump_y")
 
-        camera.set_property("scale", [1.025, 1.025])
+        camera.set_property("zoom", [1.025, 1.025])
 
-        camera.do_tween("cam_bump_x", camera, "scale:x", 1.0, 0.85, "quad", "out")
-        camera.do_tween("cam_bump_y", camera, "scale:y", 1.0, 0.85, "quad", "out")
+        camera.do_tween("cam_bump_x", camera, "zoom:x", 1.0, 0.85, "quad", "out")
+        camera.do_tween("cam_bump_y", camera, "zoom:y", 1.0, 0.85, "quad", "out")
     
     invoke_script_function("beat")
 
@@ -436,32 +569,13 @@ hitsound.set_volume(profile_options["Audio"]["volume"]["hitsound"] * profile_opt
 last_score = 0
 last_time = time.time_ns() / 1000 / 1000000
 
-invoke_script_function("create")
+has_created = False
+continue_notes = True
 
 while True:
-    clock.tick(fps_cap)
+    if not has_created: has_created = True; invoke_script_function("create")
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            exit()
-        else:
-            match event.type:
-                case pygame.KEYDOWN:              
-                    for key in binds:
-                        if pygame.key.get_pressed()[key] and not pressed[binds.index(key)]:
-                            key_handle(binds.index(key), True)
-                            pressed[binds.index(key)] = True
-                    if not event.key in binds:
-                        match event.key:
-                            case _: pass
-                case pygame.KEYUP:
-                    for key in binds:
-                        if not pygame.key.get_pressed()[key] and pressed[binds.index(key)]:
-                            key_handle(binds.index(key), False)
-                            pressed[binds.index(key)] = False
-                    if not event.key in binds:
-                        match event.key:
-                            case _: pass
+    clock.tick(fps_cap)
 
     # Time
 
@@ -473,6 +587,8 @@ while True:
     if perf_score != last_score:
         last_score = perf_score
         update_accuracy()
+    
+    handle_current_sus(cur_time, dt)
 
     # UI
 
@@ -485,3 +601,31 @@ while True:
     # Render
     
     scene.render_scene()
+
+    # Events
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            exit()
+        else:
+            match event.type:
+                case pygame.KEYDOWN:              
+                    for key in binds:
+                        if pygame.key.get_pressed()[key] and not pressed[binds.index(key)] and not profile_options["Gameplay"]["botplay"]:
+                            key_handle(binds.index(key), True)
+                            pressed[binds.index(key)] = True
+                    if not event.key in binds:
+                        match event.key:
+                            case pygame.K_F5: load_scripts()
+                            case _: pass
+                case pygame.KEYUP:
+                    for key in binds:
+                        if not pygame.key.get_pressed()[key] and pressed[binds.index(key)] and not profile_options["Gameplay"]["botplay"]:
+                            key_handle(binds.index(key), False)
+                            pressed[binds.index(key)] = False
+                    if not event.key in binds:
+                        match event.key:
+                            case _: pass
+                case pygame.VIDEORESIZE:
+                    camera.set_property("scale", [event.w/1280, event.h/720])
+                    camera.set_property("position", [(event.w-1280)/2,(event.h-720)/2])

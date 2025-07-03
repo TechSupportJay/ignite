@@ -14,6 +14,7 @@ class camera():
         self.fonts = {}
 
         self.scale = [1,1]
+        self.zoom = [1,1]
         self.position = [0,0]
         self.rotation = 0
         
@@ -23,7 +24,7 @@ class camera():
 
     def cache_image(self, path):
         if path not in self.textures.keys():
-            self.textures[path] = pygame.image.load(path).convert_alpha()
+            self.textures[path] = pygame.image.load(path) .convert_alpha()
     
     def cache_image_bulk(self, path_list):
         for item in path_list: self.cache_image(item)
@@ -47,6 +48,9 @@ class camera():
         self.order_items()
     
     def remove_item(self, tag):
+        if not self.has_item(tag):
+            print(f"[!] Tried to remove Item ({tag}), but it was not in Camera ({self.tag})")
+            return
         self.items.pop(tag)
         self.order_items()
     
@@ -55,6 +59,9 @@ class camera():
             case "scale": self.scale = value
             case "scale:x": self.scale[0] = value
             case "scale:y": self.scale[1] = value
+            case "zoom": self.zoom = value
+            case "zoom:x": self.zoom[0] = value
+            case "zoom:y": self.zoom[1] = value
             case "position": self.position = value
             case "position:x": self.position[0] = value
             case "position:y": self.position[1] = value
@@ -67,6 +74,9 @@ class camera():
             case "scale": return self.scale
             case "scale:x": return self.scale[0]
             case "scale:y": return self.scale[1]
+            case "zoom": return self.zoom
+            case "zoom:x": return self.zoom[0]
+            case "zoom:y": return self.zoom[1]
             case "position": return self.position
             case "position:x": return self.position[0]
             case "position:y": return self.position[1]
@@ -77,6 +87,11 @@ class camera():
         if tag in self.items.keys():
             if not self.items[tag] == None:
                 return self.items[tag]
+            else:
+                print(f"[!] Item ({tag}) not found in Camera ({self.get_property("tag")})")
+    
+    def has_item(self, tag):
+        return tag in self.items.keys()
 
     def item_exists(self, tag):
         return tag in self.items.keys()
@@ -117,35 +132,54 @@ class camera():
                 case "image":
                     if item.get_property("opacity") > 0:
                         to_blit = self.textures[item.get_property("image_location")]
-                        to_blit = pygame.transform.scale(to_blit, [(item.get_property("size")[0] * item.get_property("scale")[0]) * self.scale[0], (item.get_property("size")[1] * item.get_property("scale")[1]) * self.scale[1]])
+                        to_blit = pygame.transform.scale(to_blit, [abs(item.get_property("size")[0] * item.get_property("scale")[0]) * self.scale[0] * self.zoom[0], abs(item.get_property("size")[1] * item.get_property("scale")[1]) * self.scale[1] * self.zoom[1]])
                         to_blit = pygame.transform.rotate(to_blit, item.get_property("rotation"))
 
                         orig_pos_x = (item.get_property("position")[0] - (item.get_property("size")[0] * item.get_property("scale")[0])/2)
                         orig_pos_y = (item.get_property("position")[1] - (item.get_property("size")[1] * item.get_property("scale")[1])/2)
                         orig_pos = (orig_pos_x, orig_pos_y)
 
-                        new_pos_x = (orig_pos[0] - self.screen_size[0]/2) * self.scale[0] + self.screen_size[0]/2
-                        new_pos_y = (orig_pos[1] - self.screen_size[1]/2) * self.scale[1] + self.screen_size[1]/2
-                        new_pos = (new_pos_x, new_pos_y)
+                        new_pos_x = (orig_pos[0] - self.screen_size[0]/2) * self.zoom[0] * self.scale[0] + self.screen_size[0]/2
+                        new_pos_y = (orig_pos[1] - self.screen_size[1]/2) * self.zoom[1] * self.scale[1] + self.screen_size[1]/2
+                        new_pos = (new_pos_x+self.get_property("position:x"), new_pos_y+self.get_property("position:y"))
 
                         to_blit.set_alpha(int(item.get_property("opacity")))
                         
                         screen.blit(to_blit, new_pos)
+                case "rectangle":
+                    if item.get_property("opacity") > 0:
+                        rect = [
+                            (((item.get_property("position")[0] - (item.get_property("size")[0] * item.get_property("scale")[0])/2)) - self.screen_size[0]/2) * self.zoom[0] * self.scale[0] + self.screen_size[0]/2 + self.get_property("position:x"), 
+                            (((item.get_property("position")[1] - (item.get_property("size")[1] * item.get_property("scale")[1])/2)) - self.screen_size[1]/2) * self.zoom[1] * self.scale[1] + self.screen_size[1]/2 + self.get_property("position:y"),
+                            (item.get_property("size:x") * item.get_property("scale:x") * self.scale[0] * self.zoom[0]),
+                            (item.get_property("size:y") * item.get_property("scale:y") * self.scale[1] * self.zoom[1]),
+                        ]
+
+                        for i in range(2,4):
+                            if rect[i] < 0: rect[i] = 0    
+                        
+                        rect_color = pygame.Color(item.get_property("color"))
+                        rect_color.a = item.get_property("opacity")
+
+                        blit_surface = pygame.Surface((rect[2], rect[3]), pygame.SRCALPHA)
+                        blit_surface.fill(rect_color)
+                        screen.blit(blit_surface, (rect[0], rect[1]))
+                        del blit_surface
                 case "text":
                     if item.get_property("opacity") > 0:
                         pre_blit = self.fonts[(f"{item.get_property("font")}_{item.get_property("font_size")}")]
 
                         to_blit = pre_blit.render(item.get_property("text"), True, item.get_property("color"))
 
-                        to_blit = pygame.transform.scale_by(to_blit, [(item.get_property("size")[0]) * self.scale[0], (item.get_property("size")[1]) * self.scale[1]])
+                        to_blit = pygame.transform.scale_by(to_blit, [(item.get_property("size")[0]) * self.scale[0] * self.zoom[0], (item.get_property("size")[1]) * self.scale[1] * self.zoom[1]])
                         to_blit = pygame.transform.rotate(to_blit, item.get_property("rotation"))
 
                         orig_pos = item.get_property("position")
 
-                        new_pos_x = (orig_pos[0] - self.screen_size[0]/2) * self.scale[0] + self.screen_size[0]/2
-                        new_pos_y = (orig_pos[1] - self.screen_size[1]/2) * self.scale[1] + self.screen_size[1]/2
+                        new_pos_x = (orig_pos[0] - self.screen_size[0]/2) * self.scale[0] * self.zoom[0] + self.screen_size[0]/2
+                        new_pos_y = (orig_pos[1] - self.screen_size[1]/2) * self.scale[1] * self.zoom[1] + self.screen_size[1]/2
 
-                        new_pos = (new_pos_x, new_pos_y)
+                        new_pos = (new_pos_x+self.get_property("position:x"), new_pos_y+self.get_property("position:y"))
 
                         match item.get_property("text_align"):
                             case "center": new_pos = (new_pos[0] - ((to_blit.get_rect().w / 2) - (item.get_property("size")[0] / 2)), new_pos[1])
