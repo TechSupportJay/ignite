@@ -73,6 +73,7 @@ chart = []
 for i in range(note_count): chart.append([])
 
 for sec in chart_notes:
+    if not "l" in sec.keys(): sec["l"] = 0.0
     chart[sec["p"]-1].append(sec)
     chart_len += 1
 
@@ -338,10 +339,20 @@ def process_notes(time_in):
     for l in range(note_count):
         if processed_notes >= chart_len: continue_notes = False
 
-        while chart[l][chart_pointers[l]]["t"] - time_in <= note_speed*2 and processed_notes < chart_len and continue_notes:
-            if chart_pointers[l] >= len(chart[l]): continue_notes = False; break
+        processing = True
+        while processing:  
+            if chart_pointers[l] >= len(chart[l]):
+                continue_notes = False
+                break
+            
             if chart[l][chart_pointers[l]]["l"] > 0: create_sustain(chart[l][chart_pointers[l]]["p"]-1, chart[l][chart_pointers[l]]["l"])
             create_note(chart[l][chart_pointers[l]]["p"]-1)
+        
+            if chart_pointers[l] >= len(chart[l]):
+                continue_notes = False
+                break
+
+            processing = (chart[l][chart_pointers[l]]["t"] - time_in <= note_speed*2 and processed_notes < chart_len and continue_notes)
          
         for i in range(pass_pointers[l], chart_pointers[l]):
             if chart[l][i]["l"] > 0:

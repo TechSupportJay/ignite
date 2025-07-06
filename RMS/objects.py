@@ -54,6 +54,8 @@ class image(object):
 
         self.type = "image"
 
+        self.visible = True
+
     def set_property(self, property, value):
         match property:
             case "priority": self.priority = value
@@ -69,6 +71,7 @@ class image(object):
             case "scale:y": self.scale[1] = value
             case "opacity": self.opacity = int(value)
             case "rotation": self.rotation = value
+            case "visible": self.visible = value
             case _: print(f"Couldn't find property '{property}' in {self.tag} ({self.type})")
     
     def get_property(self, property):
@@ -87,6 +90,7 @@ class image(object):
             case "scale:y": return self.scale[1]
             case "opacity": return self.opacity
             case "rotation": return self.rotation
+            case "visible": return self.visible
             case _: print(f"Couldn't find property '{property}' in {self.tag} ({self.type})")
 
 class text(object):
@@ -110,6 +114,8 @@ class text(object):
 
         self.text_align = "left"
 
+        self.visible = True
+
     def set_property(self, property, value):
         match property:
             case "priority": self.priority = value
@@ -129,6 +135,7 @@ class text(object):
             case "font_size": self.text_size = value
             case "color": self.color = value
             case "text_align": self.text_align = value
+            case "visible": self.visible = value
             case _: print(f"Couldn't find property '{property}' in {self.tag} ({self.type})")
     
     def get_property(self, property):
@@ -151,6 +158,7 @@ class text(object):
             case "font_size": return self.text_size
             case "color": return self.color
             case "text_align": return self.text_align
+            case "visible": return self.visible
             case _: print(f"Couldn't find property '{property}' in {self.tag} ({self.type})")
 
 class rectangle(object):
@@ -167,6 +175,8 @@ class rectangle(object):
 
         self.type = "rectangle"
 
+        self.visible = True
+
     def set_property(self, property, value):
         match property:
             case "priority": self.priority = value
@@ -181,6 +191,7 @@ class rectangle(object):
             case "scale:x": self.scale[0] = value
             case "scale:y": self.scale[1] = value
             case "opacity": self.opacity = int(value)
+            case "visible": self.visible = value
             case _: print(f"Couldn't find property '{property}' in {self.tag} ({self.type})")
     
     def get_property(self, property):
@@ -198,4 +209,5 @@ class rectangle(object):
             case "scale:x": return self.scale[0]
             case "scale:y": return self.scale[1]
             case "opacity": return self.opacity
+            case "visible": return self.visible
             case _: print(f"Couldn't find property '{property}' in {self.tag} ({self.type})")

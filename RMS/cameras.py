@@ -130,7 +130,7 @@ class camera():
             item = self.items[tag]
             match item.get_type():
                 case "image":
-                    if item.get_property("opacity") > 0:
+                    if item.get_property("opacity") > 0 and item.get_property("visible"):
                         to_blit = self.textures[item.get_property("image_location")]
                         to_blit = pygame.transform.scale(to_blit, [abs(item.get_property("size")[0] * item.get_property("scale")[0]) * self.scale[0] * self.zoom[0], abs(item.get_property("size")[1] * item.get_property("scale")[1]) * self.scale[1] * self.zoom[1]])
                         to_blit = pygame.transform.rotate(to_blit, item.get_property("rotation"))
@@ -147,7 +147,7 @@ class camera():
                         
                         screen.blit(to_blit, new_pos)
                 case "rectangle":
-                    if item.get_property("opacity") > 0:
+                    if item.get_property("opacity") > 0 and item.get_property("visible"):
                         rect = [
                             (((item.get_property("position")[0] - (item.get_property("size")[0] * item.get_property("scale")[0])/2)) - self.screen_size[0]/2) * self.zoom[0] * self.scale[0] + self.screen_size[0]/2 + self.get_property("position:x"), 
                             (((item.get_property("position")[1] - (item.get_property("size")[1] * item.get_property("scale")[1])/2)) - self.screen_size[1]/2) * self.zoom[1] * self.scale[1] + self.screen_size[1]/2 + self.get_property("position:y"),
@@ -166,7 +166,7 @@ class camera():
                         screen.blit(blit_surface, (rect[0], rect[1]))
                         del blit_surface
                 case "text":
-                    if item.get_property("opacity") > 0:
+                    if item.get_property("opacity") > 0 and item.get_property("visible"):
                         pre_blit = self.fonts[(f"{item.get_property("font")}_{item.get_property("font_size")}")]
 
                         to_blit = pre_blit.render(item.get_property("text"), True, item.get_property("color"))
