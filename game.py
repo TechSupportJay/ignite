@@ -345,8 +345,9 @@ def process_notes(time_in):
                 continue_notes = False
                 break
             
-            if chart[l][chart_pointers[l]]["l"] > 0: create_sustain(chart[l][chart_pointers[l]]["p"]-1, chart[l][chart_pointers[l]]["l"])
-            create_note(chart[l][chart_pointers[l]]["p"]-1)
+            if (chart[l][chart_pointers[l]]["t"] - time_in <= note_speed*2):
+                if chart[l][chart_pointers[l]]["l"] > 0: create_sustain(chart[l][chart_pointers[l]]["p"]-1, chart[l][chart_pointers[l]]["l"])
+                create_note(chart[l][chart_pointers[l]]["p"]-1)
         
             if chart_pointers[l] >= len(chart[l]):
                 continue_notes = False
