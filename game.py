@@ -9,7 +9,6 @@ pygame.display.gl_set_attribute(pygame.GL_ACCELERATED_VISUAL, 1)
 pygame.display.set_caption("Ignite")
 
 clock = pygame.time.Clock()
-fps_cap = 0
 
 # Variables
 
@@ -20,9 +19,6 @@ note_count = 4
 pressed = []
 is_sus = []
 
-for i in range(note_count):
-    pressed.append(False)
-    is_sus.append([False,0])
 
 def pygame_get_key(key):
     try:
@@ -32,21 +28,21 @@ def pygame_get_key(key):
 
 ### User Variables
 
-current_profile = "Profile1"
-profile_options = json.load(open(f"Data/{current_profile}/options.json"))
+current_profile = ""
+profile_options = {}
 
-songs_dir = f"{profile_options["Customisation"]["content_folder"]}/Songs"
-skin_dir = f"{profile_options["Customisation"]["content_folder"]}/Skins/{profile_options["Customisation"]["skin"]}"
-grab_dir = f"{skin_dir}/Notes_{note_count}K"
+fps_cap = 0
 
-note_speed = profile_options["Gameplay"]["scroll_time"]
-hit_window = profile_options["Gameplay"]["timings"]["hit_window"]
+songs_dir = ""
+skin_dir = ""
+grab_dir = ""
+
+note_speed = 1
+hit_window = 0.5
 
 ### Game Variables
 
 binds = []
-for bind in profile_options["Binds"][str(note_count)]:
-    binds.append(pygame_get_key(bind))
 
 player_stats = {
     "score": 0,
@@ -60,43 +56,24 @@ perf_score = 0
 
 ### Instance Variables
 
-song_name = "beancore"
-song_difficulty = "hard"
+song_name = ""
+song_difficulty = ""
 
-chart_raw = json.load(open(f"{songs_dir}/{song_name}/charts/{song_difficulty}.json"))
-chart_notes = chart_raw["notes"]
+chart_raw = []
+chart_notes = []
 
 chart_len = 0
 processed_notes = 0
 
 chart = []
-for i in range(note_count): chart.append([])
-
-for sec in chart_notes:
-    if not "l" in sec.keys(): sec["l"] = 0.0
-    chart[sec["p"]-1].append(sec)
-    chart_len += 1
-
-for i in range(note_count): chart.append([])
 
 ##### Sort
 
 chart_unsorted = True
-while chart_unsorted:
-    chart_unsorted = False
-    for lane in chart:
-        for i in range(len(lane)-1):
-            if lane[i]["t"] > lane[i+1]["t"]:
-                temp = lane[i+1]
-                lane[i+1] = lane[i]
-                lane[i] = temp
-                chart_unsorted = True
 
 chart_pointers = []
-for i in range(note_count): chart_pointers.append(0)
 
 pass_pointers = []
-for i in range(note_count): pass_pointers.append(0)
 
 class user_script_class_template():
     def __init__(self): pass
@@ -156,14 +133,12 @@ def load_scripts(mid_song = True):
     
     if mid_song: invoke_script_function("create")
 
-load_scripts(False)
-
 def set_global(prop, val):
     globals()[prop] = val
 
 # Conductor
 
-bpm = chart_raw["meta"]["BPM"]
+bpm = 130
 
 step_time = ((60.0 / bpm) / 4.0)
 
@@ -187,95 +162,29 @@ camera.do_tween("cam_bump_y", camera, "zoom:y", 1.0, 1, "quad", "out")
 
 # Background
 
-background = RMS.objects.image("background", f"{skin_dir}/background.png")
-background.set_property("size", [1280,720])
-background.set_property("position", [1280/2,720/2])
-if os.path.isfile(f"songs_dir/{song_name}/background.png"): background.set_property("image_location", (f"songs_dir/{song_name}/background.png"))
-camera.add_item(background)
-
-background.set_property("opacity", 0)
-camera.do_tween("background_fade", background, "opacity", 255, 1, "cubic", "out")
-
-### Cache
-
-for i in range(4): camera.cache_image_bulk([
-    f"{grab_dir}/strum_{i+1}.png",
-    f"{grab_dir}/regular_{i+1}.png",
-    f"{grab_dir}/confirm_{i+1}.png"
-])
-    
-for rat in ["perf", "okay", "bad", "miss"]: camera.cache_image(f"{skin_dir}/Ratings/{rat}.png") 
+background = None
 
 #
 
-skin_hud = json.load(open(f"{skin_dir}/hud.json"))
-skin_texts = json.load(open(f"{skin_dir}/texts.json"))
+skin_hud = {}
+skin_texts = {}
 
 ### Notes
 
-strum_origin = skin_hud["strumline"]["origin"]
-strum_seperation = skin_hud["strumline"]["spacing"]
+strum_origin = [0,0]
+strum_seperation = 10
 
-note_size = skin_hud["strumline"]["size"]
-sus_size = skin_hud["sustain"]["width"]
-tip_size = skin_hud["sustain"]["tip"]
+note_size = 32
+sus_size = 20
+tip_size = [20,10]
 
 # Note Background
 
-note_bg = RMS.objects.rectangle("note_bg", "#000000")
-note_bg.set_property("opacity", int(profile_options["Gameplay"]["back_trans"] * 255))
-note_bg.set_property("size", [(note_size * (note_count) + (strum_seperation * (note_count-1))), 720])
-note_bg.set_property("position", [1280/2,720/2])
-camera.add_item(note_bg)
-
-# Strums
-
-for i in range(note_count):
-    new_note = RMS.objects.image(f"strum_{i}", f"{grab_dir}/strum_{i+1}.png")
-    new_note.set_property("size", [note_size,note_size])
-    new_note.set_property("position", [strum_origin[0] + ((note_size + strum_seperation) * i), strum_origin[1]])
-    camera.add_item(new_note)
-
-    # Tweens
-
-    new_note.set_property("position:y", strum_origin[1] + 20)
-    new_note.set_property("opacity", 0)
-    
-    camera.do_tween(f"start_tween_y_{i}", new_note, "position:y", strum_origin[1], 0.5, "circ", "out", (0.05*i))
-    camera.do_tween(f"start_tween_alpha_{i}", new_note, "opacity", 255, 0.5, "circ", "out", (0.05*i))
-
-### User Text
-
-i = 0
-for key in skin_hud["text"].keys():
-    text_obj = skin_hud["text"][key]
-
-    new_text = RMS.objects.text(key, text_obj["text"])
-    new_text.set_property("font", f"{skin_dir}/Fonts/{text_obj["font"]}")
-    new_text.set_property("font_size", text_obj["size"])
-    new_text.set_property("position", text_obj["position"])
-
-    if "text_align" in text_obj.keys(): new_text.set_property("text_align", text_obj["text_align"])
-    
-    camera.add_item(new_text)
-
-    # Tweens
-
-    new_text.set_property("position:y", text_obj["position"][1] + 20)
-    new_text.set_property("opacity", 0)
-
-    camera.do_tween(f"start_tween_y_{key}", new_text, "position:y", text_obj["position"][1] - 20, 0.5, "circ", "out", (0.05*note_count)+(0.05*i))
-    camera.do_tween(f"start_tween_alpha_{key}", new_text, "opacity", 255, 0.5, "circ", "out", (0.05*note_count)+(0.05*i))
-
-    i += 1
-del i
+note_bg = None
 
 ### Other
 
-rating = RMS.objects.image("rating", f"{skin_dir}/Ratings/perf.png")
-rating.set_property("position", (1280/2, 720/2))
-rating.set_property("opacity", 0)
-camera.add_item(rating)
+rating = None
 
 # Functions
 
@@ -576,7 +485,7 @@ pygame.mixer.music.set_volume(profile_options["Audio"]["volume"]["music"] * prof
 hitsound = pygame.mixer.Sound(f"{skin_dir}/SFX/hitsound.ogg")
 hitsound.set_volume(profile_options["Audio"]["volume"]["hitsound"] * profile_options["Audio"]["volume"]["master"])
 
-# Main Loop
+# Pre-Loop
 
 last_score = 0
 last_time = time.time_ns() / 1000 / 1000000
@@ -584,7 +493,219 @@ last_time = time.time_ns() / 1000 / 1000000
 has_created = False
 continue_notes = True
 
-while True:
+# Initialise
+def init(data):
+    global note_count, note_speed, hit_window, pressed, is_sus
+    global chart, chart_len, chart_notes, chart_pointers, chart_raw, chart_unsorted, processed_notes
+    global fps_cap, grab_dir, songs_dir, skin_dir
+    global player_stats, last_score, perf_score
+    global cur_time, cur_step, cur_beat, last_time
+    global hitsound
+    global camera, scene
+    global background, rating, note_bg
+
+    ### System Variables
+
+    note_count = data[2]
+
+    pressed = []
+    is_sus = []
+
+    for i in range(note_count):
+        pressed.append(False)
+        is_sus.append([False,0])
+
+    ### User Variables
+
+    current_profile = "Profile1"
+    profile_options = json.load(open(f"Data/{current_profile}/options.json"))
+
+    fps_cap = int(profile_options["Video"]["fps_cap"])
+
+    songs_dir = f"{profile_options["Customisation"]["content_folder"]}/Songs"
+    skin_dir = f"{profile_options["Customisation"]["content_folder"]}/Skins/{profile_options["Customisation"]["skin"]}"
+    grab_dir = f"{skin_dir}/Notes_{note_count}K"
+
+    note_speed = profile_options["Gameplay"]["scroll_time"]
+    hit_window = profile_options["Gameplay"]["timings"]["hit_window"]
+
+    ### Game Variables
+
+    binds = []
+    for bind in profile_options["Binds"][str(note_count)]:
+        binds.append(pygame_get_key(bind))
+
+    player_stats = {
+        "score": 0,
+        "combo": 0,
+        "misses": 0,
+        "accuracy": 0.0,
+        "rank": "s+"
+    }
+
+    perf_score = 0
+
+    ### Instance Variables
+
+    song_name = data[0]
+    song_difficulty = data[1]
+
+    chart_raw = json.load(open(f"{songs_dir}/{song_name}/charts/{song_difficulty}.json"))
+    chart_notes = chart_raw["notes"]
+
+    chart_len = 0
+    processed_notes = 0
+
+    chart = []
+    for i in range(note_count): chart.append([])
+
+    for sec in chart_notes:
+        if not "l" in sec.keys(): sec["l"] = 0.0
+        chart[sec["p"]-1].append(sec)
+        chart_len += 1
+
+    for i in range(note_count): chart.append([])
+
+    ##### Sort
+
+    chart_unsorted = True
+    while chart_unsorted:
+        chart_unsorted = False
+        for lane in chart:
+            for i in range(len(lane)-1):
+                if lane[i]["t"] > lane[i+1]["t"]:
+                    temp = lane[i+1]
+                    lane[i+1] = lane[i]
+                    lane[i] = temp
+                    chart_unsorted = True
+
+    chart_pointers = []
+    for i in range(note_count): chart_pointers.append(0)
+
+    pass_pointers = []
+    for i in range(note_count): pass_pointers.append(0)
+
+    load_scripts(False)
+
+    # Background
+
+    background = RMS.objects.image("background", f"{skin_dir}/background.png")
+    background.set_property("size", [1280,720])
+    background.set_property("position", [1280/2,720/2])
+    if os.path.isfile(f"songs_dir/{song_name}/background.png"): background.set_property("image_location", (f"songs_dir/{song_name}/background.png"))
+    camera.add_item(background)
+    background.set_property("opacity", 0)
+    camera.do_tween("background_fade", background, "opacity", 255, 1, "cubic", "out")
+
+    # Note BG
+
+    note_bg = RMS.objects.rectangle("note_bg", "#000000")
+    note_bg.set_property("opacity", int(profile_options["Gameplay"]["back_trans"] * 255))
+    note_bg.set_property("size", [(note_size * (note_count) + (strum_seperation * (note_count-1))), 720])
+    note_bg.set_property("position", [1280/2,720/2])
+    camera.add_item(note_bg)
+
+    # Strums
+
+    for i in range(note_count):
+        new_note = RMS.objects.image(f"strum_{i}", f"{grab_dir}/strum_{i+1}.png")
+        new_note.set_property("size", [note_size,note_size])
+        new_note.set_property("position", [strum_origin[0] + ((note_size + strum_seperation) * i), strum_origin[1]])
+        camera.add_item(new_note)
+
+        # Tweens
+
+        new_note.set_property("position:y", strum_origin[1] + 20)
+        new_note.set_property("opacity", 0)
+        
+        camera.do_tween(f"start_tween_y_{i}", new_note, "position:y", strum_origin[1], 0.5, "circ", "out", (0.05*i))
+        camera.do_tween(f"start_tween_alpha_{i}", new_note, "opacity", 255, 0.5, "circ", "out", (0.05*i))
+
+    ### Cache
+
+    for i in range(4): camera.cache_image_bulk([
+        f"{grab_dir}/strum_{i+1}.png",
+        f"{grab_dir}/regular_{i+1}.png",
+        f"{grab_dir}/confirm_{i+1}.png"
+    ])
+        
+    for rat in ["perf", "okay", "bad", "miss"]: camera.cache_image(f"{skin_dir}/Ratings/{rat}.png") 
+
+    #
+
+    skin_hud = json.load(open(f"{skin_dir}/hud.json"))
+    skin_texts = json.load(open(f"{skin_dir}/texts.json"))
+
+    ### Notes
+
+    strum_origin = skin_hud["strumline"]["origin"]
+    strum_seperation = skin_hud["strumline"]["spacing"]
+
+    note_size = skin_hud["strumline"]["size"]
+    sus_size = skin_hud["sustain"]["width"]
+    tip_size = skin_hud["sustain"]["tip"]
+
+    # Note Background
+
+    note_bg = RMS.objects.rectangle("note_bg", "#000000")
+    note_bg.set_property("opacity", int(profile_options["Gameplay"]["back_trans"] * 255))
+    note_bg.set_property("size", [(note_size * (note_count) + (strum_seperation * (note_count-1))), 720])
+    note_bg.set_property("position", [1280/2,720/2])
+    camera.add_item(note_bg)
+
+    # Strums
+
+    for i in range(note_count):
+        new_note = RMS.objects.image(f"strum_{i}", f"{grab_dir}/strum_{i+1}.png")
+        new_note.set_property("size", [note_size,note_size])
+        new_note.set_property("position", [strum_origin[0] + ((note_size + strum_seperation) * i), strum_origin[1]])
+        camera.add_item(new_note)
+
+        # Tweens
+
+        new_note.set_property("position:y", strum_origin[1] + 20)
+        new_note.set_property("opacity", 0)
+        
+        camera.do_tween(f"start_tween_y_{i}", new_note, "position:y", strum_origin[1], 0.5, "circ", "out", (0.05*i))
+        camera.do_tween(f"start_tween_alpha_{i}", new_note, "opacity", 255, 0.5, "circ", "out", (0.05*i))
+
+    # Rating
+    
+    rating = RMS.objects.image("rating", f"{skin_dir}/Ratings/perf.png")
+    rating.set_property("position", (1280/2, 720/2))
+    rating.set_property("opacity", 0)
+    camera.add_item(rating)
+    
+    #
+
+    i = 0
+    for key in skin_hud["text"].keys():
+        text_obj = skin_hud["text"][key]
+
+        new_text = RMS.objects.text(key, text_obj["text"])
+        new_text.set_property("font", f"{skin_dir}/Fonts/{text_obj["font"]}")
+        new_text.set_property("font_size", text_obj["size"])
+        new_text.set_property("position", text_obj["position"])
+
+        if "text_align" in text_obj.keys(): new_text.set_property("text_align", text_obj["text_align"])
+        
+        camera.add_item(new_text)
+
+        # Tweens
+
+        new_text.set_property("position:y", text_obj["position"][1] + 20)
+        new_text.set_property("opacity", 0)
+
+        camera.do_tween(f"start_tween_y_{key}", new_text, "position:y", text_obj["position"][1] - 20, 0.5, "circ", "out", (0.05*note_count)+(0.05*i))
+        camera.do_tween(f"start_tween_alpha_{key}", new_text, "opacity", 255, 0.5, "circ", "out", (0.05*note_count)+(0.05*i))
+
+        i += 1
+    del i
+# Loop
+
+def update():
+    global has_created, cur_time, last_score, pressed
+
     if not has_created: has_created = True; invoke_script_function("create")
 
     clock.tick(fps_cap)
