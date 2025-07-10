@@ -2,13 +2,9 @@ import pygame.locals
 import RMS.scenes, RMS.cameras, RMS.objects
 import pygame, os, math, time, json, random
 
-pygame.init()
-screen = pygame.display.set_mode((1280,720), pygame.RESIZABLE | pygame.HWSURFACE)
-pygame.display.gl_set_attribute(pygame.GL_ACCELERATED_VISUAL, 1)
-
-pygame.display.set_caption("Ignite")
-
 clock = pygame.time.Clock()
+
+screen = None
 
 # Variables
 
@@ -18,7 +14,6 @@ note_count = 4
 
 pressed = []
 is_sus = []
-
 
 def pygame_get_key(key):
     try:
@@ -140,25 +135,19 @@ def set_global(prop, val):
 
 bpm = 130
 
-step_time = ((60.0 / bpm) / 4.0)
+step_time = 0
 
 cur_step = 0
 cur_beat = 0
 
 cur_time = 0.0
-start_time = time.time_ns() + ((step_time*16) * 1000 * 1000000)
+start_time = 99999
 next_step = 0.0
 
 # Generate UI
 
-scene = RMS.scenes.scene(screen, "Game")
-camera = RMS.cameras.camera("HUD", 1)
-scene.add_camera(camera)
-
-camera.set_property("zoom", [1.1, 1.1])
-
-camera.do_tween("cam_bump_x", camera, "zoom:x", 1.0, 1, "quad", "out")
-camera.do_tween("cam_bump_y", camera, "zoom:y", 1.0, 1, "quad", "out")
+scene = None
+camera = None
 
 # Background
 
@@ -453,8 +442,9 @@ def beat_hit():
 def update_accuracy():
     global player_stats
 
-    player_stats["accuracy"] = player_stats["score"] / perf_score
-    if player_stats["accuracy"] < 0: player_stats["accuracy"] = 0
+    if not perf_score == 0:
+        player_stats["accuracy"] = player_stats["score"] / perf_score
+        if player_stats["accuracy"] < 0: player_stats["accuracy"] = 0
 
     for rank in profile_options["Gameplay"]["ranks"].keys():
         r = profile_options["Gameplay"]["ranks"][rank]
@@ -470,20 +460,11 @@ pygame.mixer.init()
 exts = [".wav", ".ogg", ".mp3"]
 song_ext = ""
 
-for ex in exts:
-    if os.path.isfile(f"{songs_dir}/{song_name}/audio{ex}"):
-        song_ext = ex
-        break
-
 music_playing = False
-
-pygame.mixer.music.load(f"{songs_dir}/{song_name}/audio{song_ext}")
-pygame.mixer.music.set_volume(profile_options["Audio"]["volume"]["music"] * profile_options["Audio"]["volume"]["master"])
 
 # SFX
 
-hitsound = pygame.mixer.Sound(f"{skin_dir}/SFX/hitsound.ogg")
-hitsound.set_volume(profile_options["Audio"]["volume"]["hitsound"] * profile_options["Audio"]["volume"]["master"])
+hitsound = None
 
 # Pre-Loop
 
@@ -495,15 +476,31 @@ continue_notes = True
 
 # Initialise
 def init(data):
+    global song_name, song_difficulty, song_ext
     global note_count, note_speed, hit_window, pressed, is_sus
-    global chart, chart_len, chart_notes, chart_pointers, chart_raw, chart_unsorted, processed_notes
+    global note_size, strum_seperation, strum_origin, sus_size, tip_size, skin_texts, skin_hud
+    global chart, chart_len, chart_notes, chart_pointers, pass_pointers, chart_raw, chart_unsorted, processed_notes
     global fps_cap, grab_dir, songs_dir, skin_dir
     global player_stats, last_score, perf_score
-    global cur_time, cur_step, cur_beat, last_time
+    global cur_time, cur_step, cur_beat, last_time, music_playing, bpm, step_time, start_time, next_step
     global hitsound
     global camera, scene
     global background, rating, note_bg
+    global user_scripts, profile_options, binds, pressed
+    global has_created
 
+    # Initalise Scene
+
+    scene = RMS.scenes.scene(screen, "Game")
+    camera = RMS.cameras.camera("HUD", 1)
+    scene.add_camera(camera)
+
+    camera.set_property("zoom", [1.1, 1.1])
+
+    camera.do_tween("cam_bump_x", camera, "zoom:x", 1.0, 1, "quad", "out")
+    camera.do_tween("cam_bump_y", camera, "zoom:y", 1.0, 1, "quad", "out")
+
+    # Variables
     ### System Variables
 
     note_count = data[2]
@@ -516,6 +513,8 @@ def init(data):
         is_sus.append([False,0])
 
     ### User Variables
+
+    user_scripts = []
 
     current_profile = "Profile1"
     profile_options = json.load(open(f"Data/{current_profile}/options.json"))
@@ -566,7 +565,7 @@ def init(data):
 
     for i in range(note_count): chart.append([])
 
-    ##### Sort
+    # Sort Chart
 
     chart_unsorted = True
     while chart_unsorted:
@@ -585,9 +584,18 @@ def init(data):
     pass_pointers = []
     for i in range(note_count): pass_pointers.append(0)
 
-    load_scripts(False)
+    # Objects
+    ### Cache Images
 
-    # Background
+    for i in range(note_count): camera.cache_image_bulk([
+        f"{grab_dir}/strum_{i+1}.png",
+        f"{grab_dir}/regular_{i+1}.png",
+        f"{grab_dir}/confirm_{i+1}.png"
+    ])
+        
+    for rat in ["perf", "okay", "bad", "miss"]: camera.cache_image(f"{skin_dir}/Ratings/{rat}.png") 
+
+    ### Background
 
     background = RMS.objects.image("background", f"{skin_dir}/background.png")
     background.set_property("size", [1280,720])
@@ -597,46 +605,8 @@ def init(data):
     background.set_property("opacity", 0)
     camera.do_tween("background_fade", background, "opacity", 255, 1, "cubic", "out")
 
-    # Note BG
-
-    note_bg = RMS.objects.rectangle("note_bg", "#000000")
-    note_bg.set_property("opacity", int(profile_options["Gameplay"]["back_trans"] * 255))
-    note_bg.set_property("size", [(note_size * (note_count) + (strum_seperation * (note_count-1))), 720])
-    note_bg.set_property("position", [1280/2,720/2])
-    camera.add_item(note_bg)
-
-    # Strums
-
-    for i in range(note_count):
-        new_note = RMS.objects.image(f"strum_{i}", f"{grab_dir}/strum_{i+1}.png")
-        new_note.set_property("size", [note_size,note_size])
-        new_note.set_property("position", [strum_origin[0] + ((note_size + strum_seperation) * i), strum_origin[1]])
-        camera.add_item(new_note)
-
-        # Tweens
-
-        new_note.set_property("position:y", strum_origin[1] + 20)
-        new_note.set_property("opacity", 0)
-        
-        camera.do_tween(f"start_tween_y_{i}", new_note, "position:y", strum_origin[1], 0.5, "circ", "out", (0.05*i))
-        camera.do_tween(f"start_tween_alpha_{i}", new_note, "opacity", 255, 0.5, "circ", "out", (0.05*i))
-
-    ### Cache
-
-    for i in range(4): camera.cache_image_bulk([
-        f"{grab_dir}/strum_{i+1}.png",
-        f"{grab_dir}/regular_{i+1}.png",
-        f"{grab_dir}/confirm_{i+1}.png"
-    ])
-        
-    for rat in ["perf", "okay", "bad", "miss"]: camera.cache_image(f"{skin_dir}/Ratings/{rat}.png") 
-
-    #
-
-    skin_hud = json.load(open(f"{skin_dir}/hud.json"))
-    skin_texts = json.load(open(f"{skin_dir}/texts.json"))
-
     ### Notes
+    skin_hud = json.load(open(f"{skin_dir}/hud.json"))
 
     strum_origin = skin_hud["strumline"]["origin"]
     strum_seperation = skin_hud["strumline"]["spacing"]
@@ -645,7 +615,7 @@ def init(data):
     sus_size = skin_hud["sustain"]["width"]
     tip_size = skin_hud["sustain"]["tip"]
 
-    # Note Background
+    ### Note Background
 
     note_bg = RMS.objects.rectangle("note_bg", "#000000")
     note_bg.set_property("opacity", int(profile_options["Gameplay"]["back_trans"] * 255))
@@ -653,7 +623,7 @@ def init(data):
     note_bg.set_property("position", [1280/2,720/2])
     camera.add_item(note_bg)
 
-    # Strums
+    ### Strums
 
     for i in range(note_count):
         new_note = RMS.objects.image(f"strum_{i}", f"{grab_dir}/strum_{i+1}.png")
@@ -669,14 +639,15 @@ def init(data):
         camera.do_tween(f"start_tween_y_{i}", new_note, "position:y", strum_origin[1], 0.5, "circ", "out", (0.05*i))
         camera.do_tween(f"start_tween_alpha_{i}", new_note, "opacity", 255, 0.5, "circ", "out", (0.05*i))
 
-    # Rating
+    ### Rating
     
     rating = RMS.objects.image("rating", f"{skin_dir}/Ratings/perf.png")
     rating.set_property("position", (1280/2, 720/2))
     rating.set_property("opacity", 0)
     camera.add_item(rating)
-    
-    #
+
+    # Skin Management
+    skin_texts = json.load(open(f"{skin_dir}/texts.json"))
 
     i = 0
     for key in skin_hud["text"].keys():
@@ -691,7 +662,7 @@ def init(data):
         
         camera.add_item(new_text)
 
-        # Tweens
+        ### Tweens
 
         new_text.set_property("position:y", text_obj["position"][1] + 20)
         new_text.set_property("opacity", 0)
@@ -701,6 +672,39 @@ def init(data):
 
         i += 1
     del i
+
+    # Time
+
+    bpm = chart_raw["meta"]["BPM"]
+    step_time = ((60.0 / bpm) / 4.0)
+    start_time = time.time_ns() + ((step_time*16) * 1000 * 1000000)
+    cur_step = 0
+    cur_beat = 0
+    cur_time = 0.0
+    next_step = 0.0
+
+    # Music
+    
+    music_playing = False
+
+    for ex in exts:
+        if os.path.isfile(f"{songs_dir}/{song_name}/audio{ex}"):
+            song_ext = ex
+            break
+    
+    pygame.mixer.music.load(f"{songs_dir}/{song_name}/audio{song_ext}")
+    pygame.mixer.music.set_volume(profile_options["Audio"]["volume"]["music"] * profile_options["Audio"]["volume"]["master"])
+
+    # Hitsounds
+
+    hitsound = pygame.mixer.Sound(f"{skin_dir}/SFX/hitsound.ogg")
+    hitsound.set_volume(profile_options["Audio"]["volume"]["hitsound"] * profile_options["Audio"]["volume"]["master"])
+
+    # Finish
+
+    load_scripts(False)
+    has_created = False
+
 # Loop
 
 def update():
@@ -735,14 +739,9 @@ def update():
     
     scene.render_scene()
 
-    # Events
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            exit()
-        else:
-            match event.type:
-                case pygame.KEYDOWN:              
+def handle_event(event):
+    match event.type:
+                case pygame.KEYDOWN:  
                     for key in binds:
                         if pygame.key.get_pressed()[key] and not pressed[binds.index(key)] and not profile_options["Gameplay"]["botplay"]:
                             key_handle(binds.index(key), True)
@@ -762,3 +761,12 @@ def update():
                 case pygame.VIDEORESIZE:
                     camera.set_property("scale", [event.w/1280, event.h/720])
                     camera.set_property("position", [(event.w-1280)/2,(event.h-720)/2])
+
+def destroy():
+    global camera, scene, user_scripts
+
+    for script in user_scripts: script.destroy()
+    user_scripts = []
+    del camera, scene
+
+    pygame.mixer_music.stop()

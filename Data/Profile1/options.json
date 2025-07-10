@@ -17,14 +17,14 @@
             "f": 0
         },
         "back_trans": 0.5,
-        "botplay": false
+        "botplay": true
     },
     "Binds": {
         "4": ["d", "f", "j", "k"]
     },
     "Customisation": {
-        "content_folder": "/home/jay/Documents/Comp Sci/NEA/ignite/ContentFolder/",
-        "skin": "default"
+        "content_folder": "/mnt/3C1C05611C051792/Programming/Python/Ignite/ContentFolder/",
+        "skin": "FNF"
     },
     "Audio": {
         "volume": {
