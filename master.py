@@ -1,6 +1,6 @@
 # Imports
 import pygame
-import game
+import Assets.Scenes.game, Assets.Scenes.splash
 
 # Pygame
 
@@ -12,7 +12,10 @@ pygame.display.set_caption("Ignite")
 
 # Variables
 current_scene = ""
-valid_scenes = {"game": game}
+valid_scenes = {
+    "game": Assets.Scenes.game,
+    "splash": Assets.Scenes.splash
+}
 
 # Functions
 def switch_scene(tag):
@@ -22,7 +25,7 @@ def switch_scene(tag):
     if tag in valid_scenes.keys():
         current_scene = tag
         match tag:
-            case "game": valid_scenes[current_scene].init(["beancore", "hard", 4])
+            case "game": valid_scenes[current_scene].init(["censored", "exhaust", 4])
             case _: valid_scenes[current_scene].init()
 
 # Set Screens
@@ -30,7 +33,7 @@ for val in valid_scenes.keys():
     valid_scenes[val].screen = screen
 
 # Start
-switch_scene("game")
+switch_scene("splash")
 
 # Update Loop
 while True:
@@ -48,3 +51,10 @@ while True:
                             match event.key:
                                 case pygame.K_F7:
                                     switch_scene("game")
+    
+    if not valid_scenes[current_scene].master_data == []:
+        data = valid_scenes[current_scene].master_data
+        valid_scenes[current_scene].master_data = []
+        for pair in data:
+            match pair[0]:
+                case "switch_scene": switch_scene(pair[1])

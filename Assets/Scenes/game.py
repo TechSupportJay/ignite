@@ -3,8 +3,8 @@ import RMS.scenes, RMS.cameras, RMS.objects
 import pygame, os, math, time, json, random
 
 clock = pygame.time.Clock()
-
 screen = None
+master_data = []
 
 # Variables
 
@@ -704,6 +704,7 @@ def init(data):
 
     load_scripts(False)
     has_created = False
+    master_data = []
 
 # Loop
 
@@ -741,26 +742,26 @@ def update():
 
 def handle_event(event):
     match event.type:
-                case pygame.KEYDOWN:  
-                    for key in binds:
-                        if pygame.key.get_pressed()[key] and not pressed[binds.index(key)] and not profile_options["Gameplay"]["botplay"]:
-                            key_handle(binds.index(key), True)
-                            pressed[binds.index(key)] = True
-                    if not event.key in binds:
-                        match event.key:
-                            case pygame.K_F5: load_scripts()
-                            case _: pass
-                case pygame.KEYUP:
-                    for key in binds:
-                        if not pygame.key.get_pressed()[key] and pressed[binds.index(key)] and not profile_options["Gameplay"]["botplay"]:
-                            key_handle(binds.index(key), False)
-                            pressed[binds.index(key)] = False
-                    if not event.key in binds:
-                        match event.key:
-                            case _: pass
-                case pygame.VIDEORESIZE:
-                    camera.set_property("scale", [event.w/1280, event.h/720])
-                    camera.set_property("position", [(event.w-1280)/2,(event.h-720)/2])
+        case pygame.KEYDOWN:  
+            for key in binds:
+                if pygame.key.get_pressed()[key] and not pressed[binds.index(key)] and not profile_options["Gameplay"]["botplay"]:
+                    key_handle(binds.index(key), True)
+                    pressed[binds.index(key)] = True
+            if not event.key in binds:
+                match event.key:
+                    case pygame.K_F5: load_scripts()
+                    case _: pass
+        case pygame.KEYUP:
+            for key in binds:
+                if not pygame.key.get_pressed()[key] and pressed[binds.index(key)] and not profile_options["Gameplay"]["botplay"]:
+                    key_handle(binds.index(key), False)
+                    pressed[binds.index(key)] = False
+            if not event.key in binds:
+                match event.key:
+                    case _: pass
+        case pygame.VIDEORESIZE:
+            camera.set_property("scale", [event.w/1280, event.h/720])
+            camera.set_property("position", [(event.w-1280)/2,(event.h-720)/2])
 
 def destroy():
     global camera, scene, user_scripts
