@@ -1,6 +1,6 @@
 # Imports
 import pygame
-import Assets.Scenes.game, Assets.Scenes.splash
+import Assets.Scenes.game, Assets.Scenes.splash, Assets.Scenes.song_selection
 
 # Pygame
 
@@ -14,18 +14,22 @@ pygame.display.set_caption("Ignite")
 current_scene = ""
 valid_scenes = {
     "game": Assets.Scenes.game,
-    "splash": Assets.Scenes.splash
+    "splash": Assets.Scenes.splash,
+    "song_selection": Assets.Scenes.song_selection
 }
 
+current_profile = "Profile1"
+
 # Functions
-def switch_scene(tag):
+def switch_scene(tag, data = []):
     global current_scene
     if not current_scene == "": valid_scenes[current_scene].destroy()
 
     if tag in valid_scenes.keys():
         current_scene = tag
         match tag:
-            case "game": valid_scenes[current_scene].init(["censored", "exhaust", 4])
+            case "game": valid_scenes[current_scene].init([data[0], data[1], data[2], current_profile])
+            case "song_selection": valid_scenes[current_scene].init([current_profile])
             case _: valid_scenes[current_scene].init()
 
 # Set Screens
@@ -33,7 +37,7 @@ for val in valid_scenes.keys():
     valid_scenes[val].screen = screen
 
 # Start
-switch_scene("splash")
+switch_scene("song_selection")
 
 # Update Loop
 while True:
@@ -58,3 +62,5 @@ while True:
         for pair in data:
             match pair[0]:
                 case "switch_scene": switch_scene(pair[1])
+                case "load_song":
+                    switch_scene("game", [pair[1], "hard", 4])

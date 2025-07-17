@@ -516,7 +516,7 @@ def init(data):
 
     user_scripts = []
 
-    current_profile = "Profile1"
+    current_profile = data[3]
     profile_options = json.load(open(f"Data/{current_profile}/options.json"))
 
     fps_cap = int(profile_options["Video"]["fps_cap"])
@@ -750,6 +750,7 @@ def handle_event(event):
             if not event.key in binds:
                 match event.key:
                     case pygame.K_F5: load_scripts()
+                    case pygame.K_ESCAPE: master_data.append(["switch_scene", "song_selection"])
                     case _: pass
         case pygame.KEYUP:
             for key in binds:

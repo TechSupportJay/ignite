@@ -24,13 +24,13 @@ class camera():
 
     def cache_image(self, path):
         if path not in self.textures.keys():
-            self.textures[path] = pygame.image.load(path) .convert_alpha()
+            self.textures[path] = pygame.image.load(path).convert_alpha()
     
     def cache_image_bulk(self, path_list):
         for item in path_list: self.cache_image(item)
     
     def get_image_size(self, path):
-        if path not in self.textures.keys(): return
+        if path not in self.textures.keys(): return [0,0]
         return [self.textures[path].get_width(),self.textures[path].get_height()]
 
     def add_item(self, item):

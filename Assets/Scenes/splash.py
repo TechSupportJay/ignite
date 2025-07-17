@@ -42,8 +42,7 @@ def handle_event(event):
     match event.type:
         case pygame.KEYDOWN:
             match event.key:
-                case pygame.K_RETURN:
-                    master_data.append(["switch_scene", "game"])
+                case pygame.K_RETURN: master_data.append(["switch_scene", "song_selection"])
 
 def destroy():
     global camera, scene
