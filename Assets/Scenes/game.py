@@ -35,6 +35,7 @@ grab_dir = ""
 note_speed = 1
 hit_window = 0.5
 
+downscroll = True
 ### Game Variables
 
 binds = []
@@ -222,11 +223,13 @@ def create_sustain(lane, length):
     sus_tip = RMS.objects.image(f"tip_{lane}_{chart_pointers[lane]}", f"{grab_dir}/tip_{lane+1}.png")
     sus_tip.set_property("size", tip_size)
     sus_tip.set_property("position", [camera.get_item(f"strum_{lane}").get_property("position:x"), -note_size])
+    if not downscroll: sus_tip.set_property("rotation", 180)
     camera.add_item(sus_tip)
 
     sus_length = RMS.objects.image(f"sus_{lane}_{chart_pointers[lane]}", f"{grab_dir}/sus_{lane+1}.png")
     sus_length.set_property("size:x", sus_size)
-    sus_length.set_property("size:y", ((((720-(720-strum_origin[1]))) * (length / note_speed))))
+    if downscroll: sus_length.set_property("size:y", ((((720-(720-strum_origin[1]))) * (length / note_speed))))
+    else: sus_length.set_property("size:y", ((((720-strum_origin[1]))) * (length / note_speed)))
     sus_length.set_property("position:x", camera.get_item(f"strum_{lane}").get_property("position:x"))
     sus_length.set_property("position:y", -sus_length.get_property("size:y"))
     camera.add_item(sus_length)
@@ -256,15 +259,28 @@ def process_notes(time_in):
         for i in range(pass_pointers[l], chart_pointers[l]):
             if chart[l][i]["l"] > 0:
                 if time_in > chart[l][i]["t"]:
-                    camera.get_item(f"sus_{l}_{i}").set_property("size:y", (((((720-(720-strum_origin[1]))) * ((chart[l][i]["l"] - (time_in - chart[l][i]["t"])) / note_speed))) - tip_size[1]))
+                    if downscroll: camera.get_item(f"sus_{l}_{i}").set_property("size:y", (((((720-(720-strum_origin[1]))) * ((chart[l][i]["l"] - (time_in - chart[l][i]["t"])) / note_speed))) - tip_size[1]))
+                    else: camera.get_item(f"sus_{l}_{i}").set_property("size:y", (((((720-(720-strum_origin[1]))) * ((chart[l][i]["l"] - (time_in - chart[l][i]["t"])) / note_speed))) - tip_size[1]))
+                    
                     if camera.get_item(f"sus_{l}_{i}").get_property("size:y") < 0: camera.get_item(f"sus_{l}_{i}").set_property("size:y", 0)
-                    camera.get_item(f"sus_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") - (camera.get_item(f"sus_{l}_{i}").get_property("size:y") / 2))
+
+                    if downscroll: camera.get_item(f"sus_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") - (camera.get_item(f"sus_{l}_{i}").get_property("size:y") / 2))
+                    else: camera.get_item(f"sus_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") + (camera.get_item(f"sus_{l}_{i}").get_property("size:y") / 2))
                 else:
-                    camera.get_item(f"sus_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") - (((720-(720-strum_origin[1])) * ((chart[l][i]["t"] - time_in)) / note_speed)) - (camera.get_item(f"sus_{l}_{i}").get_property("size:y")/2))
-                camera.get_item(f"tip_{l}_{i}").set_property("position:y", camera.get_item(f"sus_{l}_{i}").get_property("position:y") - (camera.get_item(f"sus_{l}_{i}").get_property("size:y")/2) - (camera.get_item(f"tip_{l}_{i}").get_property("size:y")/2) + 2)
-                if camera.get_item(f"tip_{l}_{i}").get_property("position:y") >= strum_origin[1]: camera.get_item(f"tip_{l}_{i}").set_property("opacity", 0)
+
+                    if downscroll: camera.get_item(f"sus_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") - (((720-(720-strum_origin[1])) * ((chart[l][i]["t"] - time_in)) / note_speed)) - (camera.get_item(f"sus_{l}_{i}").get_property("size:y")/2))
+                    else: camera.get_item(f"sus_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") + ((((720-strum_origin[1])) * ((chart[l][i]["t"] - time_in)) / note_speed)) + (camera.get_item(f"sus_{l}_{i}").get_property("size:y")/2))
+
+                if downscroll: camera.get_item(f"tip_{l}_{i}").set_property("position:y", camera.get_item(f"sus_{l}_{i}").get_property("position:y") - (camera.get_item(f"sus_{l}_{i}").get_property("size:y")/2) - (camera.get_item(f"tip_{l}_{i}").get_property("size:y")/2) + 2)
+                else: camera.get_item(f"tip_{l}_{i}").set_property("position:y", camera.get_item(f"sus_{l}_{i}").get_property("position:y") + (camera.get_item(f"sus_{l}_{i}").get_property("size:y")/2) + (camera.get_item(f"tip_{l}_{i}").get_property("size:y")/2) - 2)
+
+                if downscroll and camera.get_item(f"tip_{l}_{i}").get_property("position:y") >= strum_origin[1]: camera.get_item(f"tip_{l}_{i}").set_property("opacity", 0)
+                elif not downscroll and camera.get_item(f"tip_{l}_{i}").get_property("position:y") <= strum_origin[1]: camera.get_item(f"tip_{l}_{i}").set_property("opacity", 0)
+        
             if camera.get_item(f"note_{l}_{i}") is None: continue
-            camera.get_item(f"note_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") - ((720-(720-strum_origin[1])) * ((chart[l][i]["t"] - time_in) / note_speed)))
+
+            if downscroll: camera.get_item(f"note_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") - ((720-(720-strum_origin[1])) * ((chart[l][i]["t"] - time_in) / note_speed)))
+            else: camera.get_item(f"note_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") + (((720-strum_origin[1])) * ((chart[l][i]["t"] - time_in) / note_speed)))
 
             if profile_options["Gameplay"]["botplay"]:
                 if time_in >= chart[l][i]["t"] and not pressed[l]:
@@ -477,7 +493,7 @@ continue_notes = True
 # Initialise
 def init(data):
     global song_name, song_difficulty, song_ext
-    global note_count, note_speed, hit_window, pressed, is_sus
+    global note_count, note_speed, hit_window, pressed, is_sus, downscroll
     global note_size, strum_seperation, strum_origin, sus_size, tip_size, skin_texts, skin_hud
     global chart, chart_len, chart_notes, chart_pointers, pass_pointers, chart_raw, chart_unsorted, processed_notes
     global fps_cap, grab_dir, songs_dir, skin_dir
@@ -529,6 +545,8 @@ def init(data):
     hit_window = profile_options["Gameplay"]["timings"]["hit_window"]
 
     ### Game Variables
+
+    downscroll = profile_options["Gameplay"]["downscroll"]
 
     binds = []
     for bind in profile_options["Binds"][str(note_count)]:
@@ -600,7 +618,7 @@ def init(data):
     background = RMS.objects.image("background", f"{skin_dir}/background.png")
     background.set_property("size", [1280,720])
     background.set_property("position", [1280/2,720/2])
-    if os.path.isfile(f"songs_dir/{song_name}/background.png"): background.set_property("image_location", (f"songs_dir/{song_name}/background.png"))
+    if os.path.isfile(f"{songs_dir}/{song_name}/background.png"): background.set_property("image_location", (f"{songs_dir}/{song_name}/background.png"))
     camera.add_item(background)
     background.set_property("opacity", 0)
     camera.do_tween("background_fade", background, "opacity", 255, 1, "cubic", "out")
@@ -608,7 +626,9 @@ def init(data):
     ### Notes
     skin_hud = json.load(open(f"{skin_dir}/hud.json"))
 
-    strum_origin = skin_hud["strumline"]["origin"]
+    if downscroll: strum_origin = skin_hud["strumline"]["origin"]["down"]
+    else: strum_origin = skin_hud["strumline"]["origin"]["up"]
+
     strum_seperation = skin_hud["strumline"]["spacing"]
 
     note_size = skin_hud["strumline"]["size"]

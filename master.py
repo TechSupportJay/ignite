@@ -63,4 +63,4 @@ while True:
             match pair[0]:
                 case "switch_scene": switch_scene(pair[1])
                 case "load_song":
-                    switch_scene("game", [pair[1], "hard", 4])
+                    switch_scene("game", [pair[1], pair[2], 4])

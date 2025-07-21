@@ -42,10 +42,32 @@ def init(data):
 
     # Objects
 
-    background = RMS.objects.image("background", f"{skin_dir}/menu_background.png")
+    ### Background
+    background = RMS.objects.image("background", f"{skin_dir}/SongSelect/background.png")
     background.set_property("size", [1280,720])
     background.set_property("position", [1280/2,720/2])
     camera.add_item(background)
+
+    ### Album Art
+    album = RMS.objects.image("album", f"{skin_dir}/SongSelect/cover.png")
+    album.set_property("size", [350,350])
+    album.set_property("position", [25+(350/2),25+(350/2)])
+    camera.add_item(album)
+    
+    ### Song Info Text
+    texts = ["Duration", "BPM", "Chartist"]
+    i = 0
+    for t in texts:
+        text = RMS.objects.text(t.lower(), f"{t}: X")
+        text.set_property("font", f"{skin_dir}/Fonts/default.ttf")
+        text.set_property("font_size", 26)
+        text.set_property("position", [25,380 + (30*i)])
+        camera.add_item(text)
+        i += 1
+    del i
+
+    # Set Music
+    pygame.mixer.music.set_volume(profile_options["Audio"]["volume"]["menu"] * profile_options["Audio"]["volume"]["master"])
 
     # Load Songs
     song_tabs = []
@@ -75,7 +97,7 @@ def handle_event(event):
                     if selection_id > len(song_tabs)-1: selection_id = 0
                     select_song(selection_id)
                 case pygame.K_RETURN:
-                    master_data.append(["load_song", song_tabs[selection_id][0]])
+                    master_data.append(["load_song", song_tabs[selection_id][0], _get_first_diff(song_tabs[selection_id][0])])
         case pygame.VIDEORESIZE:
             camera.set_property("scale", [event.w/1280, event.h/720])
             camera.set_property("position", [(event.w-1280)/2,(event.h-720)/2])
@@ -100,7 +122,7 @@ def make_song_tab(id, display_name, artist):
     tab_bg.set_property("size", camera.get_image_size(f"{skin_dir}/SongSelect/tab.png"))
 
     tab_bg.set_property("position:x", 1280-(camera.get_image_size(f"{skin_dir}/SongSelect/tab.png")[0]/2))
-    tab_bg.set_property("position:y", 100+((camera.get_image_size(f"{skin_dir}/SongSelect/tab.png")[1]+10)*len(song_tabs)))
+    tab_bg.set_property("position:y", 60+((camera.get_image_size(f"{skin_dir}/SongSelect/tab.png")[1]+10)*len(song_tabs)))
 
     camera.add_item(tab_bg)
 
@@ -125,6 +147,7 @@ def make_song_tab(id, display_name, artist):
     song_tabs.append([id, tab_bg, tab_name, tab_artist])
 
 def select_song(id):
+    # Change Tabs
     for i in range(len(song_tabs)):
         positon_relative = 100
         opacity = 255/2
@@ -148,3 +171,68 @@ def select_song(id):
             camera.do_tween(f"x_2_{i}", song_tabs[i][3], "position:x", positions[1], 0.5, "cubic", "out")
 
             for x in range(3): camera.do_tween(f"o_{x}_{i}", song_tabs[i][x+1], "opacity", opacity, 0.25)
+    
+    # Music
+    song_ext = ".ogg"
+    exts = [".ogg", ".wav", ".mp3"]
+
+    for ex in exts:
+        if os.path.isfile(f"{songs_dir}/{song_tabs[id][0]}/audio{ex}"):
+            song_ext = ex
+            break
+    
+    pygame.mixer.music.load(f"{songs_dir}/{song_tabs[id][0]}/audio{song_ext}")
+    pygame.mixer.music.play()
+
+    song = pygame.mixer.Sound(f"{songs_dir}/{song_tabs[id][0]}/audio{song_ext}")
+    song_len = song.get_length()
+    del song
+
+    # Modify Info
+
+    ### Album
+    cover = camera.get_item("album")
+    if os.path.isfile(f"{songs_dir}/{song_tabs[id][0]}/cover.png"):
+        camera.cache_image((f"{songs_dir}/{song_tabs[id][0]}/cover.png"))
+        cover.set_property("image_location", (f"{songs_dir}/{song_tabs[id][0]}/cover.png"))
+    else: cover.set_property("image_location", (f"{skin_dir}/SongSelect/cover.png"))
+
+    ### Texts
+    duration = camera.get_item("duration")
+    bpm = camera.get_item("bpm")
+    chartist = camera.get_item("chartist")
+
+    duration.set_property("text", f"Duration: {time.strftime("%M:%S", time.gmtime(song_len))}")
+    bpm.set_property("text", f"BPM: {get_from_meta(song_tabs[id][0], "bpm", "N/A")}")
+    chartist.set_property("text", f"Chartist: {get_from_meta(song_tabs[id][0], "chartist", "N/A")}")
+
+    # Tween Info
+    ### Album
+    cover.set_property("scale", [1.05,1.05])
+
+    camera.cancel_tween("cover_pulse_x")
+    camera.cancel_tween("cover_pulse_y")
+
+    camera.do_tween("cover_pulse_x", cover, "scale:x", 1, 0.5, "back", "out")
+    camera.do_tween("cover_pulse_y", cover, "scale:y", 1, 0.5, "back", "out")
+
+    texts = ["duration", "bpm", "chartist"]
+    i = 1
+    for t in texts:
+        camera.cancel_tween(f"{t}_x")
+        x = camera.get_item(t)
+        x.set_property("position:x", 25 + 10)
+        camera.do_tween(f"{t}_x", x, "position:x", 25, 0.5, "cubic", "out", 0.015*(i-1))
+        i += i
+    del i 
+
+def get_from_meta(song_name, variable, default_val):
+    meta_file = json.load(open(f"{songs_dir}/{song_name}/meta.json"))
+    if variable in meta_file.keys(): return meta_file[variable]
+    else: return default_val
+
+# TEMPORARY!!
+
+def _get_first_diff(song_id):
+    charts = next(os.walk(f"{songs_dir}/{song_id}/charts"), (None, None, []))[2]
+    return charts[0].replace(".json", "")
