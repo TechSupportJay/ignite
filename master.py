@@ -9,6 +9,7 @@ screen = pygame.display.set_mode((1280,720), pygame.RESIZABLE | pygame.HWSURFACE
 pygame.display.gl_set_attribute(pygame.GL_ACCELERATED_VISUAL, 1)
 
 pygame.display.set_caption("Ignite")
+pygame.display.set_icon(pygame.image.load("Assets/icon.png").convert_alpha())
 
 # Variables
 current_scene = ""

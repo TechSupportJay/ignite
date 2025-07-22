@@ -420,6 +420,10 @@ def update_hud_texts():
 
 def skin_grab(item):
     if os.path.isfile(f"{skin_dir}/{item}"): return (f"{skin_dir}/{item}")
+    elif item[-4:] == ".ogg":
+        for ext in exts:
+            if os.path.isfile(f"{skin_dir}/{item.replace(".ogg", ext)}"): return f"{skin_dir}/{item.replace(".ogg", ext)}"
+        return (f"Assets/Game/Default/{item}")
     else: return (f"Assets/Game/Default/{item}")
 
 ### Time Functions
@@ -762,11 +766,19 @@ def init(data):
 def update():
     global has_created, cur_time, last_score, pressed
 
+    # Process Binds
+    for key in binds:
+        if pygame.key.get_pressed()[key] and not pressed[binds.index(key)] and not profile_options["Gameplay"]["botplay"]:
+            key_handle(binds.index(key), True)
+            pressed[binds.index(key)] = True
+        if not pygame.key.get_pressed()[key] and pressed[binds.index(key)] and not profile_options["Gameplay"]["botplay"]:
+            key_handle(binds.index(key), False)
+            pressed[binds.index(key)] = False
+
     if not has_created: has_created = True; invoke_script_function("create")
 
-    clock.tick(fps_cap)
-
     # Time
+    clock.tick(fps_cap)
 
     cur_time = (time.time_ns() - start_time) / 1000000.0 / 1000.0 - (profile_options["Audio"]["offset"] / 1000)
 
@@ -780,34 +792,23 @@ def update():
     handle_current_sus(cur_time, dt)
 
     # UI
-
     update_hud_texts()
 
     # Script
-
     invoke_script_function("update", [dt])
 
     # Render
-    
     scene.render_scene()
 
 def handle_event(event):
     match event.type:
         case pygame.KEYDOWN:  
-            for key in binds:
-                if pygame.key.get_pressed()[key] and not pressed[binds.index(key)] and not profile_options["Gameplay"]["botplay"]:
-                    key_handle(binds.index(key), True)
-                    pressed[binds.index(key)] = True
             if not event.key in binds:
                 match event.key:
                     case pygame.K_F5: load_scripts()
                     case pygame.K_ESCAPE: master_data.append(["switch_scene", "song_selection"])
                     case _: pass
         case pygame.KEYUP:
-            for key in binds:
-                if not pygame.key.get_pressed()[key] and pressed[binds.index(key)] and not profile_options["Gameplay"]["botplay"]:
-                    key_handle(binds.index(key), False)
-                    pressed[binds.index(key)] = False
             if not event.key in binds:
                 match event.key:
                     case _: pass
