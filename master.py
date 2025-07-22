@@ -28,7 +28,7 @@ def switch_scene(tag, data = []):
     if tag in valid_scenes.keys():
         current_scene = tag
         match tag:
-            case "game": valid_scenes[current_scene].init([data[0], data[1], data[2], current_profile])
+            case "game": valid_scenes[current_scene].init([data[0], data[1], current_profile])
             case "song_selection": valid_scenes[current_scene].init([current_profile])
             case _: valid_scenes[current_scene].init()
 
@@ -63,4 +63,4 @@ while True:
             match pair[0]:
                 case "switch_scene": switch_scene(pair[1])
                 case "load_song":
-                    switch_scene("game", [pair[1], pair[2], 4])
+                    switch_scene("game", [pair[1], pair[2]])

@@ -25,6 +25,10 @@ selection_id = 0
 
 # Master Functions
 
+def skin_grab(item):
+    if os.path.isfile(f"{skin_dir}/{item}"): return (f"{skin_dir}/{item}")
+    else: return (f"Assets/Game/Default/{item}")
+
 def init(data):
     global scene, camera
     global profile_options, songs_dir, skin_dir
@@ -43,13 +47,13 @@ def init(data):
     # Objects
 
     ### Background
-    background = RMS.objects.image("background", f"{skin_dir}/SongSelect/background.png")
+    background = RMS.objects.image("background", skin_grab(f"SongSelect/background.png"))
     background.set_property("size", [1280,720])
     background.set_property("position", [1280/2,720/2])
     camera.add_item(background)
 
     ### Album Art
-    album = RMS.objects.image("album", f"{skin_dir}/SongSelect/cover.png")
+    album = RMS.objects.image("album", skin_grab(f"SongSelect/cover.png"))
     album.set_property("size", [350,350])
     album.set_property("position", [25+(350/2),25+(350/2)])
     camera.add_item(album)
@@ -59,7 +63,7 @@ def init(data):
     i = 0
     for t in texts:
         text = RMS.objects.text(t.lower(), f"{t}: X")
-        text.set_property("font", f"{skin_dir}/Fonts/default.ttf")
+        text.set_property("font", skin_grab(f"Fonts/default.ttf"))
         text.set_property("font_size", 26)
         text.set_property("position", [25,380 + (30*i)])
         camera.add_item(text)
@@ -72,7 +76,7 @@ def init(data):
     # Load Songs
     song_tabs = []
 
-    camera.cache_image(f"{skin_dir}/SongSelect/tab.png")
+    camera.cache_image(skin_grab(f"SongSelect/tab.png"))
     load_songs()
     
     selection_id = 0
@@ -118,16 +122,16 @@ def load_songs():
         make_song_tab(song, song_meta["name"], song_meta["artist"])
 
 def make_song_tab(id, display_name, artist):
-    tab_bg = RMS.objects.image(f"tab_{id}", f"{skin_dir}/SongSelect/tab.png")
-    tab_bg.set_property("size", camera.get_image_size(f"{skin_dir}/SongSelect/tab.png"))
+    tab_bg = RMS.objects.image(f"tab_{id}", skin_grab(f"SongSelect/tab.png"))
+    tab_bg.set_property("size", camera.get_image_size(skin_grab(f"SongSelect/tab.png")))
 
-    tab_bg.set_property("position:x", 1280-(camera.get_image_size(f"{skin_dir}/SongSelect/tab.png")[0]/2))
-    tab_bg.set_property("position:y", 60+((camera.get_image_size(f"{skin_dir}/SongSelect/tab.png")[1]+10)*len(song_tabs)))
+    tab_bg.set_property("position:x", 1280-(camera.get_image_size(skin_grab(f"SongSelect/tab.png"))[0]/2))
+    tab_bg.set_property("position:y", 60+((camera.get_image_size(skin_grab(f"SongSelect/tab.png"))[1]+10)*len(song_tabs)))
 
     camera.add_item(tab_bg)
 
     tab_name = RMS.objects.text(f"name_{id}", display_name)
-    tab_name.set_property("font", f"{skin_dir}/Fonts/default.ttf")
+    tab_name.set_property("font", skin_grab(f"Fonts/default.ttf"))
     tab_name.set_property("font_size", 32)
 
     tab_name.set_property("position:x", tab_bg.get_property("position:x")-(tab_bg.get_property("size:x")/2)+30)
@@ -136,7 +140,7 @@ def make_song_tab(id, display_name, artist):
     camera.add_item(tab_name)
 
     tab_artist = RMS.objects.text(f"artist_{id}", artist)
-    tab_artist.set_property("font", f"{skin_dir}/Fonts/default.ttf")
+    tab_artist.set_property("font", skin_grab(f"Fonts/default.ttf"))
     tab_artist.set_property("font_size", 20)
 
     tab_artist.set_property("position:x", tab_bg.get_property("position:x")-(tab_bg.get_property("size:x")/2)+30)
@@ -157,8 +161,8 @@ def select_song(id):
             opacity = 255
 
         positions = [
-            1280-(camera.get_image_size(f"{skin_dir}/SongSelect/tab.png")[0]/2)+positon_relative,
-            (1280-(camera.get_image_size(f"{skin_dir}/SongSelect/tab.png")[0]/2)+positon_relative)-(song_tabs[id][1].get_property("size:x")/2)+30
+            1280-(camera.get_image_size(skin_grab(f"SongSelect/tab.png"))[0]/2)+positon_relative,
+            (1280-(camera.get_image_size(skin_grab(f"SongSelect/tab.png"))[0]/2)+positon_relative)-(song_tabs[id][1].get_property("size:x")/2)+30
         ]
 
         for x in range(3):
@@ -195,7 +199,7 @@ def select_song(id):
     if os.path.isfile(f"{songs_dir}/{song_tabs[id][0]}/cover.png"):
         camera.cache_image((f"{songs_dir}/{song_tabs[id][0]}/cover.png"))
         cover.set_property("image_location", (f"{songs_dir}/{song_tabs[id][0]}/cover.png"))
-    else: cover.set_property("image_location", (f"{skin_dir}/SongSelect/cover.png"))
+    else: cover.set_property("image_location", (skin_grab(f"SongSelect/cover.png")))
 
     ### Texts
     duration = camera.get_item("duration")

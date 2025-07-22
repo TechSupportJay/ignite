@@ -127,6 +127,11 @@ def load_scripts(mid_song = True):
         if len(os.listdir(f"{skin_dir}/Scripts")) > 0:
             for script in os.listdir(f"{skin_dir}/Scripts"): add_script(f"skn_{script.replace(".py", "")}", f"{skin_dir}/Scripts/{script}")
     
+    if profile_options["Customisation"]["skin"] == "default":
+        if os.path.isdir((f"Assets/Game/Default/Scripts")):
+            if len(os.listdir(f"Assets/Game/Default/Scripts")) > 0:
+                for script in os.listdir(f"Assets/Game/Default/Scripts"): add_script(f"skn_{script.replace(".py", "")}", f"Assets/Game/Default/Scripts/{script}")
+    
     if mid_song: invoke_script_function("create")
 
 def set_global(prop, val):
@@ -184,8 +189,8 @@ def in_range(compare, base, radius):
 def show_rating(texture):
     for t in ["rating_size", "rating_size_y", "rating_opacity"]: camera.cancel_tween(t)
 
-    rating.set_property("image_location", f"{skin_dir}/Ratings/{texture}.png")
-    img_size = camera.get_image_size(f"{skin_dir}/Ratings/{texture}.png")
+    rating.set_property("image_location", skin_grab(f"Ratings/{texture}.png"))
+    img_size = camera.get_image_size(skin_grab(f"Ratings/{texture}.png"))
     rating.set_property("size", img_size)
     rating.set_property("scale", [1.1,1.1])
     rating.set_property("opacity", 255)
@@ -410,6 +415,10 @@ def update_hud_texts():
         if not camera.item_exists(pair[0]): continue
         camera.get_item(pair[0]).set_property("text", skin_hud["text"][pair[0]]["text"].replace("%s", str(pair[1])))
 
+def skin_grab(item):
+    if os.path.isfile(f"{skin_dir}/{item}"): return (f"{skin_dir}/{item}")
+    else: return (f"Assets/Game/Default/{item}")
+
 ### Time Functions
 
 dt = cur_time
@@ -503,7 +512,7 @@ def init(data):
     global camera, scene
     global background, rating, note_bg
     global user_scripts, profile_options, binds, pressed
-    global has_created
+    global has_created, master_data
 
     # Initalise Scene
 
@@ -517,9 +526,29 @@ def init(data):
     camera.do_tween("cam_bump_y", camera, "zoom:y", 1.0, 1, "quad", "out")
 
     # Variables
-    ### System Variables
+    ### User Variables
 
-    note_count = data[2]
+    user_scripts = []
+
+    current_profile = data[2]
+    profile_options = json.load(open(f"Data/{current_profile}/options.json"))
+
+    fps_cap = int(profile_options["Video"]["fps_cap"])
+
+    songs_dir = f"{profile_options["Customisation"]["content_folder"]}/Songs"
+
+    chart_raw = json.load(open(f"{songs_dir}/{data[0]}/charts/{data[1]}.json"))
+    if "lanes" in chart_raw["meta"].keys(): note_count = chart_raw["meta"]["lanes"]
+    else: note_count = 4
+
+    skin_dir = f"{profile_options["Customisation"]["content_folder"]}/Skins/{profile_options["Customisation"]["skin"]}"
+    if os.path.exists(f"{skin_dir}/Notes_{note_count}K"): grab_dir = f"{skin_dir}/Notes_{note_count}K"
+    else: grab_dir = f"Assets/Game/Default/Notes_{note_count}K"
+
+    note_speed = profile_options["Gameplay"]["scroll_time"]
+    hit_window = profile_options["Gameplay"]["timings"]["hit_window"]
+
+    ### System Variables
 
     pressed = []
     is_sus = []
@@ -527,22 +556,6 @@ def init(data):
     for i in range(note_count):
         pressed.append(False)
         is_sus.append([False,0])
-
-    ### User Variables
-
-    user_scripts = []
-
-    current_profile = data[3]
-    profile_options = json.load(open(f"Data/{current_profile}/options.json"))
-
-    fps_cap = int(profile_options["Video"]["fps_cap"])
-
-    songs_dir = f"{profile_options["Customisation"]["content_folder"]}/Songs"
-    skin_dir = f"{profile_options["Customisation"]["content_folder"]}/Skins/{profile_options["Customisation"]["skin"]}"
-    grab_dir = f"{skin_dir}/Notes_{note_count}K"
-
-    note_speed = profile_options["Gameplay"]["scroll_time"]
-    hit_window = profile_options["Gameplay"]["timings"]["hit_window"]
 
     ### Game Variables
 
@@ -567,7 +580,6 @@ def init(data):
     song_name = data[0]
     song_difficulty = data[1]
 
-    chart_raw = json.load(open(f"{songs_dir}/{song_name}/charts/{song_difficulty}.json"))
     chart_notes = chart_raw["notes"]
 
     chart_len = 0
@@ -611,11 +623,11 @@ def init(data):
         f"{grab_dir}/confirm_{i+1}.png"
     ])
         
-    for rat in ["perf", "okay", "bad", "miss"]: camera.cache_image(f"{skin_dir}/Ratings/{rat}.png") 
+    for rat in ["perf", "okay", "bad", "miss"]: camera.cache_image(skin_grab(f"Ratings/{rat}.png"))
 
     ### Background
 
-    background = RMS.objects.image("background", f"{skin_dir}/background.png")
+    background = RMS.objects.image("background", skin_grab(f"background.png"))
     background.set_property("size", [1280,720])
     background.set_property("position", [1280/2,720/2])
     if os.path.isfile(f"{songs_dir}/{song_name}/background.png"): background.set_property("image_location", (f"{songs_dir}/{song_name}/background.png"))
@@ -624,10 +636,9 @@ def init(data):
     camera.do_tween("background_fade", background, "opacity", 255, 1, "cubic", "out")
 
     ### Notes
-    skin_hud = json.load(open(f"{skin_dir}/hud.json"))
+    skin_hud = json.load(open(skin_grab(f"hud.json")))
 
-    if downscroll: strum_origin = skin_hud["strumline"]["origin"]["down"]
-    else: strum_origin = skin_hud["strumline"]["origin"]["up"]
+    new_orig = []
 
     strum_seperation = skin_hud["strumline"]["spacing"]
 
@@ -635,11 +646,19 @@ def init(data):
     sus_size = skin_hud["sustain"]["width"]
     tip_size = skin_hud["sustain"]["tip"]
 
+    if str(note_count) in skin_hud["strumline"]["x_origin"].keys(): new_orig.append(skin_hud["strumline"]["x_origin"][str(note_count)])
+    else: new_orig.append((1280 / 2) - (((note_size * note_count) + (strum_seperation * (note_count - 1))) / 2) + (note_size/2))
+
+    if downscroll: new_orig.append(skin_hud["strumline"]["y_origin"]["down"])
+    else: new_orig.append(skin_hud["strumline"]["y_origin"]["up"])
+
+    strum_origin = new_orig
+
     ### Note Background
 
     note_bg = RMS.objects.rectangle("note_bg", "#000000")
     note_bg.set_property("opacity", int(profile_options["Gameplay"]["back_trans"] * 255))
-    note_bg.set_property("size", [(note_size * (note_count) + (strum_seperation * (note_count-1))), 720])
+    note_bg.set_property("size", [(note_size * (note_count) + (strum_seperation * (note_count-1))) + 25, 720])
     note_bg.set_property("position", [1280/2,720/2])
     camera.add_item(note_bg)
 
@@ -661,20 +680,20 @@ def init(data):
 
     ### Rating
     
-    rating = RMS.objects.image("rating", f"{skin_dir}/Ratings/perf.png")
+    rating = RMS.objects.image("rating", skin_grab(f"Ratings/perf.png"))
     rating.set_property("position", (1280/2, 720/2))
     rating.set_property("opacity", 0)
     camera.add_item(rating)
 
     # Skin Management
-    skin_texts = json.load(open(f"{skin_dir}/texts.json"))
+    skin_texts = json.load(open(skin_grab(f"texts.json")))
 
     i = 0
     for key in skin_hud["text"].keys():
         text_obj = skin_hud["text"][key]
 
         new_text = RMS.objects.text(key, text_obj["text"])
-        new_text.set_property("font", f"{skin_dir}/Fonts/{text_obj["font"]}")
+        new_text.set_property("font", skin_grab(f"Fonts/{text_obj["font"]}"))
         new_text.set_property("font_size", text_obj["size"])
         new_text.set_property("position", text_obj["position"])
 
@@ -717,7 +736,7 @@ def init(data):
 
     # Hitsounds
 
-    hitsound = pygame.mixer.Sound(f"{skin_dir}/SFX/hitsound.ogg")
+    hitsound = pygame.mixer.Sound(skin_grab(f"SFX/hitsound.ogg"))
     hitsound.set_volume(profile_options["Audio"]["volume"]["hitsound"] * profile_options["Audio"]["volume"]["master"])
 
     # Finish
