@@ -1,0 +1,18 @@
+{
+    "notes": {
+        "4": ["left", "down", "up", "right"],
+        "5": ["left", "down", "diamond", "up", "right"],
+        "6": ["left", "down", "right", "left", "up", "right"],
+        "7": ["left", "down", "right", "diamond", "left", "up", "right"],
+        "8": ["left", "down", "up", "right", "left", "down", "up", "right"],
+        "9": ["left", "down", "up", "right", "diamond", "left", "down", "up", "right"]
+    },
+    "sustain": {
+        "4": ["regular", "regular", "regular", "regular"],
+        "5": ["regular", "regular", "regular", "regular", "regular"],
+        "6": ["regular", "regular", "regular", "regular", "regular", "regular"],
+        "7": ["regular", "regular", "regular", "regular", "regular", "regular", "regular"],
+        "8": ["regular", "regular", "regular", "regular", "regular", "regular", "regular", "regular"],
+        "9": ["regular", "regular", "regular", "regular", "regular", "regular", "regular", "regular", "regular"]
+    }
+}

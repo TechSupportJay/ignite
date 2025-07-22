@@ -107,7 +107,7 @@ def init(data):
 
     # Load SFX
     menu_sfx = {}
-    sfx = ["scroll", "select", "play"]
+    sfx = ["scroll", "select", "play", "back"]
     for s in sfx:
         menu_sfx[s] = pygame.mixer.Sound(skin_grab(f"SFX/Menu/{s}.ogg"))
         menu_sfx[s].set_volume(profile_options["Audio"]["volume"]["sfx"] * profile_options["Audio"]["volume"]["master"])
@@ -380,6 +380,8 @@ def display_difficulties(song):
 
 def hide_difficulties():
     global focused_element
+
+    menu_sfx["back"].play()
 
     camera.cancel_tween("diff_transition_x")
     camera.cancel_tween("diff_transition_y")

@@ -30,7 +30,6 @@ fps_cap = 0
 
 songs_dir = ""
 skin_dir = ""
-grab_dir = ""
 
 note_speed = 1
 hit_window = 0.5
@@ -164,6 +163,7 @@ background = None
 #
 
 skin_hud = {}
+skin_notes = {}
 skin_texts = {}
 
 ### Notes
@@ -213,12 +213,12 @@ def strum_handle(index, down):
     camera.do_tween(f"strum_input_{index}_x", to_grab, "scale:x", end_val, 0.15, "back", "out")
     camera.do_tween(f"strum_input_{index}_y", to_grab, "scale:y", end_val, 0.15, "back", "out")
 
-    if not down: to_grab.set_property("image_location", f"{grab_dir}/strum_{index+1}.png")
+    if not down: to_grab.set_property("image_location", skin_grab(f"Notes/{skin_notes["notes"][str(note_count)][index]}_strum.png"))
 
 def create_note(lane):
     global chart_pointers, processed_notes
 
-    new_note = RMS.objects.image(f"note_{lane}_{chart_pointers[lane]}", f"{grab_dir}/regular_{lane+1}.png")
+    new_note = RMS.objects.image(f"note_{lane}_{chart_pointers[lane]}", skin_grab(f"Notes/{skin_notes["notes"][str(note_count)][lane]}_static.png"))
     new_note.set_property("size", [note_size,note_size])
     new_note.set_property("position", [camera.get_item(f"strum_{lane}").get_property("position:x"), -note_size])
     camera.add_item(new_note)
@@ -227,13 +227,13 @@ def create_note(lane):
     processed_notes += 1
 
 def create_sustain(lane, length):
-    sus_tip = RMS.objects.image(f"tip_{lane}_{chart_pointers[lane]}", f"{grab_dir}/tip_{lane+1}.png")
+    sus_tip = RMS.objects.image(f"tip_{lane}_{chart_pointers[lane]}", skin_grab(f"Notes/{skin_notes["sustain"][str(note_count)][lane]}_tip.png"))
     sus_tip.set_property("size", tip_size)
     sus_tip.set_property("position", [camera.get_item(f"strum_{lane}").get_property("position:x"), -note_size])
     if not downscroll: sus_tip.set_property("rotation", 180)
     camera.add_item(sus_tip)
 
-    sus_length = RMS.objects.image(f"sus_{lane}_{chart_pointers[lane]}", f"{grab_dir}/sus_{lane+1}.png")
+    sus_length = RMS.objects.image(f"sus_{lane}_{chart_pointers[lane]}", skin_grab(f"Notes/{skin_notes["sustain"][str(note_count)][lane]}_tail.png"))
     sus_length.set_property("size:x", sus_size)
     if downscroll: sus_length.set_property("size:y", ((((720-(720-strum_origin[1]))) * (length / note_speed))))
     else: sus_length.set_property("size:y", ((((720-strum_origin[1]))) * (length / note_speed)))
@@ -328,7 +328,7 @@ def process_hits(lane, time_in):
                     else: is_sus[l] = [True, chart[l][i]["t"] + chart[l][i]["l"]]
 
                     camera.remove_item(f"note_{l}_{i}")
-                    camera.get_item(f"strum_{l}").set_property("image_location", f"{grab_dir}/confirm_{lane}.png")
+                    camera.get_item(f"strum_{l}").set_property("image_location", skin_grab(f"Notes/{skin_notes["notes"][str(note_count)][l]}_confirm.png"))
 
                     if profile_options["Audio"]["volume"]["hitsound"] > 0: hitsound.play()
 
@@ -507,9 +507,9 @@ continue_notes = True
 def init(data):
     global song_name, song_difficulty, song_ext
     global note_count, note_speed, hit_window, pressed, is_sus, downscroll
-    global note_size, strum_seperation, strum_origin, sus_size, tip_size, skin_texts, skin_hud
+    global note_size, strum_seperation, strum_origin, sus_size, tip_size, skin_texts, skin_hud, skin_notes
     global chart, chart_len, chart_notes, chart_pointers, pass_pointers, chart_raw, chart_unsorted, processed_notes
-    global fps_cap, grab_dir, songs_dir, skin_dir
+    global fps_cap, songs_dir, skin_dir
     global player_stats, last_score, perf_score
     global cur_time, cur_step, cur_beat, last_time, music_playing, bpm, step_time, start_time, next_step, cam_bump_mod
     global hitsound, misssound
@@ -547,8 +547,6 @@ def init(data):
     else: note_count = 4
 
     skin_dir = f"{profile_options["Customisation"]["content_folder"]}/Skins/{profile_options["Customisation"]["skin"]}"
-    if os.path.exists(f"{skin_dir}/Notes_{note_count}K"): grab_dir = f"{skin_dir}/Notes_{note_count}K"
-    else: grab_dir = f"Assets/Game/Default/Notes_{note_count}K"
 
     note_speed = profile_options["Gameplay"]["scroll_time"]
     hit_window = profile_options["Gameplay"]["timings"]["hit_window"]
@@ -621,13 +619,6 @@ def init(data):
     for i in range(note_count): pass_pointers.append(0)
 
     # Objects
-    ### Cache Images
-
-    for i in range(note_count): camera.cache_image_bulk([
-        f"{grab_dir}/strum_{i+1}.png",
-        f"{grab_dir}/regular_{i+1}.png",
-        f"{grab_dir}/confirm_{i+1}.png"
-    ])
         
     for rat in ["perf", "okay", "bad", "miss"]: camera.cache_image(skin_grab(f"Ratings/{rat}.png"))
 
@@ -643,6 +634,18 @@ def init(data):
 
     ### Notes
     skin_hud = json.load(open(skin_grab(f"hud.json")))
+    skin_notes = json.load(open(skin_grab(f"notes.json")))
+
+    ### Cache Images
+
+    for note in skin_notes["notes"][str(note_count)]:
+        camera.cache_image(skin_grab(f"Notes/{note}_static.png"))
+        camera.cache_image(skin_grab(f"Notes/{note}_strum.png"))
+        camera.cache_image(skin_grab(f"Notes/{note}_confirm.png"))
+
+    for note in skin_notes["sustain"][str(note_count)]:
+        camera.cache_image(skin_grab(f"Notes/{note}_tail.png"))
+        camera.cache_image(skin_grab(f"Notes/{note}_tip.png"))
 
     new_orig = []
 
@@ -671,7 +674,7 @@ def init(data):
     ### Strums
 
     for i in range(note_count):
-        new_note = RMS.objects.image(f"strum_{i}", f"{grab_dir}/strum_{i+1}.png")
+        new_note = RMS.objects.image(f"strum_{i}", skin_grab(f"Notes/{skin_notes["notes"][str(note_count)][i]}_strum.png"))
         new_note.set_property("size", [note_size,note_size])
         new_note.set_property("position", [strum_origin[0] + ((note_size + strum_seperation) * i), strum_origin[1]])
         camera.add_item(new_note)
