@@ -2,7 +2,7 @@
 import pygame
 import Assets.Scenes.game, Assets.Scenes.splash, Assets.Scenes.song_selection
 
-# Pygame
+# PyGame
 
 pygame.init()
 screen = pygame.display.set_mode((1280,720), pygame.RESIZABLE | pygame.HWSURFACE)

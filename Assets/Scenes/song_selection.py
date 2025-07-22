@@ -10,6 +10,9 @@ master_data = []
 screen = None
 scene = None
 camera = None
+difficulty_camera = None
+
+focused_element = "song"
 
 ###
 
@@ -23,20 +26,37 @@ skin_dir = ""
 song_tabs = []
 selection_id = 0
 
+difficulties = []
+diff_selection = 0
+
+###
+
+menu_sfx = {}
+
 # Master Functions
 
 def skin_grab(item):
     if os.path.isfile(f"{skin_dir}/{item}"): return (f"{skin_dir}/{item}")
     else: return (f"Assets/Game/Default/{item}")
 
+are_songs = True
 def init(data):
-    global scene, camera
+    global scene, camera, difficulty_camera
     global profile_options, songs_dir, skin_dir
-    global song_tabs, selection_id
+    global song_tabs, selection_id, are_songs
+    global diff_selection, difficulties
+    global focused_element
+    global menu_sfx
 
     scene = RMS.scenes.scene(screen, "Song Selection")
-    camera = RMS.cameras.camera("HUD", 1)
+
+    camera = RMS.cameras.camera("Songs", 1)
+    difficulty_camera = RMS.cameras.camera("Difficulties", 1)
+    
     scene.add_camera(camera)
+    scene.add_camera(difficulty_camera)
+
+    focused_element = "song"
 
     # Load Options
 
@@ -74,6 +94,7 @@ def init(data):
     pygame.mixer.music.set_volume(profile_options["Audio"]["volume"]["menu"] * profile_options["Audio"]["volume"]["master"])
 
     # Load Songs
+    are_songs = True
     song_tabs = []
 
     camera.cache_image(skin_grab(f"SongSelect/tab.png"))
@@ -81,27 +102,67 @@ def init(data):
     
     selection_id = 0
 
+    difficulties = []
+    diff_selection = 0
+
+    # Load SFX
+    menu_sfx = {}
+    sfx = ["scroll", "select", "play"]
+    for s in sfx:
+        menu_sfx[s] = pygame.mixer.Sound(skin_grab(f"SFX/Menu/{s}.ogg"))
+        menu_sfx[s].set_volume(profile_options["Audio"]["volume"]["sfx"] * profile_options["Audio"]["volume"]["master"])
+
+    # Add Overlay
+    ### Darkness Overlay
+    overlay = RMS.objects.rectangle("overlay", "#000000")
+    overlay.set_property("size", [1280,720])
+    overlay.set_property("position", [1280/2,720/2])
+    overlay.set_property("opacity", 0)
+    camera.add_item(overlay)
+
+    # Select
     select_song(selection_id)
 
 def update():
     scene.render_scene()
 
 def handle_event(event):
-    global selection_id
+    global selection_id, diff_selection
 
     match event.type:
         case pygame.KEYDOWN:
             match event.key:
                 case pygame.K_UP:
-                    selection_id -= 1
-                    if selection_id < 0: selection_id = len(song_tabs)-1
-                    select_song(selection_id)
+                    match focused_element:
+                        case "song":
+                            selection_id -= 1
+                            if selection_id < 0: selection_id = len(song_tabs)-1
+                            select_song(selection_id)
+                        case "diff":
+                            diff_selection -= 1
+                            if diff_selection < 0: diff_selection = len(difficulties)-1
+                            select_difficulty(diff_selection)
+                    menu_sfx["scroll"].play()
                 case pygame.K_DOWN:
-                    selection_id += 1
-                    if selection_id > len(song_tabs)-1: selection_id = 0
-                    select_song(selection_id)
+                    match focused_element:
+                        case "song":
+                            selection_id += 1
+                            if selection_id > len(song_tabs)-1: selection_id = 0
+                            select_song(selection_id)
+                        case "diff":
+                            diff_selection += 1
+                            if diff_selection > len(difficulties)-1: diff_selection = 0
+                            select_difficulty(diff_selection)
+                    menu_sfx["scroll"].play()
                 case pygame.K_RETURN:
-                    master_data.append(["load_song", song_tabs[selection_id][0], _get_first_diff(song_tabs[selection_id][0])])
+                    match focused_element:
+                        case "song":
+                            display_difficulties(song_tabs[selection_id][0])
+                        case "diff":
+                            start_song(song_tabs[selection_id][0], difficulties[diff_selection])
+                case pygame.K_ESCAPE:
+                    if focused_element == "diff":
+                        hide_difficulties()
         case pygame.VIDEORESIZE:
             camera.set_property("scale", [event.w/1280, event.h/720])
             camera.set_property("position", [(event.w-1280)/2,(event.h-720)/2])
@@ -113,7 +174,27 @@ def destroy():
 # Extra Functions
 
 def load_songs():
+    global are_songs
+
     all_songs = next(os.walk(songs_dir), (None, None, []))[1]
+    if len(all_songs) == 0:
+        are_songs = False
+
+        cam_items = list(camera.items.keys()).copy()
+
+        for item in cam_items:
+            camera.remove_item(item)
+
+        no_songs = RMS.objects.text("no_songs", "no songs... :(")
+        no_songs.set_property("font", skin_grab("Fonts/default.ttf"))
+        no_songs.set_property("font_size", 32)
+        no_songs.set_property("text_align", "center")
+        no_songs.set_property("position", [1280/2,720/2])
+
+        camera.add_item(no_songs)
+
+        return
+
     for song in all_songs:
         song_meta = json.load(open(f"{songs_dir}/{song}/meta.json", "r"))
 
@@ -151,6 +232,16 @@ def make_song_tab(id, display_name, artist):
     song_tabs.append([id, tab_bg, tab_name, tab_artist])
 
 def select_song(id):
+    if not are_songs: return
+
+    move_vertical = 0
+
+    selection_pos_down = song_tabs[id][1].get_property("position:y") + (song_tabs[id][1].get_property("size:y") / 2)
+    selection_pos_up = song_tabs[id][1].get_property("position:y") - (song_tabs[id][1].get_property("size:y") / 2)
+
+    if selection_pos_down > 720: move_vertical = selection_pos_down - 720 + 20
+    elif selection_pos_up < 0: move_vertical = (selection_pos_up - 20)
+
     # Change Tabs
     for i in range(len(song_tabs)):
         positon_relative = 100
@@ -175,6 +266,10 @@ def select_song(id):
             camera.do_tween(f"x_2_{i}", song_tabs[i][3], "position:x", positions[1], 0.5, "cubic", "out")
 
             for x in range(3): camera.do_tween(f"o_{x}_{i}", song_tabs[i][x+1], "opacity", opacity, 0.25)
+        
+        if move_vertical != 0:
+            for x in range(1,4): camera.cancel_tween(f"y_{x}_{i}")
+            for x in range(1,4): camera.do_tween(f"y_{x}_{i}", song_tabs[i][x], "position:y", song_tabs[i][x].get_property("position:y") - move_vertical, 0.5, "cubic", "out")
     
     # Music
     song_ext = ".ogg"
@@ -235,8 +330,98 @@ def get_from_meta(song_name, variable, default_val):
     if variable in meta_file.keys(): return meta_file[variable]
     else: return default_val
 
-# TEMPORARY!!
+def display_difficulties(song):
+    global focused_element, difficulties, diff_selection
 
-def _get_first_diff(song_id):
-    charts = next(os.walk(f"{songs_dir}/{song_id}/charts"), (None, None, []))[2]
-    return charts[0].replace(".json", "")
+    if len(difficulties) > 0:
+        for i in range(len(difficulties)):
+            difficulty_camera.remove_item(f"difficulty_{i}")
+
+    folder_files = next(os.walk(f"{songs_dir}/{song}/charts"), (None, None, []))[2]
+    charts = []
+    for c in folder_files:
+        if c[-5:] == ".json": charts.append(c.replace(".json", ""))
+    
+    if len(charts) == 1: start_song(song, charts[0]); return
+
+    menu_sfx["select"].play()
+
+    focused_element = "diff"
+
+    camera.cancel_tween("diff_transition_x")
+    camera.cancel_tween("diff_transition_y")
+    camera.cancel_tween("diff_transition_o")
+
+    camera.do_tween("diff_transition_x", camera, "zoom:x", 1.1, 0.6, "cubic", "out")
+    camera.do_tween("diff_transition_y", camera, "zoom:y", 1.1, 0.6, "cubic", "out")
+    camera.do_tween("diff_transition_o", camera.get_item("overlay"), "opacity", 255/1.5, 0.5)
+
+    difficulties = charts
+    diff_selection = 0
+
+    i = 0
+    for difficulty in charts:
+        diff_text = RMS.objects.text(f"difficulty_{i}", difficulty)
+        diff_text.set_property("font", skin_grab("Fonts/default.ttf"))
+        diff_text.set_property("font_size", 48)
+        diff_text.set_property("text_align", "center")
+        diff_text.set_property("position:x", 1280/2+50)
+        diff_text.set_property("position:y", (720/2) - ((60 * len(charts))/2) + (60*i))
+        diff_text.set_property("scale", [0.9,0.9])
+        diff_text.set_property("opacity", 0)
+
+        difficulty_camera.cancel_tween(f"x_difficulty_{i}")
+        difficulty_camera.do_tween(f"x_difficulty_{i}", diff_text, "position:x", 1280/2, 0.5, "cubic", "out", 0.015 * i)
+        difficulty_camera.add_item(diff_text)
+        i += 1
+    del i
+
+    select_difficulty(0)
+
+def hide_difficulties():
+    global focused_element
+
+    camera.cancel_tween("diff_transition_x")
+    camera.cancel_tween("diff_transition_y")
+    camera.cancel_tween("diff_transition_o")
+
+    camera.do_tween("diff_transition_x", camera, "zoom:x", 1, 0.6, "cubic", "out")
+    camera.do_tween("diff_transition_y", camera, "zoom:y", 1, 0.6, "cubic", "out")
+    camera.do_tween("diff_transition_o", camera.get_item("overlay"), "opacity", 0, 0.5)
+
+    for i in range(len(difficulties)):
+        difficulty_camera.cancel_tween(f"o_difficulty_{i}")
+        difficulty_camera.cancel_tween(f"y_difficulty_{i}")
+
+        diff = difficulty_camera.get_item(f"difficulty_{i}")
+
+        difficulty_camera.do_tween(f"o_difficulty_{i}", diff, "opacity", 0, 0.5)
+        difficulty_camera.do_tween(f"y_difficulty_{i}", diff, "position:y", diff.get_property("position:y") + 50, 0.5, "cubic", "in")
+
+    focused_element = "song"
+
+def select_difficulty(id):
+    for i in range(len(difficulties)):
+        diff = difficulty_camera.get_item(f"difficulty_{i}")
+
+        opacity = 255/3
+        scale = 0.9
+
+        if i == id:
+            opacity = 255
+            scale = 1
+
+        if opacity != diff.get_property("opacity"):
+            difficulty_camera.cancel_tween(f"o_difficulty_{i}")
+            difficulty_camera.do_tween(f"o_difficulty_{i}", diff, "opacity", opacity, 0.15)
+        
+        if scale != diff.get_property("scale:x"):
+            difficulty_camera.cancel_tween(f"sx_difficulty_{i}")
+            difficulty_camera.cancel_tween(f"sy_difficulty_{i}")
+
+            difficulty_camera.do_tween(f"sx_difficulty_{i}", diff, "scale:x", scale, 0.35, "back", "out")
+            difficulty_camera.do_tween(f"sy_difficulty_{i}", diff, "scale:y", scale, 0.35, "back", "out")
+
+def start_song(song, difficulty):
+    menu_sfx["play"].play()
+    master_data.append(["load_song", song, difficulty])

@@ -32,10 +32,12 @@
     },
     "Audio": {
         "volume": {
-            "master": 0.2,
+            "master": 0.15,
             "music": 0.75,
-            "hitsound": 1,
-            "menu": 0.25
+            "hitsound": 0.5,
+            "miss": 0.5,
+            "menu": 0.25,
+            "sfx": 1
         },
         "offset": 0
     },

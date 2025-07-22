@@ -171,7 +171,7 @@ class camera():
 
                         to_blit = pre_blit.render(item.get_property("text"), True, item.get_property("color"))
 
-                        to_blit = pygame.transform.scale_by(to_blit, [(item.get_property("size")[0]) * self.scale[0] * self.zoom[0], (item.get_property("size")[1]) * self.scale[1] * self.zoom[1]])
+                        to_blit = pygame.transform.scale_by(to_blit, [(item.get_property("size")[0]) * (item.get_property("scale")[0]) * self.scale[0] * self.zoom[0], (item.get_property("size")[1]) * (item.get_property("scale")[1]) * self.scale[1] * self.zoom[1]])
                         to_blit = pygame.transform.rotate(to_blit, item.get_property("rotation"))
 
                         orig_pos = item.get_property("position")
@@ -182,8 +182,8 @@ class camera():
                         new_pos = (new_pos_x+self.get_property("position:x"), new_pos_y+self.get_property("position:y"))
 
                         match item.get_property("text_align"):
-                            case "center": new_pos = (new_pos[0] - ((to_blit.get_rect().w / 2) - (item.get_property("size")[0] / 2)), new_pos[1])
-                            case "right": new_pos = (new_pos[0] - (to_blit.get_rect().w * item.get_property("size")[0]), new_pos[1])
+                            case "center": new_pos = (new_pos[0] - ((to_blit.get_rect().w / 2) - (item.get_property("size")[0] / 2)) - (item.get_property("scale")[0] / 2), new_pos[1])
+                            case "right": new_pos = (new_pos[0] - (to_blit.get_rect().w * item.get_property("size")[0]) * item.get_property("scale")[0], new_pos[1])
                         
                         to_blit.set_alpha(int(item.get_property("opacity")))
 

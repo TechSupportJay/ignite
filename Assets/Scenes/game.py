@@ -86,15 +86,17 @@ class user_script_class_template():
 
 user_scripts = []
 
-def add_script(tag, path):
+def add_script(prefix, tag, path):
     global user_scripts
 
-    to_exec = f"class user_script_{tag}(user_script_class_template):\n"
+    if tag[:1] == "_": return
+
+    to_exec = f"class user_script_{prefix}{tag}(user_script_class_template):\n"
     for line in open((path), "r").readlines():
         to_exec += f"    {line}"
-    exec(f"{to_exec}\nsong_script_{tag} = user_script_{tag}()\nuser_scripts.append(song_script_{tag})")
+    exec(f"{to_exec}\nsong_script_{prefix}{tag} = user_script_{prefix}{tag}()\nuser_scripts.append(song_script_{prefix}{tag})")
 
-    print(f"[i] Added Script: {tag}")
+    print(f"[i] Added Script: {prefix}{tag}")
 
 def invoke_script_function(tag, data = []):
     if len(user_scripts) == 0: return
@@ -120,17 +122,17 @@ def load_scripts(mid_song = True):
     global user_scripts
     user_scripts = []
 
-    if os.path.isfile(f"{songs_dir}/{song_name}/script.py"): add_script("song", f"{songs_dir}/{song_name}/script.py")
+    if os.path.isfile(f"{songs_dir}/{song_name}/script.py"): add_script("", "song", f"{songs_dir}/{song_name}/script.py")
     if len(os.listdir(f"{profile_options["Customisation"]["content_folder"]}/Scripts")) > 0:
-        for script in os.listdir(f"{profile_options["Customisation"]["content_folder"]}/Scripts"): add_script(f"scr_{script.replace(".py", "")}", f"{profile_options["Customisation"]["content_folder"]}/Scripts/{script}")
+        for script in os.listdir(f"{profile_options["Customisation"]["content_folder"]}/Scripts"): add_script("scr_", script.replace(".py", ""), f"{profile_options["Customisation"]["content_folder"]}/Scripts/{script}")
     if os.path.isdir((f"{skin_dir}/Scripts")):
         if len(os.listdir(f"{skin_dir}/Scripts")) > 0:
-            for script in os.listdir(f"{skin_dir}/Scripts"): add_script(f"skn_{script.replace(".py", "")}", f"{skin_dir}/Scripts/{script}")
+            for script in os.listdir(f"{skin_dir}/Scripts"): add_script("skn_", script.replace(".py", ""), f"{skin_dir}/Scripts/{script}")
     
     if profile_options["Customisation"]["skin"] == "default":
         if os.path.isdir((f"Assets/Game/Default/Scripts")):
             if len(os.listdir(f"Assets/Game/Default/Scripts")) > 0:
-                for script in os.listdir(f"Assets/Game/Default/Scripts"): add_script(f"skn_{script.replace(".py", "")}", f"Assets/Game/Default/Scripts/{script}")
+                for script in os.listdir(f"Assets/Game/Default/Scripts"): add_script("skn_", script.replace(".py", ""), f"Assets/Game/Default/Scripts/{script}")
     
     if mid_song: invoke_script_function("create")
 
@@ -305,6 +307,8 @@ def process_notes(time_in):
                 player_stats["score"] -= 100
                 perf_score += 500
 
+                if profile_options["Audio"]["volume"]["miss"] > 0: misssound.play()
+
                 pass_pointers[l] += 1
                 
                 show_rating("miss")
@@ -326,8 +330,7 @@ def process_hits(lane, time_in):
                     camera.remove_item(f"note_{l}_{i}")
                     camera.get_item(f"strum_{l}").set_property("image_location", f"{grab_dir}/confirm_{lane}.png")
 
-                    if profile_options["Audio"]["volume"]["hitsound"] > 0:
-                        hitsound.play()
+                    if profile_options["Audio"]["volume"]["hitsound"] > 0: hitsound.play()
 
                     invoke_script_function("note_hit", [l, abs(time_in - chart[l][i]["t"])])
 
@@ -490,6 +493,7 @@ music_playing = False
 # SFX
 
 hitsound = None
+misssound = None
 
 # Pre-Loop
 
@@ -507,8 +511,8 @@ def init(data):
     global chart, chart_len, chart_notes, chart_pointers, pass_pointers, chart_raw, chart_unsorted, processed_notes
     global fps_cap, grab_dir, songs_dir, skin_dir
     global player_stats, last_score, perf_score
-    global cur_time, cur_step, cur_beat, last_time, music_playing, bpm, step_time, start_time, next_step
-    global hitsound
+    global cur_time, cur_step, cur_beat, last_time, music_playing, bpm, step_time, start_time, next_step, cam_bump_mod
+    global hitsound, misssound
     global camera, scene
     global background, rating, note_bg
     global user_scripts, profile_options, binds, pressed
@@ -521,6 +525,7 @@ def init(data):
     scene.add_camera(camera)
 
     camera.set_property("zoom", [1.1, 1.1])
+    cam_bump_mod = 4
 
     camera.do_tween("cam_bump_x", camera, "zoom:x", 1.0, 1, "quad", "out")
     camera.do_tween("cam_bump_y", camera, "zoom:y", 1.0, 1, "quad", "out")
@@ -574,6 +579,7 @@ def init(data):
     }
 
     perf_score = 0
+    update_accuracy()
 
     ### Instance Variables
 
@@ -738,6 +744,9 @@ def init(data):
 
     hitsound = pygame.mixer.Sound(skin_grab(f"SFX/hitsound.ogg"))
     hitsound.set_volume(profile_options["Audio"]["volume"]["hitsound"] * profile_options["Audio"]["volume"]["master"])
+
+    misssound = pygame.mixer.Sound(skin_grab(f"SFX/miss.ogg"))
+    misssound.set_volume(profile_options["Audio"]["volume"]["miss"] * profile_options["Audio"]["volume"]["master"])
 
     # Finish
 
