@@ -23,7 +23,8 @@
         "4": ["d", "f", "j", "k"],
         "6": ["s", "d", "f", "j", "k", "l"],
         "7": ["s", "d", "f", "space", "j", "k", "l"],
-        "8": ["a", "s", "d", "f", "h", "j", "k", "l"]
+        "8": ["a", "s", "d", "f", "h", "j", "k", "l"],
+        "9": ["a", "s", "d", "f", "space", "h", "j", "k", "l"]
     },
     "Customisation": {
         "content_folder": "/mnt/3C1C05611C051792/Programming/Python/Ignite/ContentFolder/",

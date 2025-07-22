@@ -265,7 +265,7 @@ def process_notes(time_in):
             if chart[l][i]["l"] > 0:
                 if time_in > chart[l][i]["t"]:
                     if downscroll: camera.get_item(f"sus_{l}_{i}").set_property("size:y", (((((720-(720-strum_origin[1]))) * ((chart[l][i]["l"] - (time_in - chart[l][i]["t"])) / note_speed))) - tip_size[1]))
-                    else: camera.get_item(f"sus_{l}_{i}").set_property("size:y", (((((720-(720-strum_origin[1]))) * ((chart[l][i]["l"] - (time_in - chart[l][i]["t"])) / note_speed))) - tip_size[1]))
+                    else: camera.get_item(f"sus_{l}_{i}").set_property("size:y", ((((((720-strum_origin[1]))) * ((chart[l][i]["l"] - (time_in - chart[l][i]["t"])) / note_speed))) - tip_size[1]))
                     
                     if camera.get_item(f"sus_{l}_{i}").get_property("size:y") < 0: camera.get_item(f"sus_{l}_{i}").set_property("size:y", 0)
 
