@@ -569,8 +569,10 @@ def init(data):
     downscroll = profile_options["Gameplay"]["downscroll"]
 
     binds = []
-    for bind in profile_options["Binds"][str(note_count)]:
-        binds.append(pygame_get_key(bind))
+    for bind_set in profile_options["Binds"][str(note_count)]:
+        s = []
+        for bind in bind_set: s.append(pygame_get_key(bind))
+        binds.append(s)
 
     player_stats = {
         "score": 0,
@@ -767,13 +769,21 @@ def update():
     global has_created, cur_time, last_score, pressed
 
     # Process Binds
-    for key in binds:
-        if pygame.key.get_pressed()[key] and not pressed[binds.index(key)] and not profile_options["Gameplay"]["botplay"]:
-            key_handle(binds.index(key), True)
-            pressed[binds.index(key)] = True
-        if not pygame.key.get_pressed()[key] and pressed[binds.index(key)] and not profile_options["Gameplay"]["botplay"]:
-            key_handle(binds.index(key), False)
-            pressed[binds.index(key)] = False
+    cur_pressed = pressed.copy()
+    for i in range(note_count):
+        key_pressed = False
+        for x in range(len(binds)):
+            if pygame.key.get_pressed()[binds[x][i]]:
+                key_pressed = True
+                break
+        if key_pressed and not pressed[i] and not profile_options["Gameplay"]["botplay"]:
+                key_handle(i, True)
+                pressed[i] = True
+                cur_pressed[i] = True
+        if not key_pressed and pressed[i] and cur_pressed[i] and not profile_options["Gameplay"]["botplay"]:
+            key_handle(i, False)
+            pressed[i] = False
+            cur_pressed[i] = False
 
     if not has_created: has_created = True; invoke_script_function("create")
 
