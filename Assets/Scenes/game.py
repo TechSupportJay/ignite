@@ -387,7 +387,7 @@ def handle_current_sus(time_in, dt):
                     player_stats["score"] += int(10000*dt)
                     perf_score += int(10000*dt)
                 else:
-                    if in_range(cur_time, chart[i][pass_pointers[i]]["t"] + chart[i][pass_pointers[i]]["l"], hit_window):
+                    if in_range(time_in, chart[i][pass_pointers[i]]["t"] + chart[i][pass_pointers[i]]["l"], hit_window):
                         is_sus[i] = [False,0]
                         camera.remove_item(f"sus_{i}_{pass_pointers[i]}")
                         camera.remove_item(f"tip_{i}_{pass_pointers[i]}")
@@ -400,7 +400,7 @@ def handle_current_sus(time_in, dt):
                         camera.remove_item(f"tip_{i}_{pass_pointers[i]}")
 
                         player_stats["score"] -= 100
-                        perf_score += int(10000*(cur_time/(chart[i][pass_pointers[i]]["t"] + chart[i][pass_pointers[i]]["l"])))
+                        perf_score += int(10000*(time_in/(chart[i][pass_pointers[i]]["t"] + chart[i][pass_pointers[i]]["l"])))
 
                         pass_pointers[i] += 1
                         show_rating("miss")
@@ -803,7 +803,7 @@ def update():
         last_score = perf_score
         update_accuracy()
     
-    handle_current_sus(cur_time, dt)
+    handle_current_sus(cur_time - (profile_options["Audio"]["offset"] / 1000), dt)
 
     # UI
     update_hud_texts()
