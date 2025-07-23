@@ -28,6 +28,9 @@ def switch_scene(tag, data = []):
 
     if tag in valid_scenes.keys():
         current_scene = tag
+        print(f"------------")
+        print(f"[i] Switching to Scene {tag}")
+        if data != []: print(f"[i] ...with data {data}")
         match tag:
             case "game": valid_scenes[current_scene].init([data[0], data[1], current_profile])
             case "song_selection": valid_scenes[current_scene].init([current_profile])

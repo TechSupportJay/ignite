@@ -163,6 +163,9 @@ class camera():
 
                         blit_surface = pygame.Surface((rect[2], rect[3]), pygame.SRCALPHA)
                         blit_surface.fill(rect_color)
+
+                        blit_surface = pygame.transform.rotate(blit_surface, item.get_property("rotation"))
+
                         screen.blit(blit_surface, (rect[0], rect[1]))
                         del blit_surface
                 case "text":

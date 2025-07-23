@@ -274,7 +274,6 @@ def process_notes(time_in):
                     if downscroll: camera.get_item(f"sus_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") - (camera.get_item(f"sus_{l}_{i}").get_property("size:y") / 2))
                     else: camera.get_item(f"sus_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") + (camera.get_item(f"sus_{l}_{i}").get_property("size:y") / 2))
                 else:
-
                     if downscroll: camera.get_item(f"sus_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") - (((720-(720-strum_origin[1])) * ((chart[l][i]["t"] - time_in)) / note_speed)) - (camera.get_item(f"sus_{l}_{i}").get_property("size:y")/2))
                     else: camera.get_item(f"sus_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") + ((((720-strum_origin[1])) * ((chart[l][i]["t"] - time_in)) / note_speed)) + (camera.get_item(f"sus_{l}_{i}").get_property("size:y")/2))
 
@@ -284,7 +283,12 @@ def process_notes(time_in):
                 if downscroll and camera.get_item(f"tip_{l}_{i}").get_property("position:y") >= strum_origin[1]: camera.get_item(f"tip_{l}_{i}").set_property("opacity", 0)
                 elif not downscroll and camera.get_item(f"tip_{l}_{i}").get_property("position:y") <= strum_origin[1]: camera.get_item(f"tip_{l}_{i}").set_property("opacity", 0)
         
+                camera.get_item(f"tip_{l}_{i}").set_property("position:x", camera.get_item(f"strum_{l}").get_property("position:x"))
+                camera.get_item(f"sus_{l}_{i}").set_property("position:x", camera.get_item(f"strum_{l}").get_property("position:x"))
+
             if camera.get_item(f"note_{l}_{i}") is None: continue
+
+            camera.get_item(f"note_{l}_{i}").set_property("position:x", camera.get_item(f"strum_{l}").get_property("position:x"))
 
             if downscroll: camera.get_item(f"note_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") - ((720-(720-strum_origin[1])) * ((chart[l][i]["t"] - time_in) / note_speed)))
             else: camera.get_item(f"note_{l}_{i}").set_property("position:y", camera.get_item(f"strum_{l}").get_property("position:y") + (((720-strum_origin[1])) * ((chart[l][i]["t"] - time_in) / note_speed)))
@@ -300,7 +304,7 @@ def process_notes(time_in):
                     camera.remove_item(f"tip_{l}_{i}")
                 camera.remove_item(f"note_{l}_{i}")
 
-                perf_score += int(10000*(cur_time-(chart[l][i]["t"] + chart[l][i]["l"])))
+                perf_score += int(10000*(time_in-(chart[l][i]["t"] + chart[l][i]["l"])))
 
                 player_stats["misses"] += 1
                 player_stats["combo"] = 0
@@ -790,9 +794,9 @@ def update():
     # Time
     clock.tick(fps_cap)
 
-    cur_time = (time.time_ns() - start_time) / 1000000.0 / 1000.0 - (profile_options["Audio"]["offset"] / 1000)
+    cur_time = ((time.time_ns() - start_time) / 1000000.0 / 1000.0)
 
-    process_notes(cur_time)
+    process_notes(cur_time - (profile_options["Audio"]["offset"] / 1000))
     conduct(cur_time)
 
     if perf_score != last_score:

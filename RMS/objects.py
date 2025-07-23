@@ -167,6 +167,7 @@ class rectangle(object):
         self.color = color
 
         self.position = [0,0]
+        self.rotation = 0
         self.size = [0,0]
         self.scale = [1,1]
         self.opacity = 255
@@ -190,6 +191,7 @@ class rectangle(object):
             case "scale": self.scale = value
             case "scale:x": self.scale[0] = value
             case "scale:y": self.scale[1] = value
+            case "rotation": self.rotation = value
             case "opacity": self.opacity = int(value)
             case "visible": self.visible = value
             case _: print(f"Couldn't find property '{property}' in {self.tag} ({self.type})")
@@ -208,6 +210,7 @@ class rectangle(object):
             case "scale": return self.scale
             case "scale:x": return self.scale[0]
             case "scale:y": return self.scale[1]
+            case "rotation": return self.rotation
             case "opacity": return self.opacity
             case "visible": return self.visible
             case _: print(f"Couldn't find property '{property}' in {self.tag} ({self.type})")
