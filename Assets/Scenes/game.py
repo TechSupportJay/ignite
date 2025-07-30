@@ -25,6 +25,7 @@ def pygame_get_key(key):
 
 current_profile = ""
 profile_options = {}
+controls = {}
 
 fps_cap = 0
 
@@ -525,7 +526,7 @@ def init(data):
     global hitsound, misssound
     global camera, scene
     global background, rating, note_bg
-    global user_scripts, profile_options, binds, pressed
+    global user_scripts, profile_options, controls, binds, pressed
     global has_created, master_data
 
     # Initalise Scene
@@ -547,6 +548,7 @@ def init(data):
 
     current_profile = data[2]
     profile_options = json.load(open(f"Data/{current_profile}/options.json"))
+    controls = json.load(open(f"Data/{current_profile}/controls.json"))
 
     fps_cap = int(profile_options["Video"]["fps_cap"])
 
@@ -575,7 +577,7 @@ def init(data):
     downscroll = profile_options["Gameplay"]["downscroll"]
 
     binds = []
-    for bind_set in profile_options["Binds"][str(note_count)]:
+    for bind_set in controls[str(note_count)]:
         s = []
         for bind in bind_set: s.append(pygame_get_key(bind))
         binds.append(s)

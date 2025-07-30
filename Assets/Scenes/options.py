@@ -14,6 +14,7 @@ camera = None
 #
 
 current_options = {}
+current_profile = ""
 options_ref = {}
 skin_dir = ""
 
@@ -24,12 +25,16 @@ option_index = 0
 valid_options = []
 cur_ref = {}
 
+#
+
+menu_sfx = {}
+
 # Master Functions
 
 def init(data):
     global scene, camera
-    global current_options, skin_dir, options_ref
-    global section_index, option_index
+    global current_options, skin_dir, options_ref, current_profile
+    global section_index, option_index, menu_sfx
 
     scene = RMS.scenes.scene(screen, "Options")
     camera = RMS.cameras.camera("Options", 1)
@@ -37,6 +42,7 @@ def init(data):
 
     #
 
+    current_profile = data[0]
     current_options = json.load(open(f"Data/{data[0]}/options.json"))
     skin_dir = f"{current_options["Customisation"]["content_folder"]}/Skins/{current_options["Customisation"]["skin"]}"
 
@@ -63,6 +69,13 @@ def init(data):
     section_index = 0
     option_index = 0
 
+    #
+
+    sfx = ["scroll", "select", "play", "back"]
+    for s in sfx:
+        menu_sfx[s] = pygame.mixer.Sound(skin_grab(f"SFX/Menu/{s}.ogg"))
+        menu_sfx[s].set_volume(options_ref["Audio"]["vol_sfx"]["value"] * options_ref["Audio"]["vol_master"]["value"])
+
 def update():
     scene.render_scene()
 
@@ -77,25 +90,34 @@ def handle_event(event):
                     else: section_index = len(list(options_ref.keys()))-1
                     load_section(section_index)
                     option_index = 0
+                    play_sfx("scroll")
                 case pygame.K_e:
                     if section_index != len(list(options_ref.keys()))-1: section_index += 1
                     else: section_index = 0
                     load_section(section_index)
                     option_index = 0
+                    play_sfx("scroll")
                 case pygame.K_UP:
                     if option_index > 0: option_index -= 1
                     else: option_index = len(valid_options)-1
                     select_option(option_index)
+                    play_sfx("scroll")
                 case pygame.K_DOWN:
                     if option_index < len(valid_options)-1: option_index += 1
                     else: option_index = 0
                     select_option(option_index)
+                    play_sfx("scroll")
                 case pygame.K_RETURN:
                     option_input(option_index, "toggle")
                 case pygame.K_LEFT:
                     option_input(option_index, "left")
+                    play_sfx("scroll")
                 case pygame.K_RIGHT:
                     option_input(option_index, "right")
+                    play_sfx("scroll")
+                case pygame.K_ESCAPE:
+                    save_options()
+                    master_data.append(["switch_scene", "song_selection"])
                 case _: pass
         case pygame.VIDEORESIZE:
             camera.set_property("scale", [event.w/1280, event.h/720])
@@ -121,6 +143,11 @@ def load_options():
     for section in options_ref:
         make_section_header(section, i)
         i += 1
+    
+    for section in options_ref.keys():
+        for option in options_ref[section].keys():
+            options_ref[section][option]["value"] = current_options[section][option]
+
     load_section(0)
 
 def make_section_header(section_name, index):
@@ -176,24 +203,26 @@ def load_section(section_index):
     for i in range(len(list(options_ref))):
         if i == section_index: camera.get_item(f"header_{i}").set_property("opacity", 255)
         else: camera.get_item(f"header_{i}").set_property("opacity", 255/2)
-    
-    #
-
-    select_option(0)
 
 def make_option(section, option, index):
+    to_tween = []
+
     ref = options_ref[section][option]
 
     option_text = RMS.objects.text(f"option_{index}", ref["display"])
-    
+
     option_text.set_property("font", skin_grab("Fonts/default.ttf"))
     option_text.set_property("font_size", 48)
     option_text.set_property("position:x", 30)
     option_text.set_property("position:y", 100 + (75 * index))
-    option_text.set_property("opacity", 255/2)
-    if index == 0: option_text.set_property("opacity", 255)
+
+    opacity = 255/2
+    if index == 0: opacity = 255
+
+    option_text.set_property("opacity", opacity)
 
     camera.add_item(option_text)
+    to_tween.append(option_text)
 
     right_side = camera.get_text_size(f"option_{index}")[0]
 
@@ -207,34 +236,62 @@ def make_option(section, option, index):
             toggle_icon.set_property("position:x", 30 + right_side + 50)
             toggle_icon.set_property("position:y", option_text.get_property("position:y") + (camera.get_text_size(f"option_{index}")[1]/2))
             toggle_icon.set_property("size", [60,60])
-            toggle_icon.set_property("opacity", 255/2)
-            if index == 0: toggle_icon.set_property("opacity", 255)
+            toggle_icon.set_property("opacity", opacity)
 
             camera.add_item(toggle_icon)
+            to_tween.append(toggle_icon)
         case "float" | "int":
             for side in ["left", "right"]:
                 side_icon = RMS.objects.image(f"{side}_{index}", skin_grab(f"Menus/Options/{side}.png"))
                 side_icon.set_property("position:x", 30 + right_side + 50)
-                if side == "right": side_icon.set_property("position:x", 30 + right_side + 250)
+                if side == "right": side_icon.set_property("position:x", 30 + right_side + 300)
                 side_icon.set_property("position:y", option_text.get_property("position:y") + (camera.get_text_size(f"option_{index}")[1]/2))
                 side_icon.set_property("size", [60,60])
-                side_icon.set_property("opacity", 255/2)
-                if index == 0: side_icon.set_property("opacity", 255)
+                side_icon.set_property("opacity", opacity)
 
                 camera.add_item(side_icon)
+                to_tween.append(side_icon)
 
-            t = str(ref["default"])
-            if "value" in cur_ref[list(cur_ref.keys())[index]].keys(): t = str(cur_ref[list(cur_ref.keys())[index]]["value"])
+            t = ref["default"]
+            if "value" in cur_ref[list(cur_ref.keys())[index]].keys(): t = cur_ref[list(cur_ref.keys())[index]]["value"]
+
+            suffix = ""
+            if "suffix" in cur_ref[list(cur_ref.keys())[index]].keys(): suffix = cur_ref[list(cur_ref.keys())[index]]["suffix"]
+            
+            if suffix == "%": t = str(int(round(t * 100, 0)))
+
+            t = str(t)
+            t += suffix
 
             text = RMS.objects.text(f"text_{index}", t)
             text.set_property("font", skin_grab("Fonts/default.ttf"))
             text.set_property("text_align", "center")
             text.set_property("font_size", 48)
             text.set_property("position:y", option_text.get_property("position:y"))
-            text.set_property("position:x", camera.get_item(f"left_{index}").get_property("position:x") + 95)
-            text.set_property("opacity", 255/2)
+            text.set_property("position:x", camera.get_item(f"left_{index}").get_property("position:x") + 120)
+            text.set_property("opacity", opacity)
 
             camera.add_item(text)
+            to_tween.append(text)
+    
+    i = 0
+    for item in to_tween:
+        if item.get_property("position:y") - (item.get_property("size:y")/2) > 720: return
+
+        camera.cancel_tween(f"load_{index}_o_{i}")
+        camera.cancel_tween(f"load_{index}_x_{i}")
+
+        op = item.get_property("opacity")
+        x = item.get_property("position:x")
+
+        item.set_property("opacity", 0)
+        item.set_property("position:x", x-20)
+
+        camera.do_tween(f"load_{index}_o_{i}", item, "opacity", op, 0.25, "circ", "out", 0.0125 * index)
+        camera.do_tween(f"load_{index}_x_{i}", item, "position:x", x, 0.25, "circ", "out", 0.0125 * index)
+
+        i += 1
+    del i
             
 def select_option(index):
     y_offset = 0
@@ -285,9 +342,24 @@ def option_input(index, input_type):
                 else: cur_ref[list(cur_ref.keys())[index]]["value"] = not option["default"]
 
                 toggled = skin_grab("Menus/Options/toggle_on.png")
-                if not cur_ref[list(cur_ref.keys())[index]]["value"]: toggled = skin_grab("Menus/Options/toggle_off.png")
+                sound = "play"
+                if not cur_ref[list(cur_ref.keys())[index]]["value"]:
+                    toggled = skin_grab("Menus/Options/toggle_off.png")
+                    sound = "back"
+                
+                play_sfx(sound)
 
                 camera.get_item(f"toggle_{index}").set_property("image_location", toggled)
+
+                # Tween
+
+                camera.cancel_tween(f"scale_toggle_{index}_x")
+                camera.cancel_tween(f"scale_toggle_{index}_y")
+                
+                camera.get_item(f"toggle_{index}").set_property("scale", [0.9,0.9])
+
+                camera.do_tween(f"scale_toggle_{index}_x", camera.get_item(f"toggle_{index}"), "scale:x", 1, 0.3, "circ", "out")
+                camera.do_tween(f"scale_toggle_{index}_y", camera.get_item(f"toggle_{index}"), "scale:y", 1, 0.3, "circ", "out")
         case "left" | "right":
             if option["type"] not in ["int", "float"]: return
             else:
@@ -318,8 +390,58 @@ def option_input(index, input_type):
 
                 cur_ref[list(cur_ref.keys())[index]]["value"] = round(current, 5)
 
-                camera.get_item(f"text_{index}").set_property("text", str(round(current, 5)))
+                suffix = ""
+                if "suffix" in cur_ref[list(cur_ref.keys())[index]].keys(): suffix = cur_ref[list(cur_ref.keys())[index]]["suffix"]
 
+                to_display = str(round(current, 5))
+                if suffix == "%": to_display = str(int(round(current * 100)))
+                camera.get_item(f"text_{index}").set_property("text", to_display + suffix)
 
-def make_label(option, index):
-    pass
+                # Tween
+
+                move_amt = 5
+                if input_type == "left": move_amt *= -1
+
+                orig = camera.get_text_size(f"option_{index}")[0]
+                if input_type == "left": orig += 80
+                else: orig += 330
+
+                camera.cancel_tween(f"x_{input_type}_{index}")
+
+                camera.get_item(f"{input_type}_{index}").set_property("position:x", orig + move_amt)
+                camera.do_tween(f"x_{input_type}_{index}", camera.get_item(f"{input_type}_{index}"), "position:x", orig, 0.5, "back", "out")
+
+                ###
+
+                camera.cancel_tween(f"scale_text_{index}_x")
+                camera.cancel_tween(f"scale_text_{index}_y")
+
+                camera.get_item(f"text_{index}").set_property("scale", [1.1,1.1])
+
+                camera.do_tween(f"scale_text_{index}_x", camera.get_item(f"text_{index}"), "scale:x", 1.0, 0.5, "back", "out")
+                camera.do_tween(f"scale_text_{index}_y", camera.get_item(f"text_{index}"), "scale:y", 1.0, 0.5, "back", "out")
+
+def save_options():
+    print(f"[i] Saving options to {current_profile}...")
+
+    file = {}
+    for section in options_ref.keys():
+        file[section] = {}
+        for option in options_ref[section].keys():
+            if "value" in options_ref[section][option].keys(): file[section][option] = options_ref[section][option]["value"]
+            else: file[section][option] = options_ref[section][option]["default"]
+    
+    to_save = open(f"Data/{current_profile}/options.json", "w")
+    to_save.write(json.dumps(file))
+
+    print(f"[/] Options saved to {current_profile}!")
+
+def make_label(option, index): pass
+
+#
+
+def play_sfx(tag):
+    sound = menu_sfx[tag]
+    sound.stop()
+    sound.set_volume(options_ref["Audio"]["vol_sfx"]["value"] * options_ref["Audio"]["vol_master"]["value"])
+    sound.play()
