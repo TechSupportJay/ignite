@@ -65,6 +65,14 @@ def init(data):
     overlay.set_property("priority", 3)
     camera.add_item(overlay)
 
+    ### Cache Images
+    camera.cache_image_bulk([
+        skin_grab("Menus/Options/toggle_on.png"),
+        skin_grab("Menus/Options/toggle_off.png"),
+        skin_grab("Menus/Options/left.png"),
+        skin_grab("Menus/Options/right.png")
+    ])
+
     #
     
     options_ref = json.load(open(f"Assets/Game/options.json"))
@@ -463,14 +471,19 @@ def option_input(index, input_type):
             value = option["default"]
             cur_ref[list(cur_ref.keys())[index]]["value"] = value
 
-            if option["type"] in ["int", "float"]:
-                suffix = ""
-                if "suffix" in cur_ref[list(cur_ref.keys())[index]].keys(): suffix = cur_ref[list(cur_ref.keys())[index]]["suffix"]
+            match option["type"]:
+                case "bool":
+                    toggled = skin_grab("Menus/Options/toggle_off.png")
+                    if value: toggled = skin_grab("Menus/Options/toggle_on.png")
+                    camera.get_item(f"toggle_{index}").set_property("image_location", toggled)
+                case "float" | "int":
+                    suffix = ""
+                    if "suffix" in cur_ref[list(cur_ref.keys())[index]].keys(): suffix = cur_ref[list(cur_ref.keys())[index]]["suffix"]
 
-                to_display = str(round(value, 5))
-                if suffix == "%": to_display = str(int(round(value * 100)))
-                
-                camera.get_item(f"text_{index}").set_property("text", to_display + suffix)
+                    to_display = str(round(value, 5))
+                    if suffix == "%": to_display = str(int(round(value * 100)))
+                    
+                    camera.get_item(f"text_{index}").set_property("text", to_display + suffix)
 
 def save_options():
     print(f"[i] Saving options to {current_profile}...")

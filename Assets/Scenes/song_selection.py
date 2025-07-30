@@ -197,6 +197,8 @@ def handle_event(event):
                     if focused_element == "diff":
                         hide_difficulties()
                         invoke_script_function("return")
+                case pygame.K_o:
+                    master_data.append(["switch_scene", "options"])
         case pygame.VIDEORESIZE:
             camera.set_property("scale", [event.w/1280, event.h/720])
             camera.set_property("position", [(event.w-1280)/2,(event.h-720)/2])
@@ -204,6 +206,8 @@ def handle_event(event):
 def destroy():
     global camera, scene
     del camera, scene
+
+    pygame.mixer.music.stop()
 
 # Extra Functions
 

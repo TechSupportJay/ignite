@@ -45,7 +45,7 @@ for val in valid_scenes.keys():
     valid_scenes[val].screen = screen
 
 # Start
-switch_scene("options")
+switch_scene("song_selection")
 
 # Update Loop
 while True:
