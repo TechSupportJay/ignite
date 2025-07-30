@@ -5,6 +5,9 @@ import pygame, os, math, time, json, random
 screen = None
 master_data = []
 
+clock = pygame.time.Clock()
+fps_cap = 0
+
 # Variables
 
 screen = None
@@ -44,7 +47,7 @@ def skin_grab(item):
 are_songs = True
 def init(data):
     global scene, camera, difficulty_camera
-    global profile_options, ui, ui_texts
+    global profile_options, ui, ui_texts, fps_cap
     global songs_dir, skin_dir
     global song_tabs, selection_id, are_songs
     global diff_selection, difficulties
@@ -140,11 +143,16 @@ def init(data):
     # Select
     select_song(selection_id)
 
+    # FPS Cap
+    fps_cap = profile_options["Video"]["fps_cap"]
+
     # Scripts
     load_scripts()
     invoke_script_function("create")
 
 def update():
+    clock.tick(fps_cap)
+    
     scene.render_scene()
     invoke_script_function("update")
 

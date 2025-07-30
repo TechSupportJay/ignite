@@ -29,12 +29,18 @@ cur_ref = {}
 
 menu_sfx = {}
 
+#
+
+direction_held = ["left", False, 0.0]
+last_tick = 0
+
 # Master Functions
 
 def init(data):
     global scene, camera
     global current_options, skin_dir, options_ref, current_profile
     global section_index, option_index, menu_sfx
+    global direction_held, last_tick
 
     scene = RMS.scenes.scene(screen, "Options")
     camera = RMS.cameras.camera("Options", 1)
@@ -71,16 +77,36 @@ def init(data):
 
     #
 
-    sfx = ["scroll", "select", "play", "back"]
+    sfx = ["scroll", "select", "select", "back"]
     for s in sfx:
         menu_sfx[s] = pygame.mixer.Sound(skin_grab(f"SFX/Menu/{s}.ogg"))
         menu_sfx[s].set_volume(options_ref["Audio"]["vol_sfx"]["value"] * options_ref["Audio"]["vol_master"]["value"])
+    
+    #
+
+    direction_held = ["left", False, 0.0]
+    last_tick = 0
 
 def update():
+    global last_tick
+
     scene.render_scene()
 
+    if direction_held[1]:
+        times_run = 1
+        if pygame.key.get_pressed()[pygame.K_LSHIFT]: times_run = 10
+        if time.time() > direction_held[2] and time.time() > last_tick:
+            match direction_held[0]:
+                case "left":
+                    for i in range(times_run): option_input(option_index, "left")
+                    play_sfx("scroll")
+                case "right":
+                    for i in range(times_run): option_input(option_index, "right")
+                    play_sfx("scroll")
+            last_tick = time.time() + 0.025
+
 def handle_event(event):
-    global section_index, option_index
+    global section_index, option_index, direction_held
 
     match event.type:
         case pygame.KEYDOWN:
@@ -110,15 +136,28 @@ def handle_event(event):
                 case pygame.K_RETURN:
                     option_input(option_index, "toggle")
                 case pygame.K_LEFT:
-                    option_input(option_index, "left")
+                    times_run = 1
+                    if pygame.key.get_pressed()[pygame.K_LSHIFT]: times_run = 10
+                    for i in range(times_run): option_input(option_index, "left")
                     play_sfx("scroll")
+                    direction_held = ["left", True, time.time()+0.5]
                 case pygame.K_RIGHT:
-                    option_input(option_index, "right")
+                    times_run = 1
+                    if pygame.key.get_pressed()[pygame.K_LSHIFT]: times_run = 10
+                    for i in range(times_run): option_input(option_index, "right")
                     play_sfx("scroll")
+                    direction_held = ["right", True, time.time()+0.5]
                 case pygame.K_ESCAPE:
                     save_options()
                     master_data.append(["switch_scene", "song_selection"])
+                case pygame.K_BACKSPACE:
+                    option_input(option_index, "reset")
+                    play_sfx("back")
                 case _: pass
+        case pygame.KEYUP:
+            match event.key:
+                case pygame.K_LEFT: direction_held = ["left", False, 0]
+                case pygame.K_RIGHT: direction_held = ["right", False, 0]
         case pygame.VIDEORESIZE:
             camera.set_property("scale", [event.w/1280, event.h/720])
             camera.set_property("position", [(event.w-1280)/2,(event.h-720)/2])
@@ -342,7 +381,7 @@ def option_input(index, input_type):
                 else: cur_ref[list(cur_ref.keys())[index]]["value"] = not option["default"]
 
                 toggled = skin_grab("Menus/Options/toggle_on.png")
-                sound = "play"
+                sound = "select"
                 if not cur_ref[list(cur_ref.keys())[index]]["value"]:
                     toggled = skin_grab("Menus/Options/toggle_off.png")
                     sound = "back"
@@ -420,6 +459,18 @@ def option_input(index, input_type):
 
                 camera.do_tween(f"scale_text_{index}_x", camera.get_item(f"text_{index}"), "scale:x", 1.0, 0.5, "back", "out")
                 camera.do_tween(f"scale_text_{index}_y", camera.get_item(f"text_{index}"), "scale:y", 1.0, 0.5, "back", "out")
+        case "reset":
+            value = option["default"]
+            cur_ref[list(cur_ref.keys())[index]]["value"] = value
+
+            if option["type"] in ["int", "float"]:
+                suffix = ""
+                if "suffix" in cur_ref[list(cur_ref.keys())[index]].keys(): suffix = cur_ref[list(cur_ref.keys())[index]]["suffix"]
+
+                to_display = str(round(value, 5))
+                if suffix == "%": to_display = str(int(round(value * 100)))
+                
+                camera.get_item(f"text_{index}").set_property("text", to_display + suffix)
 
 def save_options():
     print(f"[i] Saving options to {current_profile}...")
