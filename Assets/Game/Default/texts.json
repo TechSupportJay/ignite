@@ -1,6 +1,8 @@
 {
-    "Gameplay": {
-        "ranks": {
+    "Gameplay":
+    {
+        "ranks":
+        {
             "s+": "S+",
             "s": "S",
             "a": "A",
@@ -9,5 +11,11 @@
             "d": "D",
             "f": "F"
         }
+    },
+    "Song Selection":
+    {
+        "duration": "Duration: %s",
+        "bpm": "BPM: %s",
+        "chartist": "Chartist: %s"
     }
 }

@@ -11,9 +11,13 @@ screen = None
 scene = None
 camera = None
 
+#
+
+profile_options = {}
+
 # Master Functions
 
-def init():
+def init(data = []):
     global scene, camera
 
     scene = RMS.scenes.scene(screen, "Template")
@@ -35,3 +39,8 @@ def handle_event(event):
 def destroy():
     global camera, scene
     del camera, scene
+
+def resize(size):
+    for cam in scene.cameras.keys():
+        scene.cameras[cam].set_property("scale", [size[0]/1280,size[1]/720])
+        scene.cameras[cam].set_property("position", [(size[0]-1280)/2,(size[1]-720)/2])

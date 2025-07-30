@@ -88,7 +88,7 @@ user_scripts = []
 def add_script(prefix, tag, path):
     global user_scripts
 
-    if tag[:1] == "_": return
+    if tag[:1] in ["_", "#"]: return
 
     to_exec = f"class user_script_{prefix}{tag}(user_script_class_template):\n"
     for line in open((path), "r").readlines():
@@ -311,7 +311,7 @@ def process_notes(time_in):
                 player_stats["score"] -= 100
                 perf_score += 500
 
-                if profile_options["Audio"]["volume"]["miss"] > 0: misssound.play()
+                if profile_options["Audio"]["vol_miss"] > 0: misssound.play()
 
                 pass_pointers[l] += 1
                 
@@ -334,7 +334,7 @@ def process_hits(lane, time_in):
                     camera.remove_item(f"note_{l}_{i}")
                     camera.get_item(f"strum_{l}").set_property("image_location", skin_grab(f"Notes/{skin_notes["notes"][str(note_count)][l]}_confirm.png"))
 
-                    if profile_options["Audio"]["volume"]["hitsound"] > 0: hitsound.play()
+                    if profile_options["Audio"]["vol_hitsound"] > 0: hitsound.play()
 
                     invoke_script_function("note_hit", [l, abs(time_in - chart[l][i]["t"])])
 
@@ -346,10 +346,10 @@ def process_hits(lane, time_in):
 def process_time(difference):
     global player_stats, perf_score
 
-    if difference <= profile_options["Gameplay"]["timings"]["perfect"]:
+    if difference <= profile_options["Gameplay"]["timing_perfect"]:
         show_rating("perf")
         player_stats["score"] += 500
-    elif difference <= profile_options["Gameplay"]["timings"]["okay"]:
+    elif difference <= profile_options["Gameplay"]["timing_okay"]:
         show_rating("okay")
         player_stats["score"] += 250
     else:
@@ -367,7 +367,7 @@ def key_handle(index, down):
     else:
         invoke_script_function("key_up", [index])
 
-def handle_current_sus(time_in, dt):
+def process_sustains(time_in, dt):
     global pass_pointers, player_stats, is_sus, perf_score
 
     for i in range(note_count):
@@ -384,8 +384,8 @@ def handle_current_sus(time_in, dt):
                 pass_pointers[i] += 1
             else:
                 if pressed[i]:
-                    player_stats["score"] += int(10000*dt)
-                    perf_score += int(10000*dt)
+                    player_stats["score"] += int(1000*dt)
+                    perf_score += int(1000*dt)
                 else:
                     if in_range(time_in, chart[i][pass_pointers[i]]["t"] + chart[i][pass_pointers[i]]["l"], hit_window):
                         is_sus[i] = [False,0]
@@ -400,7 +400,7 @@ def handle_current_sus(time_in, dt):
                         camera.remove_item(f"tip_{i}_{pass_pointers[i]}")
 
                         player_stats["score"] -= 100
-                        perf_score += int(10000*(time_in/(chart[i][pass_pointers[i]]["t"] + chart[i][pass_pointers[i]]["l"])))
+                        perf_score += int(1000*(time_in/(chart[i][pass_pointers[i]]["t"] + chart[i][pass_pointers[i]]["l"])))
 
                         pass_pointers[i] += 1
                         show_rating("miss")
@@ -444,6 +444,8 @@ def conduct(time_in):
         pygame.mixer.music.play()
         music_playing = True
         invoke_script_function("song_start")
+    elif music_playing and not pygame.mixer.music.get_busy():
+        master_data.append(["switch_scene", "song_selection"])
     else:
         if time_in >= next_step:
             next_step += step_time
@@ -482,8 +484,8 @@ def update_accuracy():
         player_stats["accuracy"] = player_stats["score"] / perf_score
         if player_stats["accuracy"] < 0: player_stats["accuracy"] = 0
 
-    for rank in profile_options["Gameplay"]["ranks"].keys():
-        r = profile_options["Gameplay"]["ranks"][rank]
+    for rank in ["s+", "s", "a", "b", "c", "d", "f"]:
+        r = profile_options["Gameplay"][f"rank_{rank}"]
         if player_stats["accuracy"] >= r:
             player_stats["rank"] = rank
             break
@@ -557,7 +559,7 @@ def init(data):
     skin_dir = f"{profile_options["Customisation"]["content_folder"]}/Skins/{profile_options["Customisation"]["skin"]}"
 
     note_speed = profile_options["Gameplay"]["scroll_time"]
-    hit_window = profile_options["Gameplay"]["timings"]["hit_window"]
+    hit_window = profile_options["Gameplay"]["timing_hit_window"]
 
     ### System Variables
 
@@ -751,15 +753,15 @@ def init(data):
             break
     
     pygame.mixer.music.load(f"{songs_dir}/{song_name}/audio{song_ext}")
-    pygame.mixer.music.set_volume(profile_options["Audio"]["volume"]["music"] * profile_options["Audio"]["volume"]["master"])
+    pygame.mixer.music.set_volume(profile_options["Audio"]["vol_music"] * profile_options["Audio"]["vol_master"])
 
     # Hitsounds
 
     hitsound = pygame.mixer.Sound(skin_grab(f"SFX/hitsound.ogg"))
-    hitsound.set_volume(profile_options["Audio"]["volume"]["hitsound"] * profile_options["Audio"]["volume"]["master"])
+    hitsound.set_volume(profile_options["Audio"]["vol_hitsound"] * profile_options["Audio"]["vol_master"])
 
     misssound = pygame.mixer.Sound(skin_grab(f"SFX/miss.ogg"))
-    misssound.set_volume(profile_options["Audio"]["volume"]["miss"] * profile_options["Audio"]["volume"]["master"])
+    misssound.set_volume(profile_options["Audio"]["vol_miss"] * profile_options["Audio"]["vol_master"])
 
     # Finish
 
@@ -803,7 +805,7 @@ def update():
         last_score = perf_score
         update_accuracy()
     
-    handle_current_sus(cur_time - (profile_options["Audio"]["offset"] / 1000), dt)
+    process_sustains(cur_time - (profile_options["Audio"]["offset"] / 1000), dt)
 
     # UI
     update_hud_texts()
@@ -826,10 +828,6 @@ def handle_event(event):
             if not event.key in binds:
                 match event.key:
                     case _: pass
-        case pygame.VIDEORESIZE:
-            camera.set_property("scale", [event.w/1280, event.h/720])
-            camera.set_property("position", [(event.w-1280)/2,(event.h-720)/2])
-
 def destroy():
     global camera, scene, user_scripts
 
@@ -838,3 +836,8 @@ def destroy():
     del camera, scene
 
     pygame.mixer_music.stop()
+
+def resize(size):
+    for cam in scene.cameras.keys():
+        scene.cameras[cam].set_property("scale", [size[0]/1280,size[1]/720])
+        scene.cameras[cam].set_property("position", [(size[0]-1280)/2,(size[1]-720)/2])

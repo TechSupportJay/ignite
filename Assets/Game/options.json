@@ -1,0 +1,36 @@
+{
+    "Gameplay": {
+        "botplay": {"type": "bool", "default": false, "display": "Botplay"},
+        "downscroll": {"type": "bool", "default": true, "display": "Downscroll"},
+        "scroll_time": {"type": "float", "default": 0.5, "display": "Scroll Speed", "suffix": "s", "increment": 0.01, "min": 0.01},
+        "back_trans": {"type": "float", "default": 0.5, "display": "Background Transparency", "increment": 0.05, "min": 0.00, "max": 1.0},
+
+        "timing_hit_window": {"type": "float", "default": 0.1, "display": "Hit Window", "suffix": "s", "increment": 0.01, "min": 0.01},
+        "timing_perfect": {"type": "float", "default": 0.35, "display": "Perfect", "suffix": "s", "increment": 0.01, "min": 0.0},
+        "timing_okay": {"type": "float", "default": 0.075, "display": "Okay", "suffix": "s", "increment": 0.01, "min": 0.0},
+
+        "rank_s+": {"type": "float", "default": 1.0, "display": "S+", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0},
+        "rank_s": {"type": "float", "default": 0.95, "display": "S", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0},
+        "rank_a": {"type": "float", "default": 0.9, "display": "A", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0},
+        "rank_b": {"type": "float", "default": 0.8, "display": "B", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0},
+        "rank_c": {"type": "float", "default": 0.65, "display": "C", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0},
+        "rank_d": {"type": "float", "default": 0.5, "display": "D", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0},
+        "rank_f": {"type": "float", "default": 0.0, "display": "F", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0}
+    },
+    "Customisation": {
+        "skin": {"type": "list", "default": "default", "display": "Skin"}
+    },
+    "Audio": {
+        "vol_master": {"type": "float", "default": 1.0, "display": "Master", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0},
+        "vol_music": {"type": "float", "default": 1.0, "display": "Music", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0},
+        "vol_menu": {"type": "float", "default": 0.5, "display": "Menu Music", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0},
+        "vol_hitsound": {"type": "float", "default": 0.75, "display": "Hitsound", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0},
+        "vol_miss": {"type": "float", "default": 0.75, "display": "Miss Sound", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0},
+        "vol_sfx": {"type": "float", "default": 0.5, "display": "Other SFX", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0},
+
+        "offset": {"type": "float", "default": 0.5, "display": "Offset", "suffix": "s", "increment": 0.01}
+    },
+    "Video": {
+        "fps_cap": {"type": "int", "default": 0, "display": "FPS Cap", "increment": 5, "min": 0}
+    }
+}

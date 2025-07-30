@@ -119,7 +119,7 @@ class text(object):
     def set_property(self, property, value):
         match property:
             case "priority": self.priority = value
-            case "text": self.text = value
+            case "text": self.text = str(value)
             case "position": self.position = value
             case "position:x": self.position[0] = value
             case "position:y": self.position[1] = value

@@ -32,6 +32,18 @@ class camera():
     def get_image_size(self, path):
         if path not in self.textures.keys(): return [0,0]
         return [self.textures[path].get_width(),self.textures[path].get_height()]
+    
+    def get_text_size(self, text_tag):
+        item_ref = self.get_item(text_tag)
+
+        pre_blit = self.fonts[(f"{item_ref.get_property("font")}_{item_ref.get_property("font_size")}")]
+
+        to_blit = pre_blit.render(item_ref.get_property("text"), True, item_ref.get_property("color"))
+
+        to_blit = pygame.transform.scale_by(to_blit, [(item_ref.get_property("size")[0]) * (item_ref.get_property("scale")[0]) * self.scale[0] * self.zoom[0], (item_ref.get_property("size")[1]) * (item_ref.get_property("scale")[1]) * self.scale[1] * self.zoom[1]])
+        to_blit = pygame.transform.rotate(to_blit, item_ref.get_property("rotation"))
+
+        return [to_blit.get_width(), to_blit.get_height()]
 
     def add_item(self, item):
         tag = item.get_property("tag")
@@ -43,7 +55,7 @@ class camera():
                self. cache_image(item.get_property("image_location"))
             case "text":
                 if (f"{item.get_property("font")}_{item.get_property("font_size")}") not in self.fonts.keys():
-                    self.fonts[(f"{item.get_property("font")}_{item.get_property("font_size")}")] = pygame.font.Font(item.get_property("font"), item.get_property("font_size"))
+                    self.fonts[(f"{item.get_property("font")}_{item.get_property("font_size")}")] = pygame.font.Font(item.get_property("font"), int(item.get_property("font_size")))
 
         self.order_items()
     
@@ -110,9 +122,9 @@ class camera():
                 i1 = self.items[self.ordered[i]].get_property("priority")
                 i2 = self.items[self.ordered[i+1]].get_property("priority")
                 if i1 > i2:
-                    temp = self.ordered[i+1]
-                    self.items[i+1] = self.ordered[i]
-                    self.items[i] = temp
+                    temp = str(self.ordered[i+1])
+                    self.ordered[i+1] = self.ordered[i]
+                    self.ordered[i] = temp
                     unsorted = False
     
     def render(self, screen):

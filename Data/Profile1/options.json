@@ -1,21 +1,20 @@
 {
     "Gameplay": {
         "downscroll": true,
-        "scroll_time": 0.4,
-        "timings": {
-            "hit_window": 0.1,
-            "perfect": 0.035,
-            "okay": 0.075
-        },
-        "ranks": {
-            "s+": 1,
-            "s": 0.95,
-            "a": 0.90,
-            "b": 0.80,
-            "c": 0.65,
-            "d": 0.50,
-            "f": 0
-        },
+        "scroll_time": 0.35,
+
+        "timing_hit_window": 0.1,
+        "timing_perfect": 0.035,
+        "timing_okay": 0.075,
+
+        "rank_s+": 1,
+        "rank_s": 0.95,
+        "rank_a": 0.90,
+        "rank_b": 0.80,
+        "rank_c": 0.65,
+        "rank_d": 0.50,
+        "rank_f": 0,
+
         "back_trans": 0.5,
         "botplay": false
     },
@@ -28,17 +27,15 @@
     },
     "Customisation": {
         "content_folder": "/mnt/3C1C05611C051792/Programming/Python/Ignite/ContentFolder/",
-        "skin": "FNF"
+        "skin": "default"
     },
     "Audio": {
-        "volume": {
-            "master": 0.15,
-            "music": 0.75,
-            "hitsound": 0.5,
-            "miss": 0.5,
-            "menu": 0.25,
-            "sfx": 1
-        },
+        "vol_master": 0.15,
+        "vol_music": 0.75,
+        "vol_hitsound": 0.5,
+        "vol_miss": 0.5,
+        "vol_menu": 0.25,
+        "vol_sfx": 1,
         "offset": 0
     },
     "Video": {
