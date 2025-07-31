@@ -96,7 +96,7 @@ def init(data):
     last_tick = 0
 
 def update():
-    global last_tick
+    global last_tick, option_index
 
     scene.render_scene()
 
@@ -108,10 +108,24 @@ def update():
                 case "left":
                     for i in range(times_run): option_input(option_index, "left")
                     play_sfx("scroll")
+                    last_tick = time.time() + 0.025
                 case "right":
                     for i in range(times_run): option_input(option_index, "right")
                     play_sfx("scroll")
-            last_tick = time.time() + 0.025
+                    last_tick = time.time() + 0.025
+                case "up":
+                    if option_index > 0: option_index -= 1
+                    else: option_index = len(valid_options)-1
+                    select_option(option_index)
+                    play_sfx("scroll")
+                    last_tick = time.time() + 0.075
+                case "down":
+                    if option_index < len(valid_options)-1: option_index += 1
+                    else: option_index = 0
+                    select_option(option_index)
+                    play_sfx("scroll")
+                    last_tick = time.time() + 0.075
+            
 
 def handle_event(event):
     global section_index, option_index, direction_held
@@ -136,11 +150,13 @@ def handle_event(event):
                     else: option_index = len(valid_options)-1
                     select_option(option_index)
                     play_sfx("scroll")
+                    direction_held = ["up", True, time.time()+0.5]
                 case pygame.K_DOWN:
                     if option_index < len(valid_options)-1: option_index += 1
                     else: option_index = 0
                     select_option(option_index)
                     play_sfx("scroll")
+                    direction_held = ["down", True, time.time()+0.5]
                 case pygame.K_RETURN:
                     option_input(option_index, "toggle")
                 case pygame.K_LEFT:
@@ -166,6 +182,8 @@ def handle_event(event):
             match event.key:
                 case pygame.K_LEFT: direction_held = ["left", False, 0]
                 case pygame.K_RIGHT: direction_held = ["right", False, 0]
+                case pygame.K_UP: direction_held = ["up", False, 0]
+                case pygame.K_DOWN: direction_held = ["down", False, 0]
         case pygame.VIDEORESIZE:
             camera.set_property("scale", [event.w/1280, event.h/720])
             camera.set_property("position", [(event.w-1280)/2,(event.h-720)/2])
@@ -227,7 +245,7 @@ def load_section(section_index):
             type = cur_ref[item]["type"]
             match type:
                 case "bool": camera.remove_item(f"toggle_{i}")
-                case "float" | "int":
+                case "float" | "int" | "fps":
                     camera.remove_item(f"left_{i}")
                     camera.remove_item(f"right_{i}")
                     camera.remove_item(f"text_{i}")
@@ -287,7 +305,7 @@ def make_option(section, option, index):
 
             camera.add_item(toggle_icon)
             to_tween.append(toggle_icon)
-        case "float" | "int":
+        case "float" | "int" | "fps":
             for side in ["left", "right"]:
                 side_icon = RMS.objects.image(f"{side}_{index}", skin_grab(f"Menus/Options/{side}.png"))
                 side_icon.set_property("position:x", 30 + right_side + 50)
@@ -306,6 +324,9 @@ def make_option(section, option, index):
             if "suffix" in cur_ref[list(cur_ref.keys())[index]].keys(): suffix = cur_ref[list(cur_ref.keys())[index]]["suffix"]
             
             if suffix == "%": t = str(int(round(t * 100, 0)))
+            elif suffix == "ms": t = str(int(round(t * 1000, 0)))
+
+            if ref["type"] == "fps" and t == 0: t = "Infinite"
 
             t = str(t)
             t += suffix
@@ -315,7 +336,7 @@ def make_option(section, option, index):
             text.set_property("text_align", "center")
             text.set_property("font_size", 48)
             text.set_property("position:y", option_text.get_property("position:y"))
-            text.set_property("position:x", camera.get_item(f"left_{index}").get_property("position:x") + 120)
+            text.set_property("position:x", camera.get_item(f"left_{index}").get_property("position:x") + 125)
             text.set_property("opacity", opacity)
 
             camera.add_item(text)
@@ -334,8 +355,8 @@ def make_option(section, option, index):
         item.set_property("opacity", 0)
         item.set_property("position:x", x-20)
 
-        camera.do_tween(f"load_{index}_o_{i}", item, "opacity", op, 0.25, "circ", "out", 0.0125 * index)
-        camera.do_tween(f"load_{index}_x_{i}", item, "position:x", x, 0.25, "circ", "out", 0.0125 * index)
+        camera.do_tween(f"load_{index}_o_{i}", item, "opacity", op, 0.35, "linear", "out", 0.0125 * index)
+        camera.do_tween(f"load_{index}_x_{i}", item, "position:x", x, 0.35, "circ", "out", 0.0125 * index)
 
         i += 1
     del i
@@ -358,15 +379,15 @@ def select_option(index):
         camera.get_item(f"option_{i}").set_property("opacity", opacity)
 
         camera.cancel_tween(f"option_{i}_y")
-        camera.do_tween(f"option_{i}_y", camera.get_item(f"option_{i}"), "position:y", camera.get_item(f"option_{i}").get_property("position:y") + y_offset, 0.5, "circ", "out")
+        camera.do_tween(f"option_{i}_y", camera.get_item(f"option_{i}"), "position:y", camera.get_item(f"option_{i}").get_property("position:y") + y_offset, 0.5, "expo", "out")
 
         match type:
             case "bool":
                 camera.get_item(f"toggle_{i}").set_property("opacity", opacity)
 
                 camera.cancel_tween(f"toggle_{i}_y")
-                camera.do_tween(f"toggle_{i}_y", camera.get_item(f"toggle_{i}"), "position:y", camera.get_item(f"toggle_{i}").get_property("position:y") + y_offset, 0.5, "circ", "out")
-            case "float" | "int":
+                camera.do_tween(f"toggle_{i}_y", camera.get_item(f"toggle_{i}"), "position:y", camera.get_item(f"toggle_{i}").get_property("position:y") + y_offset, 0.5, "expo", "out")
+            case "float" | "int" | "fps":
                 camera.get_item(f"left_{i}").set_property("opacity", opacity)
                 camera.get_item(f"right_{i}").set_property("opacity", opacity)
                 camera.get_item(f"text_{i}").set_property("opacity", opacity)               
@@ -374,9 +395,9 @@ def select_option(index):
                 camera.cancel_tween(f"left_{i}_y")
                 camera.cancel_tween(f"right_{i}_y")
                 camera.cancel_tween(f"text_{i}_y")
-                camera.do_tween(f"left_{i}_y", camera.get_item(f"left_{i}"), "position:y", camera.get_item(f"left_{i}").get_property("position:y") + y_offset, 0.5, "circ", "out")
-                camera.do_tween(f"right_{i}_y", camera.get_item(f"right_{i}"), "position:y", camera.get_item(f"right_{i}").get_property("position:y") + y_offset, 0.5, "circ", "out")
-                camera.do_tween(f"text_{i}_y", camera.get_item(f"text_{i}"), "position:y", camera.get_item(f"text_{i}").get_property("position:y") + y_offset, 0.5, "circ", "out")
+                camera.do_tween(f"left_{i}_y", camera.get_item(f"left_{i}"), "position:y", camera.get_item(f"left_{i}").get_property("position:y") + y_offset, 0.5, "expo", "out")
+                camera.do_tween(f"right_{i}_y", camera.get_item(f"right_{i}"), "position:y", camera.get_item(f"right_{i}").get_property("position:y") + y_offset, 0.5, "expo", "out")
+                camera.do_tween(f"text_{i}_y", camera.get_item(f"text_{i}"), "position:y", camera.get_item(f"text_{i}").get_property("position:y") + y_offset, 0.5, "expo", "out")
 
 def option_input(index, input_type):
     option = cur_ref[list(cur_ref.keys())[index]]
@@ -405,14 +426,14 @@ def option_input(index, input_type):
                 
                 camera.get_item(f"toggle_{index}").set_property("scale", [0.9,0.9])
 
-                camera.do_tween(f"scale_toggle_{index}_x", camera.get_item(f"toggle_{index}"), "scale:x", 1, 0.3, "circ", "out")
-                camera.do_tween(f"scale_toggle_{index}_y", camera.get_item(f"toggle_{index}"), "scale:y", 1, 0.3, "circ", "out")
+                camera.do_tween(f"scale_toggle_{index}_x", camera.get_item(f"toggle_{index}"), "scale:x", 1, 0.3, "expo", "out")
+                camera.do_tween(f"scale_toggle_{index}_y", camera.get_item(f"toggle_{index}"), "scale:y", 1, 0.3, "expo", "out")
         case "left" | "right":
-            if option["type"] not in ["int", "float"]: return
+            if option["type"] not in ["int", "float", "fps"]: return
             else:
                 incr = 0
 
-                if option["type"] == "int" and "increment" not in option.keys(): incr = 1
+                if option["type"] in ["int", "fps"] and "increment" not in option.keys(): incr = 1
                 else: incr = option["increment"]
 
                 bounds = [None, None]
@@ -442,6 +463,10 @@ def option_input(index, input_type):
 
                 to_display = str(round(current, 5))
                 if suffix == "%": to_display = str(int(round(current * 100)))
+                elif suffix == "ms": to_display = str(int(round(current * 1000)))
+
+                if option["type"] == "fps" and current == 0: to_display = "Infinite"
+
                 camera.get_item(f"text_{index}").set_property("text", to_display + suffix)
 
                 # Tween
@@ -476,12 +501,13 @@ def option_input(index, input_type):
                     toggled = skin_grab("Menus/Options/toggle_off.png")
                     if value: toggled = skin_grab("Menus/Options/toggle_on.png")
                     camera.get_item(f"toggle_{index}").set_property("image_location", toggled)
-                case "float" | "int":
+                case "float" | "int" | "fps":
                     suffix = ""
                     if "suffix" in cur_ref[list(cur_ref.keys())[index]].keys(): suffix = cur_ref[list(cur_ref.keys())[index]]["suffix"]
 
                     to_display = str(round(value, 5))
                     if suffix == "%": to_display = str(int(round(value * 100)))
+                    elif suffix == "ms": to_display = str(int(round(value * 1000)))
                     
                     camera.get_item(f"text_{index}").set_property("text", to_display + suffix)
 
