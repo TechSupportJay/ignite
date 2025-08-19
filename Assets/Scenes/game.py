@@ -1,6 +1,7 @@
 import pygame.locals
 import RMS.scenes, RMS.cameras, RMS.objects
 import pygame, os, math, time, json, random
+import Assets.Scenes.online.client
 
 clock = pygame.time.Clock()
 screen = None
@@ -9,6 +10,8 @@ master_data = []
 # Variables
 
 ### System Variables
+
+online_play = False
 
 note_count = 4
 
@@ -527,7 +530,7 @@ def init(data):
     global camera, scene
     global background, rating, note_bg
     global user_scripts, profile_options, controls, binds, pressed
-    global has_created, master_data
+    global has_created, master_data, online_play
 
     # Initalise Scene
 
@@ -764,6 +767,15 @@ def init(data):
 
     misssound = pygame.mixer.Sound(skin_grab(f"SFX/miss.ogg"))
     misssound.set_volume(profile_options["Audio"]["vol_miss"] * profile_options["Audio"]["vol_master"])
+
+    # Onlinne
+
+    Assets.Scenes.online.client.reset()
+    if data[3] == False: online_play = False
+    else:
+        online_play = True
+        Assets.Scenes.online.client.host_ip = data[3][1]
+        Assets.Scenes.online.client.host_port = data[3][2]
 
     # Finish
 

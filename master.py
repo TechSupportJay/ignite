@@ -14,7 +14,7 @@ pygame.display.set_icon(pygame.image.load("Assets/icon.png").convert_alpha())
 screen_size = [1280,720]
 
 # Variables
-current_scene = ""
+current_scene = "" 
 valid_scenes = {
     "game": Assets.Scenes.game,
     "splash": Assets.Scenes.splash,
@@ -35,7 +35,7 @@ def switch_scene(tag, data = []):
         print(f"[i] Switching to Scene {tag}")
         if data != []: print(f"[i] ...with data {data}")
         match tag:
-            case "game": valid_scenes[current_scene].init([data[0], data[1], current_profile])
+            case "game": valid_scenes[current_scene].init([data[0], data[1], current_profile, data[2]])
             case "song_selection": valid_scenes[current_scene].init([current_profile])
             case _: valid_scenes[current_scene].init([current_profile])
         valid_scenes[current_scene].resize(screen_size)
@@ -74,5 +74,4 @@ while True:
         for pair in data:
             match pair[0]:
                 case "switch_scene": switch_scene(pair[1])
-                case "load_song":
-                    switch_scene("game", [pair[1], pair[2]])
+                case "load_song": switch_scene("game", [pair[1], pair[2], pair[3]])

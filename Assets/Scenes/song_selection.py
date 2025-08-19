@@ -238,7 +238,7 @@ def load_songs():
 
         # Hardcoded Laoyut (temp?)
 
-        make_song_tab(song, song_meta["name"], song_meta["artist"])
+        make_song_tab(song, get_from_meta(song, "name", song), get_from_meta(song, "artist", "N/A"))
 
 def make_song_tab(id, display_name, artist):
     tab_bg = RMS.objects.image(f"tab_{id}", skin_grab(f"Menus/SongSelect/tab.png"))
@@ -472,7 +472,7 @@ def select_difficulty(id):
 
 def start_song(song, difficulty):
     menu_sfx["play"].play()
-    master_data.append(["load_song", song, difficulty])
+    master_data.append(["load_song", song, difficulty, False])
 
 def resize(size):
     for cam in scene.cameras.keys():
