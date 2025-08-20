@@ -139,18 +139,19 @@ def init(data):
     overlay = RMS.objects.rectangle("overlay", "#000000")
     overlay.set_property("size", [1280,720])
     overlay.set_property("position", [1280/2,720/2])
+    overlay.set_property("opacity", 0)
     camera.add_item(overlay)
 
     # Transition
-    camera.set_property("zoom", [1.2,1.2])
+    # camera.set_property("zoom", [1.2,1.2])
 
-    camera.cancel_tween("diff_transition_x")
-    camera.cancel_tween("diff_transition_y")
-    camera.cancel_tween("diff_transition_o")
+    # camera.cancel_tween("diff_transition_x")
+    # camera.cancel_tween("diff_transition_y")
+    # camera.cancel_tween("diff_transition_o")
 
-    camera.do_tween("diff_transition_x", camera, "zoom:x", 1, 1, "cubic", "out")
-    camera.do_tween("diff_transition_y", camera, "zoom:y", 1, 1, "cubic", "out")
-    camera.do_tween("diff_transition_o", camera.get_item("overlay"), "opacity", 0, 1)
+    # camera.do_tween("diff_transition_x", camera, "zoom:x", 1, 1, "cubic", "out")
+    # camera.do_tween("diff_transition_y", camera, "zoom:y", 1, 1, "cubic", "out")
+    # camera.do_tween("diff_transition_o", camera.get_item("overlay"), "opacity", 0, 1)
 
     # Select
     select_song(selection_id)

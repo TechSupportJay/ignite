@@ -11,14 +11,29 @@ screen = None
 scene = None
 camera = None
 
+clock = pygame.time.Clock()
+
 #
 
 profile_options = {}
 ui = {}
 menu_sfx = {}
 
+fps_cap = 0
+
 buttons = []
 selected_index = 0
+
+#
+
+beat_time = 0
+next_beat = 0
+
+started_bumping = False
+
+#
+
+pygame.mixer.init()
 
 # Master Functions
 
@@ -26,6 +41,9 @@ def init(data = []):
     global scene, camera
     global skin_dir, ui, menu_sfx
     global buttons, selected_index
+    global beat_time, next_beat
+    global fps_cap
+    global started_bumping
 
     scene = RMS.scenes.scene(screen, "Template")
     camera = RMS.cameras.camera("HUD", 1)
@@ -37,6 +55,7 @@ def init(data = []):
     skin_dir = f"{profile_options["Customisation"]["content_folder"]}/Skins/{profile_options["Customisation"]["skin"]}"
 
     ui = json.load(open(skin_grab("Menus/MainMenu/ui.json")))
+    fps_cap = profile_options["Video"]["fps_cap"]
 
     ### SFX
 
@@ -51,7 +70,7 @@ def init(data = []):
     camera.cache_image(skin_grab("Menus/MainMenu/logo.png"))
     logo = RMS.objects.image("logo", skin_grab("Menus/MainMenu/logo.png"))
     logo.set_property("size", camera.get_image_size(skin_grab("Menus/MainMenu/logo.png")))
-    logo.set_property("position", [1280/2, 200])
+    logo.set_property("position", [1280/2, ui["logo"]["position"][1]])
     logo.set_property("priority", 5)
     camera.add_item(logo)
 
@@ -88,17 +107,29 @@ def init(data = []):
                 break
             i += 1
         del i
+        
+    # Menu Schmusic
+    pygame.mixer.music.load(skin_grab("Menus/MainMenu/menu_music.wav"))
+    pygame.mixer.music.set_volume(profile_options["Audio"]["vol_music"] * profile_options["Audio"]["vol_menu"])
+    pygame.mixer.music.play(-1)
+
+    # BPM
+    beat_time = (60/ui["bpm"])
+    started_bumping = False
 
     # Splash
 
-    if data[1][0]:
-        # Background
-        splash_background = RMS.objects.rectangle("splash_background", "#000000")
-        splash_background.set_property("size", [1280,720])
-        splash_background.set_property("position", [1280/2,720/2])
-        splash_background.set_property("priority", 2)
+    ### Background
+    splash_background = RMS.objects.rectangle("splash_background", "#000000")
+    splash_background.set_property("size", [1280,720])
+    splash_background.set_property("position", [1280/2,720/2])
+    splash_background.set_property("priority", 2)
+    splash_background.set_property("opacity", 0)
 
-        camera.add_item(splash_background)
+    camera.add_item(splash_background)
+
+    if data[1][0]:
+        splash_background.set_property("opacity", 255)
 
         # PyGame
         camera.cache_image(skin_grab("Menus/MainMenu/pygame.png"))
@@ -112,26 +143,26 @@ def init(data = []):
         pygame_splash.set_property("scale", [0.8,0.8])
         pygame_splash.set_property("opacity", 0)
 
-        camera.do_tween("pygame_x_0", pygame_splash, "scale:x", 1, 1, "expo", "out", 0.2)
-        camera.do_tween("pygame_y_0", pygame_splash, "scale:y", 1, 1, "expo", "out", 0.2)
+        camera.do_tween("pygame_x_0", pygame_splash, "scale:x", 1, 1/(ui["bpm"]/160), "expo", "out")
+        camera.do_tween("pygame_y_0", pygame_splash, "scale:y", 1, 1/(ui["bpm"]/160), "expo", "out")
         camera.do_tween("pygame_a_0", pygame_splash, "opacity", 255, 0.35, delay=0.2)
 
-        camera.do_tween("pygame_x_1", pygame_splash, "scale:x", 0.8, 1, "expo", "in", 1.5)
-        camera.do_tween("pygame_y_1", pygame_splash, "scale:y", 0.8, 1, "expo", "in", 1.5)
-        camera.do_tween("pygame_a_1", pygame_splash, "opacity", 0, 0.35, delay=2)
+        camera.do_tween("pygame_x_1", pygame_splash, "scale:x", 0.8, 0.75/(ui["bpm"]/160), "expo", "in", 0.75/(ui["bpm"]/160))
+        camera.do_tween("pygame_y_1", pygame_splash, "scale:y", 0.8, 0.75/(ui["bpm"]/160), "expo", "in", 0.75/(ui["bpm"]/160))
+        camera.do_tween("pygame_a_1", pygame_splash, "opacity", 0, 0.35/(ui["bpm"]/160), delay=1/(ui["bpm"]/160))
 
         ### Ignite
         logo.set_property("position", [1280/2, 720/2])
         logo.set_property("scale", [2,2])
         logo.set_property("opacity", 0)
 
-        camera.do_tween("logo_x_0", logo, "scale:x", 1.5, 1, "expo", "out", 2)
-        camera.do_tween("logo_y_0", logo, "scale:y", 1.5, 1, "expo", "out", 2)
-        camera.do_tween("logo_a_0", logo, "opacity", 255, 0.35, delay=2.2)
+        camera.do_tween("logo_x_0", logo, "scale:x", 1.5, 1.25/(ui["bpm"]/160), "expo", "out", 1.5/(ui["bpm"]/160))
+        camera.do_tween("logo_y_0", logo, "scale:y", 1.5, 1.25/(ui["bpm"]/160), "expo", "out", 1.5/(ui["bpm"]/160))
+        camera.do_tween("logo_a_0", logo, "opacity", 255, 0.35, delay=1.5/(ui["bpm"]/160))
 
-        camera.do_tween("logo_py_1", logo, "position:y", 200, 0.75, "expo", "in", 2.7)
-        camera.do_tween("logo_x_1", logo, "scale:x", 1, 1, "circ", "out", 2.7)
-        camera.do_tween("logo_y_1", logo, "scale:y", 1, 1, "circ", "out", 2.7)
+        camera.do_tween("logo_py_1", logo, "position:y", ui["logo"]["position"][1], 1.2/(ui["bpm"]/160), "expo", "in", 1.8/(ui["bpm"]/160))
+        camera.do_tween("logo_x_1", logo, "scale:x", 1, 0.75/(ui["bpm"]/160), "circ", "out", 2.3/(ui["bpm"]/160))
+        camera.do_tween("logo_y_1", logo, "scale:y", 1, 0.75/(ui["bpm"]/160), "circ", "out", 2.3/(ui["bpm"]/160))
 
         # Flash
         flash = RMS.objects.rectangle("flash", "#FFFFFF")
@@ -141,20 +172,35 @@ def init(data = []):
 
         camera.add_item(flash)
 
-        camera.do_tween("flash_go", flash, "opacity", 0, 1, delay=3.45)
-        camera.do_tween("hide_bg", splash_background, "opacity", 0, 0.0001, delay=3.45)
+        camera.do_tween("flash_go", flash, "opacity", 0, 1, delay=3/(ui["bpm"]/160))
+        camera.do_tween("hide_bg", splash_background, "opacity", 0, 0.0001, delay=3/(ui["bpm"]/160))
 
         # Zoom
-        camera.do_tween("cam_x_0", camera, "zoom:x", 1.3, 0.8, "expo", "in", 2.7)
-        camera.do_tween("cam_y_0", camera, "zoom:y", 1.3, 0.8, "expo", "in", 2.7)
-        camera.do_tween("cam_x_1", camera, "zoom:x", 1, 1, "expo", "out", 3.45)
-        camera.do_tween("cam_y_1", camera, "zoom:y", 1, 1, "expo", "out", 3.45)
+        camera.do_tween("cam_x_0", camera, "zoom:x", 1.3, 0.7/(ui["bpm"]/160), "expo", "in", 2.3/(ui["bpm"]/160))
+        camera.do_tween("cam_y_0", camera, "zoom:y", 1.3, 0.7/(ui["bpm"]/160), "expo", "in", 2.3/(ui["bpm"]/160))
+        camera.do_tween("cam_x_1", camera, "zoom:x", 1, 1/(ui["bpm"]/160), "expo", "out", 3/(ui["bpm"]/160))
+        camera.do_tween("cam_y_1", camera, "zoom:y", 1, 1/(ui["bpm"]/160), "expo", "out", 3/(ui["bpm"]/160))
 
 def update():
+    global next_beat, started_bumping
+    
+    if time.time() >= next_beat and started_bumping:
+        camera.cancel_tween("cam_x")
+        camera.cancel_tween("cam_y")
+        camera.set_property("zoom", [1.02,1.02])
+        camera.do_tween("cam_x", camera, "zoom:x", 1, 1, "expo", "out")
+        camera.do_tween("cam_y", camera, "zoom:y", 1, 1, "expo", "out")
+        next_beat += beat_time
+    elif not started_bumping and camera.get_item("splash_background").get_property("opacity") == 0:
+        started_bumping = True
+        next_beat = time.time() + beat_time
+
+    clock.tick(fps_cap)
+
     scene.render_scene()
 
 def handle_event(event):
-    global selected_index
+    global selected_index, next_beat
 
     match event.type:
         case pygame.KEYDOWN:
@@ -172,26 +218,32 @@ def handle_event(event):
                     if selected_index >= len(buttons): selected_index = 0
                     select_button(selected_index)
                 case pygame.K_RETURN:
-                    if camera.has_item("splash_background"):
-                        if camera.get_item("splash_background").get_property("opacity") == 255:
-                            tweens = ["pygame_x_0", "pygame_y_0", "pygame_a_0", "pygame_x_1", "pygame_y_1", "pygame_a_1", "logo_x_0", "logo_y_0", "logo_a_0", "logo_py_1", "logo_x_1", "logo_y_1", "flash_set", "flash_go", "hide_bg", "cam_x_0", "cam_x_1", "cam_y_0", "cam_y_1"]
-                            for t in tweens: camera.cancel_tween(t)
+                    if camera.get_item("splash_background").get_property("opacity") == 255:
+                        tweens = [
+                            "pygame_x_0", "pygame_y_0", "pygame_a_0",
+                            "pygame_x_1", "pygame_y_1", "pygame_a_1",
+                            "logo_x_0", "logo_y_0", "logo_a_0",
+                            "logo_py_1", "logo_x_1", "logo_y_1",
+                            "cam_x_0", "cam_x_1", "cam_y_0", "cam_y_1",
+                            "flash_set", "flash_go", "hide_bg"
+                        ]
+                        for t in tweens: camera.cancel_tween(t)
 
-                            camera.get_item("pygame").set_property("opacity", 0)
+                        camera.get_item("pygame").set_property("opacity", 0)
 
-                            camera.get_item("logo").set_property("position", [1280/2, 200])
-                            camera.get_item("logo").set_property("scale", [1,1])
-                            camera.get_item("logo").set_property("opacity", 255)
+                        camera.get_item("logo").set_property("position", [1280/2, ui["logo"]["position"][1]])
+                        camera.get_item("logo").set_property("scale", [1,1])
+                        camera.get_item("logo").set_property("opacity", 255)
 
-                            camera.get_item("flash").set_property("opacity", 255/2)
-                            camera.do_tween("flash_go", camera.get_item("flash"), "opacity", 0, 2)
-                            camera.get_item("splash_background").set_property("opacity", 0)
+                        camera.get_item("flash").set_property("opacity", 255/2)
+                        camera.do_tween("flash_go", camera.get_item("flash"), "opacity", 0, 1)
+                        camera.get_item("splash_background").set_property("opacity", 0)
 
-                            camera.set_property("zoom", [1.3,1.3])
-                            camera.do_tween("cam_x", camera, "zoom:x", 1, 1, "expo", "out")
-                            camera.do_tween("cam_y", camera, "zoom:y", 1, 1, "expo", "out")
-
-                        else: press_button(buttons[selected_index][0].get_property("tag").replace("btn_", ""))
+                        camera.set_property("zoom", [1.3,1.3])
+                        camera.do_tween("cam_x", camera, "zoom:x", 1, 1, "expo", "out")
+                        camera.do_tween("cam_y", camera, "zoom:y", 1, 1, "expo", "out")
+                        
+                        next_beat -= 4
                     else:
                         press_button(buttons[selected_index][0].get_property("tag").replace("btn_", ""))
         case pygame.VIDEORESIZE:
@@ -216,16 +268,16 @@ def skin_grab(item):
 def make_buttons():
     global buttons
 
-    for button_name in ui.keys():
+    for button_name in ui["buttons"].keys():
         camera.cache_image(skin_grab(f"Menus/MainMenu/Buttons/active_{button_name}.png"))
         camera.cache_image(skin_grab(f"Menus/MainMenu/Buttons/inactive_{button_name}.png"))
 
         button = RMS.objects.image(f"btn_{button_name}", skin_grab(f"Menus/MainMenu/Buttons/inactive_{button_name}.png"))
         button.set_property("size", camera.get_image_size(skin_grab(f"Menus/MainMenu/Buttons/inactive_{button_name}.png")))
-        button.set_property("position", ui[button_name]["position"])
-        button.set_property("scale", ui[button_name]["inactive"])
+        button.set_property("position", ui["buttons"][button_name]["position"])
+        button.set_property("scale", ui["buttons"][button_name]["inactive"])
 
-        buttons.append([button, ui[button_name]["inactive"].copy(), ui[button_name]["active"].copy()])
+        buttons.append([button, ui["buttons"][button_name]["inactive"].copy(), ui["buttons"][button_name]["active"].copy()])
         camera.add_item(button)
 
 def select_button(index, sound = True):
@@ -251,7 +303,9 @@ def select_button(index, sound = True):
 
         i += 1
 
-    if sound: menu_sfx["scroll"].play()
+    if sound:
+        menu_sfx["scroll"].stop()
+        menu_sfx["scroll"].play()
 
 def press_button(name):
     menu_sfx["select"].play()

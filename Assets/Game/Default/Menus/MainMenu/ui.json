@@ -1,32 +1,39 @@
 { 
-    "single":
-    {
-        "position": [640, 350],
-        "inactive": [0.5,0.5],
-        "active": [0.6,0.6]
+    "buttons": {
+        "single":
+        {
+            "position": [640, 350],
+            "inactive": [0.5,0.5],
+            "active": [0.6,0.6]
+        },
+        "lan":
+        {
+            "position": [640, 400],
+            "inactive": [0.5,0.5],
+            "active": [0.6,0.6]
+        },
+        "content":
+        {
+            "position": [640, 450],
+            "inactive": [0.5,0.5],
+            "active": [0.6,0.6]
+        },
+        "options":
+        {
+            "position": [640, 500],
+            "inactive": [0.5,0.5],
+            "active": [0.6,0.6]
+        },
+        "exit":
+        {
+            "position": [640, 550],
+            "inactive": [0.5,0.5],
+            "active": [0.6,0.6]
+        }
     },
-    "lan":
+    "logo":
     {
-        "position": [640, 400],
-        "inactive": [0.5,0.5],
-        "active": [0.6,0.6]
+        "position": [640,200]
     },
-    "content":
-    {
-        "position": [640, 450],
-        "inactive": [0.5,0.5],
-        "active": [0.6,0.6]
-    },
-    "options":
-    {
-        "position": [640, 500],
-        "inactive": [0.5,0.5],
-        "active": [0.6,0.6]
-    },
-    "exit":
-    {
-        "position": [640, 550],
-        "inactive": [0.5,0.5],
-        "active": [0.6,0.6]
-    }
+    "bpm": 170
 }

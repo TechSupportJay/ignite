@@ -5,6 +5,8 @@ import pygame, os, math, time, json, random
 screen = None
 master_data = []
 
+fps_cap = 0
+
 # Variables
 
 screen = None
@@ -17,6 +19,7 @@ current_options = {}
 current_profile = ""
 options_ref = {}
 skin_dir = ""
+clock = pygame.time.Clock()
 
 #
 
@@ -41,6 +44,7 @@ def init(data):
     global current_options, skin_dir, options_ref, current_profile
     global section_index, option_index, menu_sfx
     global direction_held, last_tick, cur_ref
+    global fps_cap
 
     scene = RMS.scenes.scene(screen, "Options")
     camera = RMS.cameras.camera("Options", 1)
@@ -51,6 +55,8 @@ def init(data):
     current_profile = data[0]
     current_options = json.load(open(f"Data/{data[0]}/options.json"))
     skin_dir = f"{current_options["Customisation"]["content_folder"]}/Skins/{current_options["Customisation"]["skin"]}"
+
+    fps_cap = current_options["Video"]["fps_cap"]
 
     ### Background
     background = RMS.objects.image("background", skin_grab(f"Menus/Options/background.png"))
@@ -76,6 +82,7 @@ def init(data):
     #
     
     options_ref = json.load(open(f"Assets/Game/options.json"))
+
     cur_ref = {}
     load_options()
 
@@ -126,6 +133,8 @@ def update():
                     select_option(option_index)
                     play_sfx("scroll")
                     last_tick = time.time() + 0.075
+    
+    clock.tick(fps_cap)
             
 
 def handle_event(event):

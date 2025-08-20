@@ -767,9 +767,9 @@ def init(data):
 
     # Online
 
-    Assets.Scenes.online.client.reset()
     if data[3] == False: online_play = False
     else:
+        Assets.Scenes.online.client.reset()
         online_play = True
         Assets.Scenes.online.client.host_ip = data[3][1]
         Assets.Scenes.online.client.host_port = data[3][2]
