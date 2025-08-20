@@ -64,6 +64,14 @@ def init(data = []):
     background.set_property("position", [1280/2, 720/2])
     camera.add_item(background)
 
+    ### Version String
+    version = RMS.objects.text("version", "Version 0.28")
+    version.set_property("font", skin_grab("Fonts/default.ttf"))
+    version.set_property("font_size", 20)
+    version.set_property("text_align", "center")
+    version.set_property("position", [1280/2, 20])
+    camera.add_item(version)
+
     ### Buttons
     buttons = []
     selected_index = 0
@@ -136,6 +144,12 @@ def init(data = []):
         camera.do_tween("flash_go", flash, "opacity", 0, 1, delay=3.45)
         camera.do_tween("hide_bg", splash_background, "opacity", 0, 0.0001, delay=3.45)
 
+        # Zoom
+        camera.do_tween("cam_x_0", camera, "zoom:x", 1.3, 0.8, "expo", "in", 2.7)
+        camera.do_tween("cam_y_0", camera, "zoom:y", 1.3, 0.8, "expo", "in", 2.7)
+        camera.do_tween("cam_x_1", camera, "zoom:x", 1, 1, "expo", "out", 3.45)
+        camera.do_tween("cam_y_1", camera, "zoom:y", 1, 1, "expo", "out", 3.45)
+
 def update():
     scene.render_scene()
 
@@ -160,7 +174,7 @@ def handle_event(event):
                 case pygame.K_RETURN:
                     if camera.has_item("splash_background"):
                         if camera.get_item("splash_background").get_property("opacity") == 255:
-                            tweens = ["pygame_x_0", "pygame_y_0", "pygame_a_0", "pygame_x_1", "pygame_y_1", "pygame_a_1", "logo_x_0", "logo_y_0", "logo_a_0", "logo_py_1", "logo_x_1", "logo_y_1", "flash_set", "flash_go", "hide_bg"]
+                            tweens = ["pygame_x_0", "pygame_y_0", "pygame_a_0", "pygame_x_1", "pygame_y_1", "pygame_a_1", "logo_x_0", "logo_y_0", "logo_a_0", "logo_py_1", "logo_x_1", "logo_y_1", "flash_set", "flash_go", "hide_bg", "cam_x_0", "cam_x_1", "cam_y_0", "cam_y_1"]
                             for t in tweens: camera.cancel_tween(t)
 
                             camera.get_item("pygame").set_property("opacity", 0)
@@ -172,6 +186,11 @@ def handle_event(event):
                             camera.get_item("flash").set_property("opacity", 255/2)
                             camera.do_tween("flash_go", camera.get_item("flash"), "opacity", 0, 2)
                             camera.get_item("splash_background").set_property("opacity", 0)
+
+                            camera.set_property("zoom", [1.3,1.3])
+                            camera.do_tween("cam_x", camera, "zoom:x", 1, 1, "expo", "out")
+                            camera.do_tween("cam_y", camera, "zoom:y", 1, 1, "expo", "out")
+
                         else: press_button(buttons[selected_index][0].get_property("tag").replace("btn_", ""))
                     else:
                         press_button(buttons[selected_index][0].get_property("tag").replace("btn_", ""))
