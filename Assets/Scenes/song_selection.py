@@ -44,6 +44,18 @@ def skin_grab(item):
     if os.path.isfile(f"{skin_dir}/{item}"): return (f"{skin_dir}/{item}")
     else: return (f"Assets/Game/Default/{item}")
 
+def grab_json(name, key):
+    path = f"{skin_dir}/{name}"
+    dict = {}
+
+    if not os.path.isfile(f"{skin_dir}/{name}"): path = (f"Assets/Game/Default/{name}")
+
+    dict = json.load(open(path))
+    if key not in dict.keys():
+        dict = json.load(open((f"Assets/Game/Default/{name}")))
+    
+    return dict[key]
+
 are_songs = True
 def init(data):
     global scene, camera, difficulty_camera
@@ -70,7 +82,7 @@ def init(data):
     songs_dir = f"{profile_options["Customisation"]["content_folder"]}/Songs"
     skin_dir = f"{profile_options["Customisation"]["content_folder"]}/Skins/{profile_options["Customisation"]["skin"]}"
     ui = json.load(open(skin_grab("Menus/SongSelect/ui.json")))
-    ui_texts = json.load(open(skin_grab("texts.json")))["Song Selection"]
+    ui_texts = grab_json("texts.json", "Song Selection")
 
     # Objects
 
@@ -197,8 +209,8 @@ def handle_event(event):
                     if focused_element == "diff":
                         hide_difficulties()
                         invoke_script_function("return")
-                case pygame.K_o:
-                    master_data.append(["switch_scene", "options"])
+                    else:
+                        master_data.append(["switch_scene", "menu", [False, "single"]])
         case pygame.VIDEORESIZE:
             camera.set_property("scale", [event.w/1280, event.h/720])
             camera.set_property("position", [(event.w-1280)/2,(event.h-720)/2])

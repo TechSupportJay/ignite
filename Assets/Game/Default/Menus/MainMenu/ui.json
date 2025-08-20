@@ -1,0 +1,32 @@
+{ 
+    "single":
+    {
+        "position": [630, 350],
+        "inactive": [0.5,0.5],
+        "active": [0.6,0.6]
+    },
+    "lan":
+    {
+        "position": [630, 400],
+        "inactive": [0.5,0.5],
+        "active": [0.6,0.6]
+    },
+    "content":
+    {
+        "position": [630, 450],
+        "inactive": [0.5,0.5],
+        "active": [0.6,0.6]
+    },
+    "options":
+    {
+        "position": [630, 500],
+        "inactive": [0.5,0.5],
+        "active": [0.6,0.6]
+    },
+    "exit":
+    {
+        "position": [630, 550],
+        "inactive": [0.5,0.5],
+        "active": [0.6,0.6]
+    }
+}

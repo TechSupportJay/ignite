@@ -205,7 +205,7 @@ def show_rating(texture):
     camera.do_tween("rating_size_y", rating, "scale:y", 1, 0.5, "back", "out")
     camera.do_tween("rating_opacity", rating, "opacity", 0, 0.5, "cubic", "in")
 
-def strum_handle(index, down):
+def     strum_handle(index, down):
     to_grab = camera.get_item(f"strum_{index}")
 
     end_val = 1
@@ -547,18 +547,17 @@ def init(data):
     # Variables
     ### User Variables
 
-    user_scripts = []
+    user_scripts = []   
 
     current_profile = data[2]
     profile_options = json.load(open(f"Data/{current_profile}/options.json"))
     controls = json.load(open(f"Data/{current_profile}/controls.json"))
 
     fps_cap = int(profile_options["Video"]["fps_cap"])
-
     songs_dir = f"{profile_options["Customisation"]["content_folder"]}/Songs"
 
     chart_raw = json.load(open(f"{songs_dir}/{data[0]}/charts/{data[1]}.json"))
-    if "lanes" in chart_raw["meta"].keys(): note_count = chart_raw["meta"]["lanes"]
+    if "lanes" in chart_raw ["meta"].keys(): note_count = chart_raw["meta"]["lanes"]
     else: note_count = 4
 
     skin_dir = f"{profile_options["Customisation"]["content_folder"]}/Skins/{profile_options["Customisation"]["skin"]}"
@@ -613,8 +612,6 @@ def init(data):
         if not "l" in sec.keys(): sec["l"] = 0.0
         chart[sec["p"]-1].append(sec)
         chart_len += 1
-
-    for i in range(note_count): chart.append([])
 
     # Sort Chart
 
@@ -768,7 +765,7 @@ def init(data):
     misssound = pygame.mixer.Sound(skin_grab(f"SFX/miss.ogg"))
     misssound.set_volume(profile_options["Audio"]["vol_miss"] * profile_options["Audio"]["vol_master"])
 
-    # Onlinne
+    # Online
 
     Assets.Scenes.online.client.reset()
     if data[3] == False: online_play = False
@@ -797,9 +794,9 @@ def update():
                 key_pressed = True
                 break
         if key_pressed and not pressed[i] and not profile_options["Gameplay"]["botplay"]:
-                key_handle(i, True)
-                pressed[i] = True
-                cur_pressed[i] = True
+            key_handle(i, True)
+            pressed[i] = True
+            cur_pressed[i] = True
         if not key_pressed and pressed[i] and cur_pressed[i] and not profile_options["Gameplay"]["botplay"]:
             key_handle(i, False)
             pressed[i] = False

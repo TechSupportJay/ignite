@@ -40,7 +40,7 @@ def init(data):
     global scene, camera
     global current_options, skin_dir, options_ref, current_profile
     global section_index, option_index, menu_sfx
-    global direction_held, last_tick
+    global direction_held, last_tick, cur_ref
 
     scene = RMS.scenes.scene(screen, "Options")
     camera = RMS.cameras.camera("Options", 1)
@@ -76,6 +76,7 @@ def init(data):
     #
     
     options_ref = json.load(open(f"Assets/Game/options.json"))
+    cur_ref = {}
     load_options()
 
     #
@@ -173,7 +174,7 @@ def handle_event(event):
                     direction_held = ["right", True, time.time()+0.5]
                 case pygame.K_ESCAPE:
                     save_options()
-                    master_data.append(["switch_scene", "song_selection"])
+                    master_data.append(["switch_scene", "menu", [False, "options"]])
                 case pygame.K_BACKSPACE:
                     option_input(option_index, "reset")
                     play_sfx("back")

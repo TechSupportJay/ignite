@@ -1,6 +1,6 @@
 # Imports
 import pygame
-import Assets.Scenes.game, Assets.Scenes.splash, Assets.Scenes.song_selection, Assets.Scenes.options
+import Assets.Scenes.game, Assets.Scenes.main_menu, Assets.Scenes.song_selection, Assets.Scenes.options
 
 # PyGame
 
@@ -17,7 +17,7 @@ screen_size = [1280,720]
 current_scene = "" 
 valid_scenes = {
     "game": Assets.Scenes.game,
-    "splash": Assets.Scenes.splash,
+    "menu": Assets.Scenes.main_menu,
     "song_selection": Assets.Scenes.song_selection,
     "options": Assets.Scenes.options
 }
@@ -37,6 +37,7 @@ def switch_scene(tag, data = []):
         match tag:
             case "game": valid_scenes[current_scene].init([data[0], data[1], current_profile, data[2]])
             case "song_selection": valid_scenes[current_scene].init([current_profile])
+            case "menu": valid_scenes[current_scene].init([current_profile, data])
             case _: valid_scenes[current_scene].init([current_profile])
         valid_scenes[current_scene].resize(screen_size)
 
@@ -45,7 +46,7 @@ for val in valid_scenes.keys():
     valid_scenes[val].screen = screen
 
 # Start
-switch_scene("song_selection")
+switch_scene("menu", [True])
 
 # Update Loop
 while True:
@@ -73,5 +74,7 @@ while True:
         valid_scenes[current_scene].master_data = []
         for pair in data:
             match pair[0]:
-                case "switch_scene": switch_scene(pair[1])
+                case "switch_scene":
+                    if len(pair) == 3: switch_scene(pair[1], pair[2])
+                    else: switch_scene(pair[1])
                 case "load_song": switch_scene("game", [pair[1], pair[2], pair[3]])
