@@ -84,7 +84,7 @@ def init(data = []):
     camera.add_item(background)
 
     ### Version String
-    version = RMS.objects.text("version", "Version 0.29")
+    version = RMS.objects.text("version", "Version 0.30")
     version.set_property("font", skin_grab("Fonts/default.ttf"))
     version.set_property("font_size", 20)
     version.set_property("text_align", "center")

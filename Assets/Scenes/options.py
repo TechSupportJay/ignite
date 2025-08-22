@@ -221,7 +221,8 @@ def load_options():
     
     for section in options_ref.keys():
         for option in options_ref[section].keys():
-            options_ref[section][option]["value"] = current_options[section][option]
+            if option in current_options[section].keys(): options_ref[section][option]["value"] = current_options[section][option]
+            else: options_ref[section][option]["value"] = options_ref[section][option]["default"]
 
     load_section(0)
 

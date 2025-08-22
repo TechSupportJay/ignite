@@ -11,6 +11,8 @@ screen = None
 scene = None
 camera = None
 
+sound = None
+
 #
 
 skin_dir = ""
@@ -20,7 +22,8 @@ ui_texts = {}
 # Master Functions
 
 def init(data = []):
-    global scene, camera, skin_dir, ui_texts, ui
+    global scene, camera, sound
+    global skin_dir, ui_texts, ui
 
     scene = RMS.scenes.scene(screen, "Template")
     camera = RMS.cameras.camera("HUD", 1)
@@ -145,10 +148,10 @@ def init(data = []):
 
     # Sound
 
-    rank_sound = pygame.mixer.Sound(skin_grab(f"Results/SFX/{game_data["rank"]}.ogg"))
-    rank_sound.set_volume(profile_options["Audio"]["vol_sfx"] * profile_options["Audio"]["vol_master"])
+    sound = pygame.mixer.Sound(skin_grab(f"Results/SFX/{game_data["rank"]}.ogg"))
+    sound.set_volume(profile_options["Audio"]["vol_sfx"] * profile_options["Audio"]["vol_master"])
 
-    rank_sound.play()
+    sound.play()
 
 def update():
     scene.render_scene()
@@ -163,6 +166,7 @@ def handle_event(event):
             camera.set_property("position", [(event.w-1280)/2,(event.h-720)/2])
 
 def destroy():
+    sound.stop()
     global camera, scene
     del camera, scene
 

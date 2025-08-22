@@ -352,6 +352,13 @@ def process_hits(lane, time_in):
                     if profile_options["Gameplay"]["botplay"] and chart[l][i]["l"] == 0:
                         key_handle(lane-1, False)
                         pressed[lane-1] = False
+                elif not profile_options["Gameplay"]["ghost_tapping"]:
+                    player_stats["misses"] += 1
+                    player_stats["combo"] = 0
+                    player_stats["score"] -= 100
+                    if profile_options["Audio"]["vol_miss"] > 0: misssound.play()
+                    show_rating("miss")
+                    invoke_script_function("note_miss", [l])
                 return
 
 def process_time(difference):
