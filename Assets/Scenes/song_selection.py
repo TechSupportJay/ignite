@@ -140,6 +140,7 @@ def init(data):
     overlay.set_property("size", [1280,720])
     overlay.set_property("position", [1280/2,720/2])
     overlay.set_property("opacity", 0)
+    overlay.set_property("priority", 10)
     camera.add_item(overlay)
 
     # Transition
@@ -185,6 +186,7 @@ def handle_event(event):
                             diff_selection -= 1
                             if diff_selection < 0: diff_selection = len(difficulties)-1
                             select_difficulty(diff_selection)
+                    menu_sfx["scroll"].stop()
                     menu_sfx["scroll"].play()
                     invoke_script_function("scroll", ["up"])
                 case pygame.K_DOWN:
@@ -197,6 +199,7 @@ def handle_event(event):
                             diff_selection += 1
                             if diff_selection > len(difficulties)-1: diff_selection = 0
                             select_difficulty(diff_selection)
+                    menu_sfx["scroll"].stop()
                     menu_sfx["scroll"].play()
                     invoke_script_function("scroll", ["down"])
                 case pygame.K_RETURN:
@@ -402,6 +405,7 @@ def display_difficulties(song):
     
     if len(charts) == 1: start_song(song, charts[0]); return
 
+    menu_sfx["select"].stop()
     menu_sfx["select"].play()
 
     focused_element = "diff"

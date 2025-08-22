@@ -60,7 +60,7 @@ def init(data = []):
     ### SFX
 
     menu_sfx = {}
-    sfx = ["scroll", "select"]
+    sfx = ["scroll", "select", "back"]
     for s in sfx:
         menu_sfx[s] = pygame.mixer.Sound(skin_grab(f"SFX/Menu/{s}.ogg"))
         menu_sfx[s].set_volume(profile_options["Audio"]["vol_sfx"] * profile_options["Audio"]["vol_master"])
@@ -84,7 +84,7 @@ def init(data = []):
     camera.add_item(background)
 
     ### Version String
-    version = RMS.objects.text("version", "Version 0.28")
+    version = RMS.objects.text("version", "Version 0.29")
     version.set_property("font", skin_grab("Fonts/default.ttf"))
     version.set_property("font_size", 20)
     version.set_property("text_align", "center")
@@ -98,6 +98,8 @@ def init(data = []):
     make_buttons()
     select_button(selected_index, False)
 
+    start_music = True
+
     if len(data[1]) == 2:
         i = 0
         for button in buttons:
@@ -107,11 +109,14 @@ def init(data = []):
                 break
             i += 1
         del i
+
+        if data[1][1] == "options": start_music = False
         
     # Menu Schmusic
-    pygame.mixer.music.load(skin_grab("Menus/MainMenu/menu_music.wav"))
-    pygame.mixer.music.set_volume(profile_options["Audio"]["vol_music"] * profile_options["Audio"]["vol_menu"])
-    pygame.mixer.music.play(-1)
+    if start_music:
+        pygame.mixer.music.load(skin_grab("Menus/MainMenu/menu_music.wav"))
+        pygame.mixer.music.set_volume(profile_options["Audio"]["vol_music"] * profile_options["Audio"]["vol_menu"])
+        pygame.mixer.music.play(-1)
 
     # BPM
     beat_time = (60/ui["bpm"])
@@ -180,6 +185,7 @@ def init(data = []):
         camera.do_tween("cam_y_0", camera, "zoom:y", 1.3, 0.7/(ui["bpm"]/160), "expo", "in", 2.3/(ui["bpm"]/160))
         camera.do_tween("cam_x_1", camera, "zoom:x", 1, 1/(ui["bpm"]/160), "expo", "out", 3/(ui["bpm"]/160))
         camera.do_tween("cam_y_1", camera, "zoom:y", 1, 1/(ui["bpm"]/160), "expo", "out", 3/(ui["bpm"]/160))
+    else: menu_sfx["back"].play()
 
 def update():
     global next_beat, started_bumping
@@ -190,6 +196,13 @@ def update():
         camera.set_property("zoom", [1.02,1.02])
         camera.do_tween("cam_x", camera, "zoom:x", 1, 1, "expo", "out")
         camera.do_tween("cam_y", camera, "zoom:y", 1, 1, "expo", "out")
+
+        camera.cancel_tween("logo_x")
+        camera.cancel_tween("logo_y")
+        camera.get_item("logo").set_property("scale", [1.05,1.05])
+        camera.do_tween("logo_x", camera.get_item("logo"), "scale:x", 1, 1, "expo", "out")
+        camera.do_tween("logo_y", camera.get_item("logo"), "scale:y", 1, 1, "expo", "out")
+
         next_beat += beat_time
     elif not started_bumping and camera.get_item("splash_background").get_property("opacity") == 0:
         started_bumping = True
@@ -313,4 +326,5 @@ def press_button(name):
     match name:
         case "single": master_data.append(["switch_scene", "song_selection"])
         case "options": master_data.append(["switch_scene", "options"])
+        case "content": master_data.append(["switch_scene", "content"])
         case "exit": exit()

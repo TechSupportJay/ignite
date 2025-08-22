@@ -1,6 +1,6 @@
 # Imports
 import pygame
-import Assets.Scenes.game, Assets.Scenes.main_menu, Assets.Scenes.song_selection, Assets.Scenes.options
+import Assets.Scenes.game, Assets.Scenes.main_menu, Assets.Scenes.song_selection, Assets.Scenes.options, Assets.Scenes.results
 
 # PyGame
 
@@ -19,7 +19,8 @@ valid_scenes = {
     "game": Assets.Scenes.game,
     "menu": Assets.Scenes.main_menu,
     "song_selection": Assets.Scenes.song_selection,
-    "options": Assets.Scenes.options
+    "options": Assets.Scenes.options,
+    "results": Assets.Scenes.results
 }
 
 current_profile = "Profile1"
@@ -36,10 +37,13 @@ def switch_scene(tag, data = []):
         if data != []: print(f"[i] ...with data {data}")
         match tag:
             case "game": valid_scenes[current_scene].init([data[0], data[1], current_profile, data[2]])
-            case "song_selection": valid_scenes[current_scene].init([current_profile])
-            case "menu": valid_scenes[current_scene].init([current_profile, data])
+            case "menu" | "results": valid_scenes[current_scene].init([current_profile, data])
             case _: valid_scenes[current_scene].init([current_profile])
         valid_scenes[current_scene].resize(screen_size)
+        if current_scene not in ["game"]:
+            valid_scenes[current_scene].camera.set_property("zoom", [1.1,1.1])
+            valid_scenes[current_scene].camera.do_tween("cam_x", valid_scenes[current_scene].camera, "zoom:x", 1, 0.75, "expo", "out")
+            valid_scenes[current_scene].camera.do_tween("cam_y", valid_scenes[current_scene].camera, "zoom:y", 1, 0.75, "expo", "out")
 
 # Set Screens
 for val in valid_scenes.keys():

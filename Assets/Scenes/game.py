@@ -48,7 +48,12 @@ player_stats = {
     "combo": 0,
     "misses": 0,
     "accuracy": 0.0,
-    "rank": "s+"
+    "rank": "s+",
+    "ratings": {
+        "perf": 0,
+        "okay": 0,
+        "bad": 0
+    }
 }
 
 perf_score = 0
@@ -65,6 +70,8 @@ chart_len = 0
 processed_notes = 0
 
 chart = []
+
+song_ended = False
 
 ##### Sort
 
@@ -205,7 +212,7 @@ def show_rating(texture):
     camera.do_tween("rating_size_y", rating, "scale:y", 1, 0.5, "back", "out")
     camera.do_tween("rating_opacity", rating, "opacity", 0, 0.5, "cubic", "in")
 
-def     strum_handle(index, down):
+def strum_handle(index, down):
     to_grab = camera.get_item(f"strum_{index}")
 
     end_val = 1
@@ -353,14 +360,18 @@ def process_time(difference):
     if difference <= profile_options["Gameplay"]["timing_perfect"]:
         show_rating("perf")
         player_stats["score"] += 500
+        player_stats["ratings"]["perf"] += 1
     elif difference <= profile_options["Gameplay"]["timing_okay"]:
         show_rating("okay")
         player_stats["score"] += 250
+        player_stats["ratings"]["okay"] += 1
     else:
         show_rating("bad")
-        player_stats["score"] += 500
+        player_stats["score"] += 100
+        player_stats["ratings"]["bad"] += 1
 
     player_stats["combo"] += 1
+    if player_stats["combo"] > player_stats["highest"]: player_stats["highest"] = player_stats["combo"]
     perf_score += 500
 
 def key_handle(index, down):
@@ -440,6 +451,7 @@ dt = cur_time
 
 def conduct(time_in):
     global next_step, cur_step, music_playing, dt, last_time
+    global song_ended
 
     dt = time_in - last_time
     last_time = time_in
@@ -448,8 +460,9 @@ def conduct(time_in):
         pygame.mixer.music.play()
         music_playing = True
         invoke_script_function("song_start")
-    elif music_playing and not pygame.mixer.music.get_busy():
-        master_data.append(["switch_scene", "song_selection"])
+    elif music_playing and not pygame.mixer.music.get_busy() and not song_ended:
+        song_ended = True
+        camera.do_tween("fadeout", camera.get_item("overlay"), "opacity", 255, 0.5)
     else:
         if time_in >= next_step:
             next_step += step_time
@@ -488,11 +501,14 @@ def update_accuracy():
         player_stats["accuracy"] = player_stats["score"] / perf_score
         if player_stats["accuracy"] < 0: player_stats["accuracy"] = 0
 
-    for rank in ["s+", "s", "a", "b", "c", "d", "f"]:
-        r = profile_options["Gameplay"][f"rank_{rank}"]
-        if player_stats["accuracy"] >= r:
-            player_stats["rank"] = rank
-            break
+    if profile_options["Gameplay"]["botplay"]: player_stats["rank"] = "bot"
+    else:
+        for rank in ["s+", "s", "a", "b", "c", "d", "f"]:
+            r = profile_options["Gameplay"][f"rank_{rank}"]
+            if player_stats["accuracy"] >= r:
+                player_stats["rank"] = rank
+                break
+            player_stats["rank"] = "f"
 
 
 # Music
@@ -531,6 +547,7 @@ def init(data):
     global background, rating, note_bg
     global user_scripts, profile_options, controls, binds, pressed
     global has_created, master_data, online_play
+    global song_ended
 
     # Initalise Scene
 
@@ -587,9 +604,15 @@ def init(data):
     player_stats = {
         "score": 0,
         "combo": 0,
+        "highest": 0,
         "misses": 0,
         "accuracy": 0.0,
-        "rank": "s+"
+        "rank": "s+",
+        "ratings": {
+            "perf": 0,
+            "okay": 0,
+            "bad": 0
+        }
     }
 
     perf_score = 0
@@ -774,6 +797,16 @@ def init(data):
         Assets.Scenes.online.client.host_ip = data[3][1]
         Assets.Scenes.online.client.host_port = data[3][2]
 
+    # Exit Fade
+    overlay = RMS.objects.rectangle("overlay", "#000000")
+    overlay.set_property("size", [1280,720])
+    overlay.set_property("position", [1280/2,720/2])
+    overlay.set_property("priority", 100)
+    overlay.set_property("opacity", 0)
+    camera.add_item(overlay)
+
+    song_ended = False
+
     # Finish
 
     load_scripts(False)
@@ -824,6 +857,20 @@ def update():
     # Script
     invoke_script_function("update", [dt])
 
+    # End Fade
+    if song_ended:
+        if camera.get_item("overlay").get_property("opacity") == 255:
+            master_data.append(["switch_scene", "results", {
+                "meta": json.load(open(f"{profile_options["Customisation"]["content_folder"]}/Songs/{song_name}/meta.json")),
+                "score": player_stats["score"],
+                "accuracy": player_stats["accuracy"],
+                "highest": player_stats["highest"],
+                "ratings": player_stats["ratings"],
+                "misses": player_stats["misses"],
+                "rank": player_stats["rank"],
+                "folder": song_name
+            }])
+
     # Render
     scene.render_scene()
 
@@ -833,7 +880,17 @@ def handle_event(event):
             if not event.key in binds:
                 match event.key:
                     case pygame.K_F5: load_scripts()
-                    case pygame.K_ESCAPE: master_data.append(["switch_scene", "song_selection"])
+                    case pygame.K_ESCAPE:
+                        master_data.append(["switch_scene", "results", {
+                            "meta": json.load(open(f"{profile_options["Customisation"]["content_folder"]}/Songs/{song_name}/meta.json")),
+                            "score": player_stats["score"],
+                            "accuracy": player_stats["accuracy"],
+                            "highest": player_stats["highest"],
+                            "ratings": player_stats["ratings"],
+                            "misses": player_stats["misses"],
+                            "rank": player_stats["rank"],
+                            "folder": song_name
+                        }])
                     case _: pass
         case pygame.KEYUP:
             if not event.key in binds:

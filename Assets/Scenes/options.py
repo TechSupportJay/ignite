@@ -310,7 +310,7 @@ def make_option(section, option, index):
             toggle_icon = RMS.objects.image(f"toggle_{index}", toggled)
             toggle_icon.set_property("position:x", 30 + right_side + 50)
             toggle_icon.set_property("position:y", option_text.get_property("position:y") + (camera.get_text_size(f"option_{index}")[1]/2))
-            toggle_icon.set_property("size", [60,60])
+            toggle_icon.set_property("size", camera.get_image_size(skin_grab("Menus/Options/toggle_off.png")))
             toggle_icon.set_property("opacity", opacity)
 
             camera.add_item(toggle_icon)
@@ -321,7 +321,7 @@ def make_option(section, option, index):
                 side_icon.set_property("position:x", 30 + right_side + 50)
                 if side == "right": side_icon.set_property("position:x", 30 + right_side + 300)
                 side_icon.set_property("position:y", option_text.get_property("position:y") + (camera.get_text_size(f"option_{index}")[1]/2))
-                side_icon.set_property("size", [60,60])
+                side_icon.set_property("size", camera.get_image_size(skin_grab(f"Menus/Options/{side}.png")))
                 side_icon.set_property("opacity", opacity)
 
                 camera.add_item(side_icon)

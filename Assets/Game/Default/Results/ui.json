@@ -1,0 +1,60 @@
+{
+    "rank": {
+        "position": [250,200]
+    },
+    "score": {
+        "text_align": "right",
+        "position": [1220,30],
+        "font_size": 64
+    },
+    "accuracy": {
+        "text_align": "right",
+        "position": [1220,100],
+        "font": "sub.ttf"
+    },
+    "highest": {
+        "text_align": "right",
+        "position": [1220,132],
+        "font": "sub.ttf"
+    },
+    "perf": {
+        "text_align": "right",
+        "position": [1220,200],
+        "font": "sub.ttf"
+    },
+    "okay": {
+        "text_align": "right",
+        "position": [1220,232],
+        "font": "sub.ttf"
+    },
+    "bad": {
+        "text_align": "right",
+        "position": [1220,264],
+        "font": "sub.ttf"
+    },
+    "misses": {
+        "text_align": "right",
+        "position": [1220,296],
+        "font": "sub.ttf"
+    },
+    "name": {
+        "position": [235,500],
+        "font_size": 50
+    },
+    "artist": {
+        "position": [235,570],
+        "font": "sub.ttf"
+    },
+    "chartist": {
+        "position": [235,602],
+        "font": "sub.ttf"
+    },
+    "bpm": {
+        "position": [235,650],
+        "font": "sub.ttf"
+    },
+    "album": {
+        "position": [125,600],
+        "size": [175,175]
+    }
+}

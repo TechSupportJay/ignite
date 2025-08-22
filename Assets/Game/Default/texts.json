@@ -9,7 +9,8 @@
             "b": "B",
             "c": "C",
             "d": "D",
-            "f": "F"
+            "f": "F",
+            "bot": "BOTPLAY"
         }
     },
     "Song Selection":
@@ -17,5 +18,13 @@
         "duration": "Duration: %s",
         "bpm": "BPM: %s",
         "chartist": "Chartist: %s"
+    },
+    "Results": {
+        "perf": "Perfects: %s",
+        "okay": "Okays: %s",
+        "bad": "Bads: %s",
+        "misses": "Misses: %s",
+        "highest": "Highest Combo: %sx",
+        "accuracy": "Accuracy: %s%"
     }
 }
