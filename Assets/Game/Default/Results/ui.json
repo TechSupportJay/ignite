@@ -39,14 +39,19 @@
     },
     "name": {
         "position": [235,500],
-        "font_size": 50
+        "font_size": 40
+    },
+    "difficulty": {
+        "position": [235,550],
+        "size": [175,175],
+        "font_size": 20
     },
     "artist": {
-        "position": [235,570],
+        "position": [235,582],
         "font": "sub.ttf"
     },
     "chartist": {
-        "position": [235,602],
+        "position": [235,614],
         "font": "sub.ttf"
     },
     "bpm": {

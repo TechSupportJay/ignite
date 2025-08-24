@@ -115,7 +115,7 @@ def init(data = []):
     # Menu Schmusic
     if start_music:
         pygame.mixer.music.load(skin_grab("Menus/MainMenu/menu_music.wav"))
-        pygame.mixer.music.set_volume(profile_options["Audio"]["vol_music"] * profile_options["Audio"]["vol_menu"])
+        pygame.mixer.music.set_volume(profile_options["Audio"]["vol_master"] * profile_options["Audio"]["vol_menu"])
         pygame.mixer.music.play(-1)
 
     # BPM

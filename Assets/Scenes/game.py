@@ -875,7 +875,8 @@ def update():
                 "ratings": player_stats["ratings"],
                 "misses": player_stats["misses"],
                 "rank": player_stats["rank"],
-                "folder": song_name
+                "folder": song_name,
+                "difficulty": song_difficulty
             }])
 
     # Render
@@ -896,7 +897,8 @@ def handle_event(event):
                             "ratings": player_stats["ratings"],
                             "misses": player_stats["misses"],
                             "rank": player_stats["rank"],
-                            "folder": song_name
+                            "folder": song_name,
+                            "difficulty": song_difficulty
                         }])
                     case _: pass
         case pygame.KEYUP:

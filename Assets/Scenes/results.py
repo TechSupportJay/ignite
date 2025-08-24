@@ -49,10 +49,12 @@ def init(data = []):
     camera.add_item(background)
 
     # Texts
-    song_stuff = ["name", "artist", "chartist", "bpm"]
+    song_stuff = ["name", "artist", "chartist", "difficulty", "bpm"]
     for s in song_stuff:
-        content = data[1]["meta"][s]
-        if s in ["chartist", "bpm"]: content = get_text("Song Selection", s, content)
+        content = ""
+        if s in ["chartist", "bpm", "artist"]: content = get_text("Song Selection", s,  data[1]["meta"][s])
+        elif s == "difficulty": content = data[1][s]
+        else: content = data[1]["meta"][s]
 
         text = RMS.objects.text(s, content)
         text.set_property("position", get_ui_property(s, "position", [0,0]))
@@ -135,7 +137,7 @@ def init(data = []):
     camera.do_tween("rank_x_2", rank, "scale:x", 1, 0.25, "back", "out", delay=1.2)
     camera.do_tween("rank_y_2", rank, "scale:y", 1, 0.25, "back", "out", delay=1.2)
 
-    to_move = ["album", "name", "artist", "chartist", "bpm", "score", "accuracy", "highest", "perf", "okay", "bad", "misses"]
+    to_move = ["album", "name", "artist", "difficulty", "chartist", "bpm", "score", "accuracy", "highest", "perf", "okay", "bad", "misses"]
     i = 0
     for obj in to_move:
         obj = camera.get_item(obj)
