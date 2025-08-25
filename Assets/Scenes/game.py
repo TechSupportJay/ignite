@@ -123,28 +123,41 @@ def invoke_script_function(tag, data = []):
             case "key_up": script.key_up(data[0]) 
 
 def load_scripts(mid_song = True):
-    fancy_print(f"Loaded Scripts...", "Game", "i")
+    fancy_print(f"Loading Scripts...", "Game", "i")
 
     if mid_song: invoke_script_function("destroy")
 
     global user_scripts
     user_scripts = []
+    print_names = []
 
-    if os.path.isfile(f"{songs_dir}/{song_name}/script.py"): add_script("", "song", f"{songs_dir}/{song_name}/script.py")
+    if os.path.isfile(f"{songs_dir}/{song_name}/script.py"):
+        add_script("", "song", f"{songs_dir}/{song_name}/script.py")
+        if not script[:1] == "_": print_names.append("* Song Script")
     if len(os.listdir(f"{profile_options["Customisation"]["content_folder"]}/Scripts")) > 0:
-        for script in os.listdir(f"{profile_options["Customisation"]["content_folder"]}/Scripts"): add_script("scr_", script.replace(".py", ""), f"{profile_options["Customisation"]["content_folder"]}/Scripts/{script}")
+        for script in os.listdir(f"{profile_options["Customisation"]["content_folder"]}/Scripts"):
+            add_script("scr_", script.replace(".py", ""), f"{profile_options["Customisation"]["content_folder"]}/Scripts/{script}")
+            if not script[:1] == "_": print_names.append(f"Scripts/{script}")
     if os.path.isdir((f"{skin_dir}/Scripts")):
         if len(os.listdir(f"{skin_dir}/Scripts")) > 0:
-            for script in os.listdir(f"{skin_dir}/Scripts"): add_script("skn_", script.replace(".py", ""), f"{skin_dir}/Scripts/{script}")
+            for script in os.listdir(f"{skin_dir}/Scripts"):
+                add_script("skn_", script.replace(".py", ""), f"{skin_dir}/Scripts/{script}")
+                if not script[:1] == "_": print_names.append(f"Skin Scripts/{script}")
     
     if profile_options["Customisation"]["skin"] == "default":
         if os.path.isdir((f"Assets/Game/Default/Scripts")):
             if len(os.listdir(f"Assets/Game/Default/Scripts")) > 0:
-                for script in os.listdir(f"Assets/Game/Default/Scripts"): add_script("skn_", script.replace(".py", ""), f"Assets/Game/Default/Scripts/{script}")
+                for script in os.listdir(f"Assets/Game/Default/Scripts"):
+                    add_script("skn_", script.replace(".py", ""), f"Assets/Game/Default/Scripts/{script}")
+                    if not script[:1] == "_": print_names.append(f"Skin Scripts/{script}")
     
     if mid_song: invoke_script_function("create")
 
-    fancy_print(f"Loaded Scripts: {user_scripts}", "Game", "/")
+    script_print = ""
+    for script in print_names:
+        script_print += f"{script}\n"
+    script_print = script_print[:-2]
+    fancy_print(f"Loaded Scripts: {script_print}", "Game", "/")
 
 def set_global(prop, val):
     globals()[prop] = val

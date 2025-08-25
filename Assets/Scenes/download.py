@@ -214,6 +214,7 @@ def client_update():
                             if not download[split[0]]["finished"]:
                                 if len(download[split[0]]["content"]) < int(split[1]):
                                     fancy_print(f"{split[0]} states it has finished downloading\nbut size does not match\n({len(download[split[0]]["content"])} < {split[1]})", f"Download: {currently_downloading}", "D")
+                                    send("download", f"set_pos|{len(download[split[0]]["content"])}")
                                     request_fulfilled = True
                                     continue_download(split[0])
                                 else:
@@ -288,7 +289,7 @@ def handle_event(event):
                             menu_sfx["scroll"].play()
                     case pygame.K_RETURN:
                         if len(songs) > 0 and currently_downloading == "":
-                            if os.path.exists(f"{profile_options["Customisation"]["content_folder"]}/Songs/{songs[selection_id][0]}"):
+                            if os.path.exists(f"{profile_options["Customisation"]["content_folder"]}/Songs/{songs[selection_id][0]}") and not pygame.key.get_pressed()[pygame.K_LSHIFT]:
                                 master_data.append(["switch_scene", "song_selection"])
                             else:
                                 menu_sfx["select"].stop()
