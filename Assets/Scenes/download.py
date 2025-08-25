@@ -104,6 +104,31 @@ def init(data = []):
         background.set_property("position", [1280/2,720/2])
         camera.add_item(background)
 
+        download_background = RMS.objects.image("download_background", skin_grab(f"Menus/Download/download_background.png"))
+        download_background.set_property("size", [1280,720])
+        download_background.set_property("position", [1280/2,720/2])
+        download_background.set_property("visible", False)
+        download_background.set_property("priority", 99)
+        camera.add_item(download_background)
+
+        download_title = RMS.objects.text("download_title", "Song Name")
+        download_title.set_property("font", skin_grab("Fonts/default.ttf"))
+        download_title.set_property("font_size", 48)
+        download_title.set_property("text_align", "center")
+        download_title.set_property("position", [1280/2,720/2-60])
+        download_title.set_property("priority", 100)
+        download_title.set_property("visible", False)
+        camera.add_item(download_title)
+
+        download_progress = RMS.objects.text("download_progress", "Downloading Song...")
+        download_progress.set_property("font", skin_grab("Fonts/sub.ttf"))
+        download_progress.set_property("font_size", 32)
+        download_progress.set_property("text_align", "center")
+        download_progress.set_property("position", [1280/2,720/2+10])
+        download_progress.set_property("priority", 100)
+        download_progress.set_property("visible", False)
+        camera.add_item(download_progress)
+
         ###
 
         ### Song Info Text
@@ -435,6 +460,14 @@ def download_chart(id):
         "audio": {"finished": False}
     }
 
+    # Show Overlay
+    camera.get_item("download_background").set_property("visible", True)
+    camera.get_item("download_title").set_property("visible", True)
+    camera.get_item("download_progress").set_property("visible", True)
+
+    camera.get_item("download_title").set_property("text", songs[selection_id][2].get_property("text"))
+    camera.get_item("download_progress").set_property("text", "Starting Download...")
+
     send("download", f"get_charts|{currently_downloading}")
     
 def continue_download(current):
@@ -458,10 +491,20 @@ def continue_download(current):
                 if current in charts:
                     current_index = charts.index(current)+1
                     if current_index >= len(charts):
-                        print("[D] Download Finished!")
+                        print("[D] Download has finished!")
+                        camera.get_item("download_background").set_property("visible", False)
+                        camera.get_item("download_title").set_property("visible", False)
+                        camera.get_item("download_progress").set_property("visible", False)
+                        menu_sfx["play"].play()
                         return
-                    else: current = charts[current_index]
+                    else:
+                        current = charts[current_index]
+                        camera.get_item("download_progress").set_property("text", f"Downloading Chart {current_index+1}/{len(charts)}...")
         continue_download(current)
+    else:
+        match current:
+            case "audio": camera.get_item("download_progress").set_property("text", f"Downloading Audio...")
+            case "meta": camera.get_item("download_progress").set_property("text", f"Downloading Meta...")
 
     requested = current
 
