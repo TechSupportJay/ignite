@@ -110,7 +110,7 @@ def init(data = []):
             i += 1
         del i
 
-        if data[1][1] == "options": start_music = False
+        if data[1][1] in ["options", "content"]: start_music = False
         
     # Menu Schmusic
     if start_music:

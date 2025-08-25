@@ -74,7 +74,7 @@ def init(data = []):
     # Online
 
     header = 64
-    ip = "192.168.1.100" # Temp
+    ip = "25.14.234.237" # Temp
     port = 5050 # Temp
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
 
@@ -158,6 +158,7 @@ def init(data = []):
         ###
 
         camera.cache_image(skin_grab(f"Menus/Download/tab.png"))
+        camera.cache_image(skin_grab(f"Menus/Download/tab_owned.png"))
         songs = []
         send("sql", "SELECT * FROM songs")
 
@@ -167,13 +168,19 @@ def init(data = []):
         thread.start()
     else:
         print("[!] Unable to Connect")
+        error = RMS.objects.image("error", skin_grab(f"Menus/Download/error.png"))
+        error.set_property("size", [1280,720])
+        error.set_property("position", [1280/2,720/2])
+        error.set_property("visible", False)
+        error.set_property("priority", 99)
+        camera.add_item(error)
 
 def client_update():
     global connected, currently_downloading, download, requested, charts, ext, request_fulfilled
 
     while connected:
         # Check for UTF-8
-        pre = client.recv(327680)
+        pre = client.recv(5120000)
         if not pre: continue
 
         utf8 = False
@@ -235,30 +242,41 @@ def handle_event(event):
 
     match event.type:
         case pygame.KEYDOWN:
-            match event.key:
-                case pygame.K_ESCAPE:
-                    connected = False
-                    thread = None
-                    send("sys", "disconnect")
-                    master_data.append(["switch_scene", "menu", [False, "content"]])
-                case pygame.K_UP:
-                    selection_id -= 1
-                    if selection_id < 0: selection_id = len(songs)-1
-                    select_song(selection_id)
-                    menu_sfx["scroll"].stop()
-                    menu_sfx["scroll"].play()
-                case pygame.K_DOWN:
-                    selection_id += 1
-                    if selection_id > len(songs)-1: selection_id = 0
-                    select_song(selection_id)
-                    menu_sfx["scroll"].stop()
-                    menu_sfx["scroll"].play()
-                case pygame.K_RETURN:
-                    if len(songs) > 0 and currently_downloading == "":
-                        menu_sfx["select"].stop()
-                        menu_sfx["select"].play()
-                        download_chart(songs[selection_id][0])
-                case _: pass
+            if camera.has_item("error"):
+                connected = False
+                thread = None
+                send("sys", "disconnect")
+                master_data.append(["switch_scene", "menu", [False, "content"]])
+            else:
+                match event.key:
+                    case pygame.K_ESCAPE:
+                        connected = False
+                        thread = None
+                        send("sys", "disconnect")
+                        master_data.append(["switch_scene", "menu", [False, "content"]])
+                    case pygame.K_UP:
+                        if len(songs) > 0 and currently_downloading == "":
+                            selection_id -= 1
+                            if selection_id < 0: selection_id = len(songs)-1
+                            select_song(selection_id)
+                            menu_sfx["scroll"].stop()
+                            menu_sfx["scroll"].play()
+                    case pygame.K_DOWN:
+                        if len(songs) > 0 and currently_downloading == "":
+                            selection_id += 1
+                            if selection_id > len(songs)-1: selection_id = 0
+                            select_song(selection_id)
+                            menu_sfx["scroll"].stop()
+                            menu_sfx["scroll"].play()
+                    case pygame.K_RETURN:
+                        if len(songs) > 0 and currently_downloading == "":
+                            if os.path.exists(f"{profile_options["Customisation"]["content_folder"]}/Songs/{songs[selection_id][0]}"):
+                                master_data.append(["switch_scene", "song_selection"])
+                            else:
+                                menu_sfx["select"].stop()
+                                menu_sfx["select"].play()
+                                download_chart(songs[selection_id][0])
+                    case _: pass
         case pygame.VIDEORESIZE:
             camera.set_property("scale", [event.w/1280, event.h/720])
             camera.set_property("position", [(event.w-1280)/2,(event.h-720)/2])
@@ -307,7 +325,13 @@ def connect(ip, port):
         client.connect((ip, port))
         return True
     except:
-        print("[!] Unable to Connect to Server due to an error")
+        menu_sfx["back"].play()
+        print("[!] Unable to Connect to Server")
+        error = RMS.objects.image("error", skin_grab(f"Menus/Download/error.png"))
+        error.set_property("size", [1280,720])
+        error.set_property("position", [1280/2,720/2])
+        error.set_property("priority", 99)
+        camera.add_item(error)
         return False
 
 def disconnect():
@@ -347,11 +371,14 @@ def load_songs(output):
     select_song(selection_id)
 
 def make_song_tab(id, display_name, artist, chartist, bpm):
-    tab_bg = RMS.objects.image(f"tab_{id}", skin_grab(f"Menus/Download/tab.png"))
-    tab_bg.set_property("size", camera.get_image_size(skin_grab(f"Menus/Download/tab.png")))
+    tab_texture = "tab"
+    if os.path.exists(f"{profile_options["Customisation"]["content_folder"]}/Songs/{id}"): tab_texture = "tab_owned"
 
-    tab_bg.set_property("position:x", ui["tab_bg"]["position"][0]+(camera.get_image_size(skin_grab(f"Menus/Download/tab.png"))[0]/2))
-    tab_bg.set_property("position:y", ui["tab_bg"]["position"][1]+((camera.get_image_size(skin_grab(f"Menus/Download/tab.png"))[1]+ui["tab_bg"]["seperation"])*len(songs)))
+    tab_bg = RMS.objects.image(f"tab_{id}", skin_grab(f"Menus/Download/{tab_texture}.png"))
+    tab_bg.set_property("size", camera.get_image_size(skin_grab(f"Menus/Download/{tab_texture}.png")))
+
+    tab_bg.set_property("position:x", ui["tab_bg"]["position"][0]+(camera.get_image_size(skin_grab(f"Menus/Download/{tab_texture}.png"))[0]/2))
+    tab_bg.set_property("position:y", ui["tab_bg"]["position"][1]+((camera.get_image_size(skin_grab(f"Menus/Download/{tab_texture}.png"))[1]+ui["tab_bg"]["seperation"])*len(songs)))
     tab_bg.set_property("priority", 10)
 
     camera.add_item(tab_bg)
@@ -468,10 +495,12 @@ def download_chart(id):
     camera.get_item("download_title").set_property("text", songs[selection_id][2].get_property("text"))
     camera.get_item("download_progress").set_property("text", "Starting Download...")
 
+    songs[selection_id][1].set_property("image_location", skin_grab(f"Menus/Download/tab_owned.png"))
+
     send("download", f"get_charts|{currently_downloading}")
     
 def continue_download(current):
-    global requested, ext, request_fulfilled
+    global requested, ext, request_fulfilled, currently_downloading
 
     if not request_fulfilled: return
     request_fulfilled = False
@@ -495,6 +524,7 @@ def continue_download(current):
                         camera.get_item("download_background").set_property("visible", False)
                         camera.get_item("download_title").set_property("visible", False)
                         camera.get_item("download_progress").set_property("visible", False)
+                        currently_downloading = ""
                         menu_sfx["play"].play()
                         return
                     else:
@@ -507,6 +537,12 @@ def continue_download(current):
             case "meta": camera.get_item("download_progress").set_property("text", f"Downloading Meta...")
 
     requested = current
+
+    camera.get_item("download_progress").set_property("scale", [1.1,1.1])
+    camera.cancel_tween("progress_bump_x")
+    camera.cancel_tween("progress_bump_y")
+    camera.do_tween("progress_bump_x", camera.get_item("download_progress"), "scale:x", 1, 0.5, "back", "out")
+    camera.do_tween("progress_bump_y", camera.get_item("download_progress"), "scale:y", 1, 0.5, "back", "out")
 
     if not current in download: download[current] = {"finished": False}
     if current != "" and not download[current]["finished"]:
