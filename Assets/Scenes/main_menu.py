@@ -35,6 +35,54 @@ started_bumping = False
 
 pygame.mixer.init()
 
+# Scripts
+
+class user_script_class_template():
+    def __init__(self): pass
+    def create(self): pass
+    def update(self): pass
+    def scroll(self, direction): pass
+    def selected(self, song_info): pass
+    def cancelled(self): pass
+
+user_scripts = []
+
+def add_script(prefix, tag, path):
+    global user_scripts
+
+    if tag[:1] == "_": return
+
+    to_exec = f"class user_script_{prefix}{tag}(user_script_class_template):\n"
+    for line in open((path), "r").readlines():
+        to_exec += f"    {line}"
+    exec(f"{to_exec}\nsong_script_{prefix}{tag} = user_script_{prefix}{tag}()\nuser_scripts.append(song_script_{prefix}{tag})")
+
+def invoke_script_function(tag, data = []):
+    if len(user_scripts) == 0: return
+
+    for script in user_scripts:
+        match tag:
+            case "create": script.create()
+            case "update": script.update()
+            case "select": script.selected(data[0])
+            case "return": script.cancelled()
+            case "scroll": script.scroll(data[0])
+
+def load_scripts():
+    fancy_print(f"Loading Scene Script...", "Main Menu", "i")
+
+    global user_scripts
+    user_scripts = []
+
+    if os.path.isfile(skin_grab(f"Scripts/#main_menu.py")):
+        add_script("", "song", skin_grab(f"Scripts/#main_menu.py"))
+        fancy_print(f"Added Scene Script", "Main Menu", "/")
+    else:
+        fancy_print(f"No Scene Script Found", "Main Menu", "i")
+
+def set_global(prop, val):
+    globals()[prop] = val
+
 # Master Functions
 
 def init(data = []):
@@ -84,7 +132,7 @@ def init(data = []):
     camera.add_item(background)
 
     ### Version String
-    version = RMS.objects.text("version", "Version 0.30")
+    version = RMS.objects.text("version", "Version 0.37")
     version.set_property("font", skin_grab("Fonts/default.ttf"))
     version.set_property("font_size", 20)
     version.set_property("text_align", "center")
@@ -115,8 +163,8 @@ def init(data = []):
     # Menu Schmusic
     if start_music:
         pygame.mixer.music.load(skin_grab("Menus/MainMenu/menu_music.wav"))
-        pygame.mixer.music.set_volume(profile_options["Audio"]["vol_master"] * profile_options["Audio"]["vol_menu"])
         pygame.mixer.music.play(-1)
+    pygame.mixer.music.set_volume(profile_options["Audio"]["vol_master"] * profile_options["Audio"]["vol_menu"])
 
     # BPM
     beat_time = (60/ui["bpm"])
@@ -328,3 +376,15 @@ def press_button(name):
         case "options": master_data.append(["switch_scene", "options"])
         case "content": master_data.append(["switch_scene", "download"])
         case "exit": exit()
+
+#
+
+def fancy_print(content, header = "", icon = ""):
+    print()
+    to_print = ""
+    if header != "": to_print = (f"[{header} - {time.strftime("%H:%M:%S", time.gmtime())}]")
+    else: to_print = (f"[{time.strftime("%H:%M:%S", time.gmtime())}]")
+    if icon != "": to_print = f"[{icon}] {to_print}"
+
+    print(f"{to_print} ---------")
+    print(content)

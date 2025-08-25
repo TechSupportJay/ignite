@@ -1,5 +1,5 @@
 # Imports
-import pygame
+import pygame, time
 import Assets.Scenes.game, Assets.Scenes.results
 import Assets.Scenes.main_menu, Assets.Scenes.song_selection, Assets.Scenes.options
 import Assets.Scenes.download
@@ -36,9 +36,10 @@ def switch_scene(tag, data = []):
 
     if tag in valid_scenes.keys():
         current_scene = tag
-        print(f"------------")
-        print(f"[i] Switching to Scene {tag}")
-        if data != []: print(f"[i] ...with data {data}")
+        
+        if data != []: fancy_print(f"Scene Switch: {tag}\nData: {data}", "Master", "i")
+        else: fancy_print(f"Scene Switch: \"{tag}\"", "Master", "i")
+
         match tag:
             case "game": valid_scenes[current_scene].init([data[0], data[1], current_profile, data[2]])
             case "menu" | "results": valid_scenes[current_scene].init([current_profile, data])
@@ -48,6 +49,18 @@ def switch_scene(tag, data = []):
             valid_scenes[current_scene].camera.set_property("zoom", [1.1,1.1])
             valid_scenes[current_scene].camera.do_tween("cam_x", valid_scenes[current_scene].camera, "zoom:x", 1, 0.75, "expo", "out")
             valid_scenes[current_scene].camera.do_tween("cam_y", valid_scenes[current_scene].camera, "zoom:y", 1, 0.75, "expo", "out")
+
+#
+
+def fancy_print(content, header = "", icon = ""):
+    print()
+    to_print = ""
+    if header != "": to_print = (f"[{header} - {time.strftime("%H:%M:%S", time.gmtime())}]")
+    else: to_print = (f"[{time.strftime("%H:%M:%S", time.gmtime())}]")
+    if icon != "": to_print = f"[{icon}] {to_print}"
+
+    print(f"{to_print} ---------")
+    print(content)
 
 # Set Screens
 for val in valid_scenes.keys():

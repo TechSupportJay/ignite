@@ -1,6 +1,6 @@
 import pygame.locals
 import RMS.scenes, RMS.cameras, RMS.objects
-import pygame, os, math, time, json, random
+import pygame, os, subprocess, math, time, json, random
 
 screen = None
 master_data = []
@@ -141,17 +141,6 @@ def init(data):
     overlay.set_property("priority", 10)
     camera.add_item(overlay)
 
-    # Transition
-    # camera.set_property("zoom", [1.2,1.2])
-
-    # camera.cancel_tween("diff_transition_x")
-    # camera.cancel_tween("diff_transition_y")
-    # camera.cancel_tween("diff_transition_o")
-
-    # camera.do_tween("diff_transition_x", camera, "zoom:x", 1, 1, "cubic", "out")
-    # camera.do_tween("diff_transition_y", camera, "zoom:y", 1, 1, "cubic", "out")
-    # camera.do_tween("diff_transition_o", camera.get_item("overlay"), "opacity", 0, 1)
-
     # Select
     select_song(selection_id)
 
@@ -201,12 +190,13 @@ def handle_event(event):
                     menu_sfx["scroll"].play()
                     invoke_script_function("scroll", ["down"])
                 case pygame.K_RETURN:
-                    match focused_element:
-                        case "song":
-                            display_difficulties(song_tabs[selection_id][0])
-                        case "diff":
-                            start_song(song_tabs[selection_id][0], difficulties[diff_selection])
-                    invoke_script_function("selected", [selection_id])
+                    if len(song_tabs) > 0:
+                        match focused_element:
+                            case "song":
+                                display_difficulties(song_tabs[selection_id][0])
+                            case "diff":
+                                start_song(song_tabs[selection_id][0], difficulties[diff_selection])
+                        invoke_script_function("selected", [selection_id])
                 case pygame.K_ESCAPE:
                     if focused_element == "diff":
                         hide_difficulties()
@@ -229,6 +219,24 @@ def load_songs():
     global are_songs
 
     all_songs = next(os.walk(songs_dir), (None, None, []))[1]
+
+    if len(all_songs) > 0:
+        i = 0
+        for song in all_songs:
+            valid_song = False
+            if not os.path.isfile(f"{songs_dir}/{song}/meta.json"):
+                fancy_print(f"{song}: No Meta Found", "Load Songs", "!")
+            elif not os.path.isfile(f"{songs_dir}/{song}/audio.mp3") and not os.path.isfile(f"{songs_dir}/{song}/audio.wav") and not os.path.isfile(f"{songs_dir}/{song}/audio.ogg"):
+                fancy_print(f"{song}: No Audio File Found", "Load Songs", "!")
+            elif not os.path.exists(f"{songs_dir}/{song}/charts"):
+                fancy_print(f"{song}: No Charts Found", "Load Songs", "!")
+            else:
+                valid_song = True
+                make_song_tab(song, get_from_meta(song, "name", song), get_from_meta(song, "artist", "N/A"))
+            if not valid_song: all_songs.pop(i)
+            i += 1
+        del i
+    
     if len(all_songs) == 0:
         are_songs = False
 
@@ -246,13 +254,6 @@ def load_songs():
         camera.add_item(no_songs)
 
         return
-
-    for song in all_songs:
-        song_meta = json.load(open(f"{songs_dir}/{song}/meta.json", "r"))
-
-        # Hardcoded Laoyut (temp?)
-
-        make_song_tab(song, get_from_meta(song, "name", song), get_from_meta(song, "artist", "N/A"))
 
 def make_song_tab(id, display_name, artist):
     tab_bg = RMS.objects.image(f"tab_{id}", skin_grab(f"Menus/SongSelect/tab.png"))
@@ -531,8 +532,6 @@ def add_script(prefix, tag, path):
         to_exec += f"    {line}"
     exec(f"{to_exec}\nsong_script_{prefix}{tag} = user_script_{prefix}{tag}()\nuser_scripts.append(song_script_{prefix}{tag})")
 
-    print(f"[i] Added Script: {prefix}{tag}")
-
 def invoke_script_function(tag, data = []):
     if len(user_scripts) == 0: return
 
@@ -545,12 +544,28 @@ def invoke_script_function(tag, data = []):
             case "scroll": script.scroll(data[0])
 
 def load_scripts():
-    print("[i] Loading Scene Script...")
+    fancy_print(f"Loading Scene Script...", "Song Select", "i")
 
     global user_scripts
     user_scripts = []
 
-    if os.path.isfile(skin_grab(f"Scripts/#song_selection.py")): add_script("", "song", skin_grab(f"Scripts/#song_selection.py"))
+    if os.path.isfile(skin_grab(f"Scripts/#song_selection.py")):
+        add_script("", "song", skin_grab(f"Scripts/#song_selection.py"))
+        fancy_print(f"Added Scene Script", "Song Select", "/")
+    else:
+        fancy_print(f"No Scene Script Found", "Song Select", "i")
 
 def set_global(prop, val):
     globals()[prop] = val
+
+#
+
+def fancy_print(content, header = "", icon = ""):
+    print()
+    to_print = ""
+    if header != "": to_print = (f"[{header} - {time.strftime("%H:%M:%S", time.gmtime())}]")
+    else: to_print = (f"[{time.strftime("%H:%M:%S", time.gmtime())}]")
+    if icon != "": to_print = f"[{icon}] {to_print}"
+
+    print(f"{to_print} ---------")
+    print(content)

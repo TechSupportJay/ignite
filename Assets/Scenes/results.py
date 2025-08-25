@@ -19,6 +19,54 @@ skin_dir = ""
 ui = {}
 ui_texts = {}
 
+# Scripts
+
+class user_script_class_template():
+    def __init__(self): pass
+    def create(self): pass
+    def update(self): pass
+    def scroll(self, direction): pass
+    def selected(self, song_info): pass
+    def cancelled(self): pass
+
+user_scripts = []
+
+def add_script(prefix, tag, path):
+    global user_scripts
+
+    if tag[:1] == "_": return
+
+    to_exec = f"class user_script_{prefix}{tag}(user_script_class_template):\n"
+    for line in open((path), "r").readlines():
+        to_exec += f"    {line}"
+    exec(f"{to_exec}\nsong_script_{prefix}{tag} = user_script_{prefix}{tag}()\nuser_scripts.append(song_script_{prefix}{tag})")
+
+def invoke_script_function(tag, data = []):
+    if len(user_scripts) == 0: return
+
+    for script in user_scripts:
+        match tag:
+            case "create": script.create()
+            case "update": script.update()
+            case "select": script.selected(data[0])
+            case "return": script.cancelled()
+            case "scroll": script.scroll(data[0])
+
+def load_scripts():
+    fancy_print(f"Loading Scene Script...", "Results", "i")
+
+    global user_scripts
+    user_scripts = []
+
+    if os.path.isfile(skin_grab(f"Scripts/#results.py")):
+        add_script("", "song", skin_grab(f"Scripts/#results.py"))
+        fancy_print(f"Added Scene Script", "Results", "/")
+    else:
+        fancy_print(f"No Scene Script Found", "Results", "i")
+
+def set_global(prop, val):
+    globals()[prop] = val
+
 # Master Functions
 
 def init(data = []):
@@ -190,3 +238,15 @@ def get_ui_property(parent, key, otherwise):
     if not parent in ui.keys(): return otherwise
     if not key in ui[parent].keys(): return otherwise
     else: return ui[parent][key]
+
+#
+
+def fancy_print(content, header = "", icon = ""):
+    print()
+    to_print = ""
+    if header != "": to_print = (f"[{header} - {time.strftime("%H:%M:%S", time.gmtime())}]")
+    else: to_print = (f"[{time.strftime("%H:%M:%S", time.gmtime())}]")
+    if icon != "": to_print = f"[{icon}] {to_print}"
+
+    print(f"{to_print} ---------")
+    print(content)

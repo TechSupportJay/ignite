@@ -37,6 +37,54 @@ menu_sfx = {}
 direction_held = ["left", False, 0.0]
 last_tick = 0
 
+# Scripts
+
+class user_script_class_template():
+    def __init__(self): pass
+    def create(self): pass
+    def update(self): pass
+    def scroll(self, direction): pass
+    def selected(self, song_info): pass
+    def cancelled(self): pass
+
+user_scripts = []
+
+def add_script(prefix, tag, path):
+    global user_scripts
+
+    if tag[:1] == "_": return
+
+    to_exec = f"class user_script_{prefix}{tag}(user_script_class_template):\n"
+    for line in open((path), "r").readlines():
+        to_exec += f"    {line}"
+    exec(f"{to_exec}\nsong_script_{prefix}{tag} = user_script_{prefix}{tag}()\nuser_scripts.append(song_script_{prefix}{tag})")
+
+def invoke_script_function(tag, data = []):
+    if len(user_scripts) == 0: return
+
+    for script in user_scripts:
+        match tag:
+            case "create": script.create()
+            case "update": script.update()
+            case "select": script.selected(data[0])
+            case "return": script.cancelled()
+            case "scroll": script.scroll(data[0])
+
+def load_scripts():
+    fancy_print(f"Loading Scene Script...", "Options", "i")
+
+    global user_scripts
+    user_scripts = []
+
+    if os.path.isfile(skin_grab(f"Scripts/#options.py")):
+        add_script("", "song", skin_grab(f"Scripts/#options.py"))
+        fancy_print(f"Added Scene Script", "Options", "/")
+    else:
+        fancy_print(f"No Scene Script Found", "Options", "i")
+
+def set_global(prop, val):
+    globals()[prop] = val
+
 # Master Functions
 
 def init(data):
@@ -78,6 +126,16 @@ def init(data):
         skin_grab("Menus/Options/left.png"),
         skin_grab("Menus/Options/right.png")
     ])
+
+    #
+
+    tooltip = RMS.objects.text("tooltip", "")
+    tooltip.set_property("font", skin_grab("Fonts/default.ttf"))
+    tooltip.set_property("font_size", 32)
+    tooltip.set_property("text_align", "center")
+    tooltip.set_property("position", [1280/2,650])
+    tooltip.set_property("priority", 5)
+    camera.add_item(tooltip)
 
     #
     
@@ -279,6 +337,8 @@ def load_section(section_index):
     for i in range(len(list(options_ref))):
         if i == section_index: camera.get_item(f"header_{i}").set_property("opacity", 255)
         else: camera.get_item(f"header_{i}").set_property("opacity", 255/2)
+    
+    select_option(0)
 
 def make_option(section, option, index):
     to_tween = []
@@ -375,8 +435,8 @@ def make_option(section, option, index):
 def select_option(index):
     y_offset = 0
 
-    if camera.get_item(f"option_{index}").get_property("position:y") + (camera.get_text_size(f"option_{index}")[1]/2) > 720:
-        y_offset = -(camera.get_item(f"option_{index}").get_property("position:y") - (720-60-(camera.get_text_size(f"option_{index}")[1]/2)))
+    if camera.get_item(f"option_{index}").get_property("position:y") + (camera.get_text_size(f"option_{index}")[1]/2) > 600:
+        y_offset = -(camera.get_item(f"option_{index}").get_property("position:y") - (600-(camera.get_text_size(f"option_{index}")[1]/2)))
     elif camera.get_item(f"option_{index}").get_property("position:y") - (camera.get_text_size(f"option_{index}")[1]/2) < 100:
         y_offset = (100 - (camera.get_item(f"option_{index}").get_property("position:y")))
 
@@ -385,12 +445,24 @@ def select_option(index):
         
         type = valid_options[i][1]["type"]
 
-        if i == index: opacity = 255
+        if i == index:
+            opacity = 255
+            if "tooltip" in valid_options[i][1].keys(): camera.get_item("tooltip").set_property("text", valid_options[i][1]["tooltip"])
+            else: camera.get_item("tooltip").set_property("text", "")
+        
+        camera.cancel_tween("tooltip_x")
+        camera.cancel_tween("tooltip_y")
+
+        camera.get_item("tooltip").set_property("scale", [1.025,1.025])
+
+        camera.do_tween("tooltip_x", camera.get_item("tooltip"), "scale:x", 1, 0.5, "back", "out")
+        camera.do_tween("tooltip_y", camera.get_item("tooltip"), "scale:y", 1, 0.5, "back", "out")
         
         camera.get_item(f"option_{i}").set_property("opacity", opacity)
 
         camera.cancel_tween(f"option_{i}_y")
         camera.do_tween(f"option_{i}_y", camera.get_item(f"option_{i}"), "position:y", camera.get_item(f"option_{i}").get_property("position:y") + y_offset, 0.5, "expo", "out")
+
 
         match type:
             case "bool":
@@ -523,7 +595,7 @@ def option_input(index, input_type):
                     camera.get_item(f"text_{index}").set_property("text", to_display + suffix)
 
 def save_options():
-    print(f"[i] Saving options to {current_profile}...")
+    fancy_print(f"Saving Options for {current_profile}...", "Options", "i")
 
     file = {}
     for section in options_ref.keys():
@@ -535,7 +607,7 @@ def save_options():
     to_save = open(f"Data/{current_profile}/options.json", "w")
     to_save.write(json.dumps(file))
 
-    print(f"[/] Options saved to {current_profile}!")
+    fancy_print(f"Saved Options for {current_profile}", "Options", "/")
 
 def make_label(option, index): pass
 
@@ -546,3 +618,15 @@ def play_sfx(tag):
     sound.stop()
     sound.set_volume(options_ref["Audio"]["vol_sfx"]["value"] * options_ref["Audio"]["vol_master"]["value"])
     sound.play()
+
+#
+
+def fancy_print(content, header = "", icon = ""):
+    print()
+    to_print = ""
+    if header != "": to_print = (f"[{header} - {time.strftime("%H:%M:%S", time.gmtime())}]")
+    else: to_print = (f"[{time.strftime("%H:%M:%S", time.gmtime())}]")
+    if icon != "": to_print = f"[{icon}] {to_print}"
+
+    print(f"{to_print} ---------")
+    print(content)

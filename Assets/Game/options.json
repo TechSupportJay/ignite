@@ -1,22 +1,22 @@
 {
     "Gameplay": {
-        "botplay": {"type": "bool", "default": false, "display": "Botplay"},
-        "downscroll": {"type": "bool", "default": true, "display": "Downscroll"},
-        "ghost_tapping": {"type": "bool", "default": true, "display": "Ghost Tapping"},
-        "scroll_time": {"type": "float", "default": 0.85, "display": "Scroll Speed", "suffix": "s", "increment": 0.01, "min": 0.01},
-        "back_trans": {"type": "float", "default": 0.5, "display": "Lane Visibility", "increment": 0.05, "min": 0.00, "max": 1.0, "suffix": "%"},
+        "botplay": {"type": "bool", "default": false, "display": "Botplay", "tooltip": "If enabled, player input will be disabled and the game will play itself."},
+        "downscroll": {"type": "bool", "default": true, "display": "Downscroll", "tooltip": "If enabled, notes will scroll from the top of the screen to the bottom."},
+        "ghost_tapping": {"type": "bool", "default": true, "display": "Ghost Tapping", "tooltip": "If enabled, you can press keys while there are no notes to hit."},
+        "scroll_time": {"type": "float", "default": 0.85, "display": "Scroll Speed", "suffix": "s", "increment": 0.01, "min": 0.01, "tooltip": "Changes the speed at which the notes will travel to the strumline."},
+        "back_trans": {"type": "float", "default": 0.5, "display": "Lane Visibility", "increment": 0.05, "min": 0.00, "max": 1.0, "suffix": "%", "tooltip": "Changes the transparency of the lane background."},
 
-        "timing_hit_window": {"type": "float", "default": 0.18, "display": "Hit Window", "suffix": "ms", "increment": 0.001, "min": 0.001},
-        "timing_perfect": {"type": "float", "default": 0.09, "display": "Perfect", "suffix": "ms", "increment": 0.001, "min": 0.0},
-        "timing_okay": {"type": "float", "default": 0.135, "display": "Okay", "suffix": "ms", "increment": 0.001, "min": 0.0},
+        "timing_hit_window": {"type": "float", "default": 0.18, "display": "Hit Window", "suffix": "ms", "increment": 0.001, "min": 0.001, "tooltip": "Changes the range you are able to hit notes."},
+        "timing_perfect": {"type": "float", "default": 0.09, "display": "Perfect", "suffix": "ms", "increment": 0.001, "min": 0.0, "tooltip": "Changes the range you are able to hit notes and get the 'perfect' rating."},
+        "timing_okay": {"type": "float", "default": 0.135, "display": "Okay", "suffix": "ms", "increment": 0.001, "min": 0.0, "tooltip": "Changes the range you are able to hit notes and get the 'okay' rating."},
 
-        "rank_s+": {"type": "float", "default": 1.0, "display": "S+", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0},
-        "rank_s": {"type": "float", "default": 0.95, "display": "S", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0},
-        "rank_a": {"type": "float", "default": 0.9, "display": "A", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0},
-        "rank_b": {"type": "float", "default": 0.8, "display": "B", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0},
-        "rank_c": {"type": "float", "default": 0.7, "display": "C", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0},
-        "rank_d": {"type": "float", "default": 0.6, "display": "D", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0},
-        "rank_f": {"type": "float", "default": 0.5, "display": "F", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0}
+        "rank_s+": {"type": "float", "default": 1.0, "display": "S+", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0, "tooltip": "Changes the accuracy required for S+ rank."},
+        "rank_s": {"type": "float", "default": 0.95, "display": "S", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0, "tooltip": "Changes the accuracy required for S rank."},
+        "rank_a": {"type": "float", "default": 0.9, "display": "A", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0, "tooltip": "Changes the accuracy required for A rank."},
+        "rank_b": {"type": "float", "default": 0.8, "display": "B", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0, "tooltip": "Changes the accuracy required for B rank."},
+        "rank_c": {"type": "float", "default": 0.7, "display": "C", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0, "tooltip": "Changes the accuracy required for C rank."},
+        "rank_d": {"type": "float", "default": 0.6, "display": "D", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0, "tooltip": "Changes the accuracy required for D rank."},
+        "rank_f": {"type": "float", "default": 0.5, "display": "F", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0, "tooltip": "Changes the accuracy required for F rank."}
     },
     "Customisation": {
         "skin": {"type": "list", "default": "default", "display": "Skin"},
@@ -30,9 +30,9 @@
         "vol_miss": {"type": "float", "default": 0.75, "display": "Miss Sound", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0},
         "vol_sfx": {"type": "float", "default": 0.5, "display": "Other SFX", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0},
 
-        "offset": {"type": "float", "default": 0.5, "display": "Offset", "suffix": "s", "increment": 0.01}
+        "offset": {"type": "float", "default": 0.5, "display": "Offset", "suffix": "s", "increment": 0.01, "tooltip": "Changes the delay at which audio is played."}
     },
     "Video": {
-        "fps_cap": {"type": "fps", "default": 60, "display": "FPS Cap", "increment": 5, "min": 0}
+        "fps_cap": {"type": "fps", "default": 60, "display": "FPS Cap", "increment": 5, "min": 0, "tooltip": "Changes the framerate limit."}
     }
 }

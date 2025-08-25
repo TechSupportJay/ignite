@@ -106,8 +106,6 @@ def add_script(prefix, tag, path):
         to_exec += f"    {line}"
     exec(f"{to_exec}\nsong_script_{prefix}{tag} = user_script_{prefix}{tag}()\nuser_scripts.append(song_script_{prefix}{tag})")
 
-    print(f"[i] Added Script: {prefix}{tag}")
-
 def invoke_script_function(tag, data = []):
     if len(user_scripts) == 0: return
 
@@ -125,7 +123,7 @@ def invoke_script_function(tag, data = []):
             case "key_up": script.key_up(data[0]) 
 
 def load_scripts(mid_song = True):
-    print("[i] Loading Scripts...")
+    fancy_print(f"Loaded Scripts...", "Game", "i")
 
     if mid_song: invoke_script_function("destroy")
 
@@ -145,6 +143,8 @@ def load_scripts(mid_song = True):
                 for script in os.listdir(f"Assets/Game/Default/Scripts"): add_script("skn_", script.replace(".py", ""), f"Assets/Game/Default/Scripts/{script}")
     
     if mid_song: invoke_script_function("create")
+
+    fancy_print(f"Loaded Scripts: {user_scripts}", "Game", "/")
 
 def set_global(prop, val):
     globals()[prop] = val
@@ -918,3 +918,15 @@ def resize(size):
     for cam in scene.cameras.keys():
         scene.cameras[cam].set_property("scale", [size[0]/1280,size[1]/720])
         scene.cameras[cam].set_property("position", [(size[0]-1280)/2,(size[1]-720)/2])
+
+#
+
+def fancy_print(content, header = "", icon = ""):
+    print()
+    to_print = ""
+    if header != "": to_print = (f"[{header} - {time.strftime("%H:%M:%S", time.gmtime())}]")
+    else: to_print = (f"[{time.strftime("%H:%M:%S", time.gmtime())}]")
+    if icon != "": to_print = f"[{icon}] {to_print}"
+
+    print(f"{to_print} ---------")
+    print(content)
