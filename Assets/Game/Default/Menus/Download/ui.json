@@ -1,0 +1,36 @@
+{ 
+    "tab_bg":
+    {
+        "position": [850, 60],
+        "selection": -100,
+        "seperation": 10
+    },
+    "tab_name":
+    {
+        "position": [30,11],
+        "font": "default",
+        "font_size": 32,
+        "color": "#FFFFFF"
+    },
+    "tab_artist":
+    {
+        "position": [30,47],
+        "font": "sub",
+        "font_size": 20,
+        "color": "#FFFFFF"
+    },
+
+    "album":
+    {
+        "position": [200,200],
+        "size": [350,350]
+    },
+    "info_texts":
+    {
+        "position": [25,380],
+        "font": "sub",
+        "font_size": 26,
+        "seperation": 30,
+        "color": "#FFFFFF"
+    }
+}

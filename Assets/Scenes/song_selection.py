@@ -121,8 +121,6 @@ def init(data):
 
     camera.cache_image(skin_grab(f"Menus/SongSelect/tab.png"))
     load_songs()
-    
-    selection_id = 0
 
     difficulties = []
     diff_selection = 0
@@ -398,10 +396,15 @@ def display_difficulties(song):
         for i in range(len(difficulties)):
             difficulty_camera.remove_item(f"difficulty_{i}")
 
-    folder_files = next(os.walk(f"{songs_dir}/{song}/charts"), (None, None, []))[2]
     charts = []
-    for c in folder_files:
-        if c[-5:] == ".json": charts.append(c.replace(".json", ""))
+
+    if get_from_meta(song, "difficulties", []) != []:
+        charts = get_from_meta(song, "difficulties", [])
+    else:
+        folder_files = next(os.walk(f"{songs_dir}/{song}/charts"), (None, None, []))[2]
+        charts = []
+        for c in folder_files:
+            if c[-5:] == ".json": charts.append(c.replace(".json", ""))
     
     if len(charts) == 1: start_song(song, charts[0]); return
 

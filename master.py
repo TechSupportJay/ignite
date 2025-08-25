@@ -1,6 +1,8 @@
 # Imports
 import pygame
-import Assets.Scenes.game, Assets.Scenes.main_menu, Assets.Scenes.song_selection, Assets.Scenes.options, Assets.Scenes.results
+import Assets.Scenes.game, Assets.Scenes.results
+import Assets.Scenes.main_menu, Assets.Scenes.song_selection, Assets.Scenes.options
+import Assets.Scenes.download
 
 # PyGame
 
@@ -20,7 +22,8 @@ valid_scenes = {
     "menu": Assets.Scenes.main_menu,
     "song_selection": Assets.Scenes.song_selection,
     "options": Assets.Scenes.options,
-    "results": Assets.Scenes.results
+    "results": Assets.Scenes.results,
+    "download": Assets.Scenes.download
 }
 
 current_profile = "Profile1"
