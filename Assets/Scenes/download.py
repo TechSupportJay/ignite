@@ -73,9 +73,11 @@ def init(data = []):
 
     # Online
 
+    network_options = json.load(open(f"Data/{data[0]}/network.json"))
+
     header = 64
-    ip = "25.14.234.237" # Temp
-    port = 5050 # Temp
+    ip = network_options["ip"]
+    port = network_options["port"]
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
 
     thread = None
@@ -180,7 +182,7 @@ def client_update():
 
     while connected:
         # Check for UTF-8
-        pre = client.recv(5120000)
+        pre = client.recv(2560000)
         if not pre: continue
 
         utf8 = False

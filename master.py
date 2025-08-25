@@ -26,6 +26,7 @@ valid_scenes = {
     "download": Assets.Scenes.download
 }
 
+
 current_profile = "Profile1"
 
 # Functions
