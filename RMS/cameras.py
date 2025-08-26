@@ -17,6 +17,8 @@ class camera():
         self.zoom = [1,1]
         self.position = [0,0]
         self.rotation = 0
+
+        self.visible = True
         
         self.screen_size = [1280,720]
 
@@ -40,7 +42,7 @@ class camera():
 
         to_blit = pre_blit.render(item_ref.get_property("text"), True, item_ref.get_property("color"))
 
-        to_blit = pygame.transform.scale_by(to_blit, [(item_ref.get_property("size")[0]) * (item_ref.get_property("scale")[0]) * self.scale[0] * self.zoom[0], (item_ref.get_property("size")[1]) * (item_ref.get_property("scale")[1]) * self.scale[1] * self.zoom[1]])
+        to_blit = pygame.transform.smoothscale_by(to_blit, [(item_ref.get_property("size")[0]) * (item_ref.get_property("scale")[0]) * self.scale[0] * self.zoom[0], (item_ref.get_property("size")[1]) * (item_ref.get_property("scale")[1]) * self.scale[1] * self.zoom[1]])
         to_blit = pygame.transform.rotate(to_blit, item_ref.get_property("rotation"))
 
         return [to_blit.get_width(), to_blit.get_height()]
@@ -78,6 +80,7 @@ class camera():
             case "position:x": self.position[0] = value
             case "position:y": self.position[1] = value
             case "priority": self.priority = value
+            case "visible": self.visible = value
             case _: print(f"Couldn't find property '{property}' in {self.tag} (Camera)")
     
     def get_property(self, property):
@@ -93,6 +96,7 @@ class camera():
             case "position:x": return self.position[0]
             case "position:y": return self.position[1]
             case "priority": return self.priority
+            case "visible": return self.visible
             case _: print(f"Couldn't find property '{property}' in {self.tag} (Camera)")
     
     def get_item(self, tag):
@@ -128,6 +132,8 @@ class camera():
                     unsorted = False
     
     def render(self, screen):
+        blit_list = []
+
         if self.tween_man.return_size() > 0:
             self.tween_man.set_valid()
             for tag in self.tween_man.valid_tweens:
@@ -144,7 +150,7 @@ class camera():
                 case "image":
                     if item.get_property("opacity") > 0 and item.get_property("visible"):
                         to_blit = self.textures[item.get_property("image_location")]
-                        to_blit = pygame.transform.scale(to_blit, [abs(item.get_property("size")[0] * item.get_property("scale")[0]) * self.scale[0] * self.zoom[0], abs(item.get_property("size")[1] * item.get_property("scale")[1]) * self.scale[1] * self.zoom[1]])
+                        to_blit = pygame.transform.smoothscale(to_blit, [abs(item.get_property("size")[0] * item.get_property("scale")[0]) * self.scale[0] * self.zoom[0], abs(item.get_property("size")[1] * item.get_property("scale")[1]) * self.scale[1] * self.zoom[1]])
                         to_blit = pygame.transform.rotate(to_blit, item.get_property("rotation"))
 
                         orig_pos_x = (item.get_property("position")[0] - (item.get_property("size")[0] * item.get_property("scale")[0])/2)
@@ -157,7 +163,7 @@ class camera():
 
                         to_blit.set_alpha(int(item.get_property("opacity")))
                         
-                        screen.blit(to_blit, new_pos)
+                        blit_list.append([to_blit, new_pos])
                 case "rectangle":
                     if item.get_property("opacity") > 0 and item.get_property("visible"):
                         rect = [
@@ -178,7 +184,7 @@ class camera():
 
                         blit_surface = pygame.transform.rotate(blit_surface, item.get_property("rotation"))
 
-                        screen.blit(blit_surface, (rect[0], rect[1]))
+                        blit_list.append([blit_surface, [rect[0], rect[1]]])
                         del blit_surface
                 case "text":
                     if item.get_property("opacity") > 0 and item.get_property("visible"):
@@ -186,7 +192,7 @@ class camera():
 
                         to_blit = pre_blit.render(item.get_property("text"), True, item.get_property("color"))
 
-                        to_blit = pygame.transform.scale_by(to_blit, [(item.get_property("size")[0]) * (item.get_property("scale")[0]) * self.scale[0] * self.zoom[0], (item.get_property("size")[1]) * (item.get_property("scale")[1]) * self.scale[1] * self.zoom[1]])
+                        to_blit = pygame.transform.smoothscale_by(to_blit, [(item.get_property("size")[0]) * (item.get_property("scale")[0]) * self.scale[0] * self.zoom[0], (item.get_property("size")[1]) * (item.get_property("scale")[1]) * self.scale[1] * self.zoom[1]])
                         to_blit = pygame.transform.rotate(to_blit, item.get_property("rotation"))
 
                         orig_pos = item.get_property("position")
@@ -202,8 +208,12 @@ class camera():
                         
                         to_blit.set_alpha(int(item.get_property("opacity")))
 
-                        screen.blit(to_blit, new_pos)
+                        blit_list.append([to_blit, new_pos])
                 case "_": pass
+        
+        # Blit All
+        
+        screen.blits(blit_sequence=blit_list)
     
     def do_tween(self, tween_tag, item, property, value, duration, trans = "linear", easing = "out", delay = 0):
         tween = tween_instance(self, tween_tag, item, property, value, duration, easing, trans, delay)

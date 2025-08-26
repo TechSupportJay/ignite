@@ -374,7 +374,9 @@ def press_button(name):
     match name:
         case "single": master_data.append(["switch_scene", "song_selection"])
         case "options": master_data.append(["switch_scene", "options"])
-        case "content": master_data.append(["switch_scene", "download"])
+        case "content":
+            menu_sfx["select"].stop()
+            master_data.append(["switch_scene", "download"])
         case "exit": exit()
 
 #

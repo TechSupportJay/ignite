@@ -14,6 +14,7 @@ pygame.display.set_caption("Ignite")
 pygame.display.set_icon(pygame.image.load("Assets/icon.png").convert_alpha())
 
 screen_size = [1280,720]
+fullscreen = False
 
 # Variables
 current_scene = "" 
@@ -67,7 +68,7 @@ for val in valid_scenes.keys():
     valid_scenes[val].screen = screen
 
 # Start
-switch_scene("menu", [True])
+switch_scene("menu", [True ])
 
 # Update Loop
 while True:
@@ -88,6 +89,19 @@ while True:
                             match event.key:
                                 case pygame.K_F7:
                                     switch_scene("game") 
+            match event.type:
+                case pygame.KEYDOWN:
+                    match event.key:
+                        case pygame.K_F11:
+                            fullscreen = not fullscreen
+                            if fullscreen:
+                                pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+                                screen_size = pygame.display.get_desktop_sizes()[0]
+                                valid_scenes[current_scene].resize(screen_size)
+                            else:
+                                pygame.display.set_mode((1280,720), pygame.RESIZABLE | pygame.HWSURFACE)
+                                screen_size = [1280,720]
+                                valid_scenes[current_scene].resize(screen_size)
     
 
     if not valid_scenes[current_scene].master_data == []:

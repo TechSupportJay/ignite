@@ -1,0 +1,51 @@
+{
+    "background": {
+        "color": "#000000",
+        "opacity": 230
+    },
+    "title": {
+        "font": "default.ttf",
+        "font_size": 64,
+        "color": "#FFFFFF",
+        "text_align": "center",
+        "position": [640,20] 
+    },
+    "artist": {
+        "font": "sub.ttf",
+        "font_size": 32,
+        "color": "#FFFFFF",
+        "text_align": "center",
+        "position": [640,90] 
+    },
+    "chartist": {
+        "font": "sub.ttf",
+        "font_size": 32,
+        "color": "#FFFFFF",
+        "text_align": "center",
+        "position": [640,605] 
+    },
+    "difficulty": {
+        "font": "default.ttf",
+        "font_size": 32,
+        "color": "#FFFFFF",
+        "text_align": "center",
+        "position": [640,645] 
+    },
+    "buttons": {
+        "resume": {
+            "inactive": [0.5,0.5],
+            "active": [0.6,0.6],
+            "position": [640,300]
+        },
+        "restart": {
+            "inactive": [0.5,0.5],
+            "active": [0.6,0.6],
+            "position": [640,360]
+        },
+        "end": {
+            "inactive": [0.5,0.5],
+            "active": [0.6,0.6],
+            "position": [640,420]
+        }
+    }
+}

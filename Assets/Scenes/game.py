@@ -26,6 +26,8 @@ def pygame_get_key(key):
 
 ### User Variables
 
+scene_data = None
+
 current_profile = ""
 profile_options = {}
 controls = {}
@@ -39,7 +41,17 @@ note_speed = 1
 hit_window = 0.5
 
 downscroll = True
+
 ### Game Variables
+
+paused = False
+pause_time = 0
+pause_start = 0
+pause_ui = {}
+pause_cam = None
+pause_buttons = []
+pause_index = 0
+menu_sfx = {}
 
 binds = []
 
@@ -62,6 +74,7 @@ perf_score = 0
 
 song_name = ""
 song_difficulty = ""
+song_meta = {}
 
 chart_raw = []
 chart_notes = []
@@ -530,6 +543,63 @@ def update_accuracy():
                 break
             player_stats["rank"] = "f"
 
+# Pause
+
+def toggle_pause():
+    global pressed, paused, pause_start, pause_time, pause_index
+
+    paused = not paused
+    pause_cam.set_property("visible", paused)
+
+    if paused:
+        pygame.mixer.music.pause()
+        pause_start = time.time_ns()
+        pause_index = 0
+        pause_select(0)
+    else:
+        pygame.mixer.music.unpause()
+        if not profile_options["Gameplay"]["botplay"]:
+            for i in range(len(pressed)): pressed[i] = False
+        pause_time += time.time_ns() - pause_start
+
+def pause_select(index):
+    for i in range(len(pause_buttons)):
+        button = pause_buttons[i][0]
+        name = button.get_property("tag")[6:]
+
+        pause_cam.cancel_tween(f"{name}_x")
+        pause_cam.cancel_tween(f"{name}_y")
+
+        if i == index:
+            button.set_property("image_location", skin_grab(f"Menus/Pause/Buttons/active_{name}.png"))
+            button.set_property("size", pause_cam.get_image_size(skin_grab(f"Menus/Pause/Buttons/active_{name}.png")))
+            pause_cam.do_tween(f"{name}_x", button, "scale:x", pause_buttons[i][2][0], 0.5, "expo", "out")
+            pause_cam.do_tween(f"{name}_y", button, "scale:y", pause_buttons[i][2][1], 0.5, "expo", "out")
+        else:
+            button.set_property("image_location", skin_grab(f"Menus/Pause/Buttons/inactive_{name}.png"))
+            button.set_property("size", pause_cam.get_image_size(skin_grab(f"Menus/Pause/Buttons/inactive_{name}.png")))
+            pause_cam.do_tween(f"{name}_x", button, "scale:x", pause_buttons[i][1][0], 0.5, "expo", "out")
+            pause_cam.do_tween(f"{name}_y", button, "scale:y", pause_buttons[i][1][1], 0.5, "expo", "out")
+
+def pause_press(index):
+    match pause_buttons[index][0].get_property("tag")[6:]:
+        case "resume": toggle_pause()
+        case "restart":
+            destroy()
+            init(scene_data)
+        case "end":
+            master_data.append(["switch_scene", "results", {
+                "meta": json.load(open(f"{profile_options["Customisation"]["content_folder"]}/Songs/{song_name}/meta.json")),
+                "score": player_stats["score"],
+                "accuracy": player_stats["accuracy"],
+                "highest": player_stats["highest"],
+                "ratings": player_stats["ratings"],
+                "misses": player_stats["misses"],
+                "rank": player_stats["rank"],
+                "folder": song_name,
+                "difficulty": song_difficulty
+            }])
+
 
 # Music
 
@@ -555,7 +625,8 @@ continue_notes = True
 
 # Initialise
 def init(data):
-    global song_name, song_difficulty, song_ext
+    global scene_data
+    global song_name, song_difficulty, song_ext, song_meta
     global note_count, note_speed, hit_window, pressed, is_sus, downscroll
     global note_size, strum_seperation, strum_origin, sus_size, tip_size, skin_texts, skin_hud, skin_notes
     global chart, chart_len, chart_notes, chart_pointers, pass_pointers, chart_raw, chart_unsorted, processed_notes
@@ -567,13 +638,19 @@ def init(data):
     global background, rating, note_bg
     global user_scripts, profile_options, controls, binds, pressed
     global has_created, master_data, online_play
-    global song_ended
+    global song_ended, paused, pause_time, pause_start, pause_cam, pause_ui, pause_buttons, pause_index, menu_sfx
 
     # Initalise Scene
 
+    scene_data = data
+
     scene = RMS.scenes.scene(screen, "Game")
     camera = RMS.cameras.camera("HUD", 1)
+    pause_cam = RMS.cameras.camera("Pause", 2)
     scene.add_camera(camera)
+    scene.add_camera(pause_cam)
+
+    pause_cam.set_property("visible", False)
 
     camera.set_property("zoom", [1.1, 1.1])
     cam_bump_mod = 4
@@ -642,6 +719,8 @@ def init(data):
 
     song_name = data[0]
     song_difficulty = data[1]
+
+    song_meta = json.load(open(f"{songs_dir}/{song_name}/meta.json"))
 
     chart_notes = chart_raw["notes"]
 
@@ -827,6 +906,79 @@ def init(data):
 
     song_ended = False
 
+    # Pause
+
+    paused = False
+    pause_time = 0
+    pause_start = 0
+    pause_buttons = []
+    pause_index = 0
+    pause_ui = json.load(open(skin_grab(f"Menus/Pause/ui.json"))).copy()
+
+    ### SFX
+    menu_sfx = {}
+    sfx = ["scroll", "select", "back"]
+    for s in sfx:
+        menu_sfx[s] = pygame.mixer.Sound(skin_grab(f"SFX/Menu/{s}.ogg"))
+        menu_sfx[s].set_volume(profile_options["Audio"]["vol_sfx"] * profile_options["Audio"]["vol_master"])
+
+    ### Background
+    pause_overlay = RMS.objects.rectangle("pause_overlay", get_pause_ui_property("background", "color", "#000000"))
+    pause_overlay.set_property("size", [1280,720])
+    pause_overlay.set_property("position", [1280/2,720/2])
+    pause_overlay.set_property("opacity", get_pause_ui_property("background", "opacity", 255*0.75))
+    pause_cam.add_item(pause_overlay)
+
+    ### Title
+    pause_title = RMS.objects.text("pause_title", song_meta["name"])
+    pause_title.set_property("font", skin_grab(f"Fonts/{get_pause_ui_property("title", "font", "default.ttf")}"))
+    pause_title.set_property("font_size", get_pause_ui_property("title", "font_size", 32))
+    pause_title.set_property("color", get_pause_ui_property("title", "color", "#FFFFFF"))
+    pause_title.set_property("text_align", get_pause_ui_property("title", "text_align", "left"))
+    pause_title.set_property("position", get_pause_ui_property("title", "position", [0,0]))
+    pause_cam.add_item(pause_title)
+
+    ### Artist
+    pause_artist = RMS.objects.text("pause_artist", song_meta["artist"])
+    pause_artist.set_property("font", skin_grab(f"Fonts/{get_pause_ui_property("artist", "font", "default.ttf")}"))
+    pause_artist.set_property("font_size", get_pause_ui_property("artist", "font_size", 32))
+    pause_artist.set_property("color", get_pause_ui_property("artist", "color", "#FFFFFF"))
+    pause_artist.set_property("text_align", get_pause_ui_property("artist", "text_align", "left"))
+    pause_artist.set_property("position", get_pause_ui_property("artist", "position", [0,0]))
+    pause_cam.add_item(pause_artist)
+    
+    ### Chartist
+    pause_chartist = RMS.objects.text("pause_chartist", song_meta["chartist"])
+    pause_chartist.set_property("font", skin_grab(f"Fonts/{get_pause_ui_property("chartist", "font", "default.ttf")}"))
+    pause_chartist.set_property("font_size", get_pause_ui_property("chartist", "font_size", 32))
+    pause_chartist.set_property("color", get_pause_ui_property("chartist", "color", "#FFFFFF"))
+    pause_chartist.set_property("text_align", get_pause_ui_property("chartist", "text_align", "left"))
+    pause_chartist.set_property("position", get_pause_ui_property("chartist", "position", [0,0]))
+    pause_cam.add_item(pause_chartist)
+
+    ### Difficulty
+    pause_difficulty = RMS.objects.text("pause_difficulty", song_difficulty)
+    pause_difficulty.set_property("font", skin_grab(f"Fonts/{get_pause_ui_property("difficulty", "font", "default.ttf")}"))
+    pause_difficulty.set_property("font_size", get_pause_ui_property("difficulty", "font_size", 32))
+    pause_difficulty.set_property("color", get_pause_ui_property("difficulty", "color", "#FFFFFF"))
+    pause_difficulty.set_property("text_align", get_pause_ui_property("difficulty", "text_align", "left"))
+    pause_difficulty.set_property("position", get_pause_ui_property("difficulty", "position", [0,0]))
+    pause_cam.add_item(pause_difficulty)
+
+    ### Buttons
+
+    for key in pause_ui["buttons"]:
+        pause_cam.cache_image(skin_grab(f"Menus/Pause/Buttons/active_{key}.png"))
+        pause_cam.cache_image(skin_grab(f"Menus/Pause/Buttons/inactive_{key}.png"))
+
+        pause_button = RMS.objects.image(f"pause_{key}", skin_grab(f"Menus/Pause/Buttons/inactive_{key}.png"))
+        pause_button.set_property("size", pause_cam.get_image_size(skin_grab(f"Menus/Pause/Buttons/inactive_{key}.png")))
+        pause_button.set_property("scale", get_pause_ui_property(key, "inactive", [1,1], True))
+        pause_button.set_property("position", get_pause_ui_property(key, "position", [1,1], True))
+
+        pause_cam.add_item(pause_button)
+        pause_buttons.append([pause_button, get_pause_ui_property(key, "inactive", [1,1], True).copy(), get_pause_ui_property(key, "active", [1,1], True).copy()])
+    
     # Finish
 
     load_scripts(False)
@@ -838,82 +990,94 @@ def init(data):
 def update():
     global has_created, cur_time, last_score, pressed
 
-    # Process Binds
-    cur_pressed = pressed.copy()
-    for i in range(note_count):
-        key_pressed = False
-        for x in range(len(binds)):
-            if pygame.key.get_pressed()[binds[x][i]]:
-                key_pressed = True
-                break
-        if key_pressed and not pressed[i] and not profile_options["Gameplay"]["botplay"]:
-            key_handle(i, True)
-            pressed[i] = True
-            cur_pressed[i] = True
-        if not key_pressed and pressed[i] and cur_pressed[i] and not profile_options["Gameplay"]["botplay"]:
-            key_handle(i, False)
-            pressed[i] = False
-            cur_pressed[i] = False
+    if not paused:
+        # Process Binds
+        cur_pressed = pressed.copy()
+        for i in range(note_count):
+            key_pressed = False
+            for x in range(len(binds)):
+                if pygame.key.get_pressed()[binds[x][i]]:
+                    key_pressed = True
+                    break
+            if key_pressed and not pressed[i] and not profile_options["Gameplay"]["botplay"]:
+                key_handle(i, True)
+                pressed[i] = True
+                cur_pressed[i] = True
+            if not key_pressed and pressed[i] and cur_pressed[i] and not profile_options["Gameplay"]["botplay"]:
+                key_handle(i, False)
+                pressed[i] = False
+                cur_pressed[i] = False
 
-    if not has_created: has_created = True; invoke_script_function("create")
+        if not has_created: has_created = True; invoke_script_function("create")
 
-    # Time
-    clock.tick(fps_cap)
+        # Time
+        clock.tick(fps_cap)
 
-    cur_time = ((time.time_ns() - start_time) / 1000000.0 / 1000.0)
+        cur_time = ((time.time_ns() - start_time - pause_time) / 1000000.0 / 1000.0)
 
-    process_notes(cur_time - (profile_options["Audio"]["offset"] / 1000))
-    conduct(cur_time)
+        process_notes(cur_time - (profile_options["Audio"]["offset"] / 1000))
+        conduct(cur_time)
 
-    if perf_score != last_score:
-        last_score = perf_score
-        update_accuracy()
-    
-    process_sustains(cur_time - (profile_options["Audio"]["offset"] / 1000), dt)
+        if perf_score != last_score:
+            last_score = perf_score
+            update_accuracy()
+        
+        process_sustains(cur_time - (profile_options["Audio"]["offset"] / 1000), dt)
 
-    # UI
-    update_hud_texts()
+        # UI
+        update_hud_texts()
 
-    # Script
-    invoke_script_function("update", [dt])
+        # Script
+        invoke_script_function("update", [dt])
 
-    # End Fade
-    if song_ended:
-        if camera.get_item("overlay").get_property("opacity") == 255:
-            master_data.append(["switch_scene", "results", {
-                "meta": json.load(open(f"{profile_options["Customisation"]["content_folder"]}/Songs/{song_name}/meta.json")),
-                "score": player_stats["score"],
-                "accuracy": player_stats["accuracy"],
-                "highest": player_stats["highest"],
-                "ratings": player_stats["ratings"],
-                "misses": player_stats["misses"],
-                "rank": player_stats["rank"],
-                "folder": song_name,
-                "difficulty": song_difficulty
-            }])
+        # End Fade
+        if song_ended:
+            if camera.get_item("overlay").get_property("opacity") == 255:
+                master_data.append(["switch_scene", "results", {
+                    "meta": json.load(open(f"{profile_options["Customisation"]["content_folder"]}/Songs/{song_name}/meta.json")),
+                    "score": player_stats["score"],
+                    "accuracy": player_stats["accuracy"],
+                    "highest": player_stats["highest"],
+                    "ratings": player_stats["ratings"],
+                    "misses": player_stats["misses"],
+                    "rank": player_stats["rank"],
+                    "folder": song_name,
+                    "difficulty": song_difficulty
+                }])
 
     # Render
     scene.render_scene()
 
 def handle_event(event):
+    global pause_index
+
     match event.type:
         case pygame.KEYDOWN:  
             if not event.key in binds:
                 match event.key:
                     case pygame.K_F5: load_scripts()
                     case pygame.K_ESCAPE:
-                        master_data.append(["switch_scene", "results", {
-                            "meta": json.load(open(f"{profile_options["Customisation"]["content_folder"]}/Songs/{song_name}/meta.json")),
-                            "score": player_stats["score"],
-                            "accuracy": player_stats["accuracy"],
-                            "highest": player_stats["highest"],
-                            "ratings": player_stats["ratings"],
-                            "misses": player_stats["misses"],
-                            "rank": player_stats["rank"],
-                            "folder": song_name,
-                            "difficulty": song_difficulty
-                        }])
+                        toggle_pause()
+                        menu_sfx["back"].play()
                     case _: pass
+                if paused:
+                    match event.key:
+                        case pygame.K_UP:
+                            if pause_index == 0: pause_index = len(pause_buttons)-1
+                            else: pause_index -= 1
+                            menu_sfx["scroll"].stop()
+                            menu_sfx["scroll"].play()
+                            pause_select(pause_index)
+                        case pygame.K_DOWN:
+                            if pause_index == len(pause_buttons)-1: pause_index = 0
+                            else: pause_index += 1
+                            menu_sfx["scroll"].stop()
+                            menu_sfx["scroll"].play()
+                            pause_select(pause_index)
+                        case pygame.K_RETURN:
+                            menu_sfx["select"].stop()
+                            menu_sfx["select"].play()
+                            pause_press(pause_index)
         case pygame.KEYUP:
             if not event.key in binds:
                 match event.key:
@@ -943,3 +1107,15 @@ def fancy_print(content, header = "", icon = ""):
 
     print(f"{to_print} ---------")
     print(content)
+
+# 
+
+def get_pause_ui_property(parent, key, otherwise, button = False):
+    if button:
+        if not parent in pause_ui["buttons"].keys(): return otherwise
+        if not key in pause_ui["buttons"][parent].keys(): return otherwise
+        else: return pause_ui["buttons"][parent][key]
+    else:
+        if not parent in pause_ui.keys(): return otherwise
+        if not key in pause_ui[parent].keys(): return otherwise
+        else: return pause_ui[parent][key]

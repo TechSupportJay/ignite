@@ -42,7 +42,8 @@ class scene():
     def render_scene(self):
         self.screen.fill("#000000")
         for tag in self.ordered:
-            cam = self.cameras[tag]
-            if cam == None: continue
-            cam.render(self.screen)
+            if self.cameras[tag].get_property("visible"): 
+                cam = self.cameras[tag]
+                if cam == None: continue
+                cam.render(self.screen)
         pygame.display.flip()

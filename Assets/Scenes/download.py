@@ -94,7 +94,7 @@ def init(data = []):
         connected = False
     
     menu_sfx = {}
-    sfx = ["scroll", "select", "play", "back"]
+    sfx = ["scroll", "select", "play", "back", "error"]
     for s in sfx:
         menu_sfx[s] = pygame.mixer.Sound(skin_grab(f"SFX/Menu/{s}.ogg"))
         menu_sfx[s].set_volume(profile_options["Audio"]["vol_sfx"] * profile_options["Audio"]["vol_master"])
@@ -170,14 +170,15 @@ def init(data = []):
         thread = threading.Thread(target=client_update)
         thread.start()
     else:
+        pygame.mixer.music.stop()
+        menu_sfx["error"].play()
         fancy_print("Unable to Connect", "Download Songs / Socket", "!")
         error = RMS.objects.image("error", skin_grab(f"Menus/Download/error.png"))
         error.set_property("size", [1280,720])
         error.set_property("position", [1280/2,720/2])
-        error.set_property("visible", True)
         error.set_property("priority", 99)
         camera.add_item(error)
-
+    
 def client_update():
     global connected, currently_downloading, download, requested, charts, ext, request_fulfilled
 
@@ -265,7 +266,7 @@ def handle_event(event):
                 connected = False
                 thread = None
                 send("sys", "disconnect")
-                master_data.append(["switch_scene", "menu", [False, "content"]])
+                master_data.append(["switch_scene", "menu", [False, "error"]])
             else:
                 match event.key:
                     case pygame.K_ESCAPE:
@@ -344,7 +345,8 @@ def connect(ip, port):
         client.connect((ip, port))
         return True
     except:
-        menu_sfx["back"].play()
+        pygame.mixer.music.stop()
+        menu_sfx["error"].play()
         fancy_print("Unable to Connect", "Download Songs / Socket", "!")
         error = RMS.objects.image("error", skin_grab(f"Menus/Download/error.png"))
         error.set_property("size", [1280,720])
