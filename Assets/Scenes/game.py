@@ -339,9 +339,9 @@ def process_notes(time_in):
                 if chart[l][i]["l"] > 0:
                     camera.remove_item(f"sus_{l}_{i}")
                     camera.remove_item(f"tip_{l}_{i}")
+                    perf_score += int(1000*(chart[l][i]["l"]))
                 camera.remove_item(f"note_{l}_{i}")
 
-                perf_score += int(10000*(time_in-(chart[l][i]["t"] + chart[l][i]["l"])))
 
                 player_stats["misses"] += 1
                 player_stats["combo"] = 0
@@ -556,6 +556,15 @@ def toggle_pause():
         pause_start = time.time_ns()
         pause_index = 0
         pause_select(0)
+
+        pause_cam.cancel_tween("pause_x")
+        pause_cam.cancel_tween("pause_y")
+
+        pause_cam.set_property("zoom", [1.1,1.1])
+
+        pause_cam.do_tween("pause_x", pause_cam, "zoom:x", 1, 1, "expo", "out")
+        pause_cam.do_tween("pause_y", pause_cam, "zoom:y", 1, 1, "expo", "out")
+
     else:
         pygame.mixer.music.unpause()
         if not profile_options["Gameplay"]["botplay"]:
@@ -588,17 +597,20 @@ def pause_press(index):
             destroy()
             init(scene_data)
         case "end":
-            master_data.append(["switch_scene", "results", {
-                "meta": json.load(open(f"{profile_options["Customisation"]["content_folder"]}/Songs/{song_name}/meta.json")),
-                "score": player_stats["score"],
-                "accuracy": player_stats["accuracy"],
-                "highest": player_stats["highest"],
-                "ratings": player_stats["ratings"],
-                "misses": player_stats["misses"],
-                "rank": player_stats["rank"],
-                "folder": song_name,
-                "difficulty": song_difficulty
-            }])
+            if processed_notes == 0:
+                master_data.append(["switch_scene", "song_selection"])
+            else:
+                master_data.append(["switch_scene", "results", {
+                    "meta": json.load(open(f"{profile_options["Customisation"]["content_folder"]}/Songs/{song_name}/meta.json")),
+                    "score": player_stats["score"],
+                    "accuracy": player_stats["accuracy"],
+                    "highest": player_stats["highest"],
+                    "ratings": player_stats["ratings"],
+                    "misses": player_stats["misses"],
+                    "rank": player_stats["rank"],
+                    "folder": song_name,
+                    "difficulty": song_difficulty
+                }])
 
 
 # Music
@@ -1010,9 +1022,6 @@ def update():
 
         if not has_created: has_created = True; invoke_script_function("create")
 
-        # Time
-        clock.tick(fps_cap)
-
         cur_time = ((time.time_ns() - start_time - pause_time) / 1000000.0 / 1000.0)
 
         process_notes(cur_time - (profile_options["Audio"]["offset"] / 1000))
@@ -1047,6 +1056,9 @@ def update():
 
     # Render
     scene.render_scene()
+
+    # Time
+    clock.tick(fps_cap)
 
 def handle_event(event):
     global pause_index

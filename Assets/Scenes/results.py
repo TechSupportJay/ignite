@@ -5,6 +5,8 @@ import pygame, os, math, time, json, random
 screen = None
 master_data = []
 
+clock = pygame.time.Clock()
+
 # Variables
 
 screen = None
@@ -70,7 +72,7 @@ def set_global(prop, val):
 # Master Functions
 
 def init(data = []):
-    global scene, camera, sound
+    global scene, camera, sound, fps_cap
     global skin_dir, ui_texts, ui
 
     scene = RMS.scenes.scene(screen, "Template")
@@ -82,6 +84,7 @@ def init(data = []):
     current_profile = data[0]
     profile_options = json.load(open(f"Data/{current_profile}/options.json"))
     skin_dir = f"{profile_options["Customisation"]["content_folder"]}/Skins/{profile_options["Customisation"]["skin"]}"
+    fps_cap = profile_options["Video"]["fps_cap"]
 
     ui = json.load(open(skin_grab("Results/ui.json")))
     ui_texts = json.load(open(skin_grab("texts.json")))
@@ -204,6 +207,7 @@ def init(data = []):
     sound.play()
 
 def update():
+    clock.tick(fps_cap)
     scene.render_scene()
 
 def handle_event(event):
