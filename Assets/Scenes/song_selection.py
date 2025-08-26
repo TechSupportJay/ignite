@@ -36,6 +36,12 @@ diff_selection = 0
 
 ###
 
+search = ""
+search_text = None
+searching = False
+
+###
+
 menu_sfx = {}
 
 # Master Functions
@@ -65,6 +71,7 @@ def init(data):
     global diff_selection, difficulties
     global focused_element
     global menu_sfx
+    global search, search_text, searching
 
     scene = RMS.scenes.scene(screen, "Song Selection")
 
@@ -120,7 +127,7 @@ def init(data):
     song_tabs = []
 
     camera.cache_image(skin_grab(f"Menus/SongSelect/tab.png"))
-    load_songs()
+    load_songs("")
 
     difficulties = []
     diff_selection = 0
@@ -141,8 +148,15 @@ def init(data):
     overlay.set_property("priority", 10)
     camera.add_item(overlay)
 
-    # Select
-    select_song(selection_id)
+    # Search
+    search = ""
+    searching = False
+
+    search_text = RMS.objects.text("search_text", "|")
+    search_text.set_property("font", skin_grab("Fonts/default.ttf"))
+    search_text.set_property("font_size", 32)
+    search_text.set_property("position", [20,-50])
+    camera.add_item(search_text)
 
     # FPS Cap
     fps_cap = profile_options["Video"]["fps_cap"]
@@ -158,54 +172,91 @@ def update():
     invoke_script_function("update")
 
 def handle_event(event):
-    global selection_id, diff_selection
+    global selection_id, diff_selection, search, searching, search_text
 
     match event.type:
         case pygame.KEYDOWN:
-            match event.key:
-                case pygame.K_UP:
-                    match focused_element:
-                        case "song":
-                            selection_id -= 1
-                            if selection_id < 0: selection_id = len(song_tabs)-1
-                            select_song(selection_id)
-                        case "diff":
-                            diff_selection -= 1
-                            if diff_selection < 0: diff_selection = len(difficulties)-1
-                            select_difficulty(diff_selection)
-                    menu_sfx["scroll"].stop()
-                    menu_sfx["scroll"].play()
-                    invoke_script_function("scroll", ["up"])
-                case pygame.K_DOWN:
-                    match focused_element:
-                        case "song":
-                            selection_id += 1
-                            if selection_id > len(song_tabs)-1: selection_id = 0
-                            select_song(selection_id)
-                        case "diff":
-                            diff_selection += 1
-                            if diff_selection > len(difficulties)-1: diff_selection = 0
-                            select_difficulty(diff_selection)
-                    menu_sfx["scroll"].stop()
-                    menu_sfx["scroll"].play()
-                    invoke_script_function("scroll", ["down"])
-                case pygame.K_RETURN:
-                    if len(song_tabs) > 0:
+            if not searching:
+                match event.key:
+                    case pygame.K_UP:
                         match focused_element:
                             case "song":
-                                display_difficulties(song_tabs[selection_id][0])
+                                selection_id -= 1
+                                if selection_id < 0: selection_id = len(song_tabs)-1
+                                select_song(selection_id)
                             case "diff":
-                                start_song(song_tabs[selection_id][0], difficulties[diff_selection])
-                        invoke_script_function("selected", [selection_id])
-                case pygame.K_ESCAPE:
-                    if focused_element == "diff":
-                        hide_difficulties()
-                        invoke_script_function("return")
-                    else:
-                        master_data.append(["switch_scene", "menu", [False, "single"]])
-        case pygame.VIDEORESIZE:
-            camera.set_property("scale", [event.w/1280, event.h/720])
-            camera.set_property("position", [(event.w-1280)/2,(event.h-720)/2])
+                                diff_selection -= 1
+                                if diff_selection < 0: diff_selection = len(difficulties)-1
+                                select_difficulty(diff_selection)
+                        menu_sfx["scroll"].stop()
+                        menu_sfx["scroll"].play()
+                        invoke_script_function("scroll", ["up"])
+                    case pygame.K_DOWN:
+                        match focused_element:
+                            case "song":
+                                selection_id += 1
+                                if selection_id > len(song_tabs)-1: selection_id = 0
+                                select_song(selection_id)
+                            case "diff":
+                                diff_selection += 1
+                                if diff_selection > len(difficulties)-1: diff_selection = 0
+                                select_difficulty(diff_selection)
+                        menu_sfx["scroll"].stop()
+                        menu_sfx["scroll"].play()
+                        invoke_script_function("scroll", ["down"])
+                    case pygame.K_RETURN:
+                        if len(song_tabs) > 0:
+                            match focused_element:
+                                case "song":
+                                    display_difficulties(song_tabs[selection_id][0])
+                                case "diff":
+                                    start_song(song_tabs[selection_id][0], difficulties[diff_selection])
+                            invoke_script_function("selected", [selection_id])
+                    case pygame.K_ESCAPE:
+                        if focused_element == "diff":
+                            hide_difficulties()
+                            invoke_script_function("return")
+                        else:
+                            master_data.append(["switch_scene", "menu", [False, "single"]])
+                    case pygame.K_k:
+                        search = ""
+                        searching = True
+                        search_text.set_property("text", "Start Typing...")
+                        search_text.set_property("opacity", 255/2)
+                        camera.cancel_tween("search")
+                        camera.do_tween("search", search_text, "position:y", 20, 0.5, "expo", "out")
+            else:
+                match event.key:
+                    case pygame.K_ESCAPE:
+                        searching = False
+                        search_text.set_property("text", search.upper())
+                    case pygame.K_RETURN:
+                        if search == "":
+                            load_songs()
+                            camera.cancel_tween("search")
+                            camera.do_tween("search", search_text, "position:y", -50, 0.5, "expo", "in")
+                        else:
+                            load_songs(search)
+                        searching = False
+                        if not search == "": search_text.set_property("text", search.upper())
+                    case pygame.K_BACKSPACE:
+                        if len(search) > 0:
+                            search = search[:-1]
+                            search_text.set_property("text", search.upper() + "|")
+                    case _:
+                        key_dict = {
+                            pygame.K_a: "a", pygame.K_b: "b", pygame.K_c: "c", pygame.K_d: "d", pygame.K_e: "e", pygame.K_f: "f", pygame.K_g: "g", pygame.K_h: "h", pygame.K_i: "i", pygame.K_j: "j", pygame.K_k: "k", pygame.K_l: "l", pygame.K_m: "m", pygame.K_n: "n", pygame.K_o: "o", pygame.K_p: "p", pygame.K_q: "q", pygame.K_r: "r", pygame.K_s: "s", pygame.K_t: "t", pygame.K_u: "u", pygame.K_v: "v", pygame.K_w: "w", pygame.K_x: "x", pygame.K_y: "y", pygame.K_z: "z",
+                            pygame.K_0: "0", pygame.K_1: "1", pygame.K_2: "2", pygame.K_3: "3", pygame.K_4: "4", pygame.K_5: "5", pygame.K_6: "6", pygame.K_7: "7", pygame.K_8: "8", pygame.K_9: "9",
+                            pygame.K_KP0: "0", pygame.K_KP1: "1", pygame.K_KP2: "2", pygame.K_KP3: "3", pygame.K_KP4: "4", pygame.K_KP5: "5", pygame.K_KP6: "6", pygame.K_KP7: "7", pygame.K_KP8: "8", pygame.K_KP9: "9",
+                            pygame.K_SPACE: " "
+                        }
+
+                        if event.key in key_dict:
+                            to_add = key_dict[event.key]
+                            search += to_add
+                            search_text.set_property("text", search.upper() + "|")
+                if not searching: search_text.set_property("opacity", 255/2)
+                else: search_text.set_property("opacity", 255)
 
 def destroy():
     global camera, scene
@@ -215,8 +266,19 @@ def destroy():
 
 # Extra Functions
 
-def load_songs():
-    global are_songs
+def load_songs(query = ""):
+    query = query.lower()
+
+    global are_songs, song_tabs, selection_id
+
+    if len(song_tabs) > 0:
+        to_remove = []
+        for song in song_tabs:
+            to_remove.append(song[1].get_property("tag"))
+            to_remove.append(song[2].get_property("tag"))
+            to_remove.append(song[3].get_property("tag"))
+        camera.remove_item_bulk(to_remove)
+    song_tabs = []
 
     all_songs = next(os.walk(songs_dir), (None, None, []))[1]
 
@@ -224,7 +286,9 @@ def load_songs():
         i = 0
         for song in all_songs:
             valid_song = False
-            if not os.path.isfile(f"{songs_dir}/{song}/meta.json"):
+            if query != "" and query not in get_from_meta(song, "name", song).lower() and query not in get_from_meta(song, "artist", song).lower():
+                pass
+            elif not os.path.isfile(f"{songs_dir}/{song}/meta.json"):
                 fancy_print(f"{song}: No Meta Found", "Load Songs", "!")
             elif not os.path.isfile(f"{songs_dir}/{song}/audio.mp3") and not os.path.isfile(f"{songs_dir}/{song}/audio.wav") and not os.path.isfile(f"{songs_dir}/{song}/audio.ogg"):
                 fancy_print(f"{song}: No Audio File Found", "Load Songs", "!")
@@ -254,6 +318,9 @@ def load_songs():
         camera.add_item(no_songs)
 
         return
+
+    selection_id = 0
+    select_song(selection_id)
 
 def make_song_tab(id, display_name, artist):
     tab_bg = RMS.objects.image(f"tab_{id}", skin_grab(f"Menus/SongSelect/tab.png"))
@@ -292,7 +359,7 @@ def make_song_tab(id, display_name, artist):
     song_tabs.append([id, tab_bg, tab_name, tab_artist])
 
 def select_song(id):
-    if not are_songs: return
+    if not are_songs or len(song_tabs) == 0: return
 
     move_vertical = 0
 

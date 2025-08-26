@@ -424,10 +424,10 @@ def make_option(section, option, index):
         x = item.get_property("position:x")
 
         item.set_property("opacity", 0)
-        item.set_property("position:x", x-20)
+        item.set_property("position:x", x-20-(5*index))
 
-        camera.do_tween(f"load_{index}_o_{i}", item, "opacity", op, 0.35, "linear", "out", 0.0125 * index)
-        camera.do_tween(f"load_{index}_x_{i}", item, "position:x", x, 0.35, "circ", "out", 0.0125 * index)
+        camera.do_tween(f"load_{index}_o_{i}", item, "opacity", op, 0.35, "linear", "out")
+        camera.do_tween(f"load_{index}_x_{i}", item, "position:x", x, 0.5, "circ", "out")
 
         i += 1
     del i

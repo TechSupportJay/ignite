@@ -43,8 +43,7 @@ def switch_scene(tag, data = []):
 
         match tag:
             case "game": valid_scenes[current_scene].init([data[0], data[1], current_profile, data[2]])
-            case "menu" | "results": valid_scenes[current_scene].init([current_profile, data])
-            case _: valid_scenes[current_scene].init([current_profile])
+            case _: valid_scenes[current_scene].init([current_profile, data])
         valid_scenes[current_scene].resize(screen_size)
         if current_scene not in ["game"]:
             valid_scenes[current_scene].camera.set_property("zoom", [1.1,1.1])

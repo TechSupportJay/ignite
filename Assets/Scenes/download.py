@@ -43,6 +43,10 @@ requested = ""
 request_fulfilled = False
 last_ping = 0
 
+search = ""
+search_text = None
+searching = False
+
 #
 
 songs = []
@@ -58,12 +62,15 @@ def init(data = []):
     global ui, ui_texts
     global songs
     global menu_sfx
+    global search, search_text, searching
 
     scene = RMS.scenes.scene(screen, "Template")
     camera = RMS.cameras.camera("HUD", 1)
     scene.add_camera(camera)
 
     #
+
+    search = ""
 
     current_profile = data[0]
     profile_options = json.load(open(f"Data/{data[0]}/options.json"))
@@ -99,6 +106,8 @@ def init(data = []):
         menu_sfx[s] = pygame.mixer.Sound(skin_grab(f"SFX/Menu/{s}.ogg"))
         menu_sfx[s].set_volume(profile_options["Audio"]["vol_sfx"] * profile_options["Audio"]["vol_master"])
     
+    menu_sfx["select"].play()
+
     if connected:
         # Load UI
         background = RMS.objects.image("background", skin_grab(f"Menus/Download/background.png"))
@@ -163,9 +172,20 @@ def init(data = []):
         camera.cache_image(skin_grab(f"Menus/Download/tab.png"))
         camera.cache_image(skin_grab(f"Menus/Download/tab_owned.png"))
         songs = []
+
+        # Search
+
+        searching = False
+
+        search_text = RMS.objects.text("search_text", "|")
+        search_text.set_property("font", skin_grab("Fonts/default.ttf"))
+        search_text.set_property("font_size", 32)
+        search_text.set_property("position", [20,-50])
+        camera.add_item(search_text)
+
         send("sql", "SELECT * FROM songs")
 
-        #
+        # Thread
 
         thread = threading.Thread(target=client_update)
         thread.start()
@@ -258,7 +278,9 @@ def update():
     scene.render_scene()
 
 def handle_event(event):
-    global connected, thread, selection_id
+    global connected, thread
+    global selection_id
+    global search, searching
 
     match event.type:
         case pygame.KEYDOWN:
@@ -268,35 +290,75 @@ def handle_event(event):
                 send("sys", "disconnect")
                 master_data.append(["switch_scene", "menu", [False, "error"]])
             else:
-                match event.key:
-                    case pygame.K_ESCAPE:
-                        connected = False
-                        thread = None
-                        send("sys", "disconnect")
-                        master_data.append(["switch_scene", "menu", [False, "content"]])
-                    case pygame.K_UP:
-                        if len(songs) > 0 and currently_downloading == "":
-                            selection_id -= 1
-                            if selection_id < 0: selection_id = len(songs)-1
-                            select_song(selection_id)
-                            menu_sfx["scroll"].stop()
-                            menu_sfx["scroll"].play()
-                    case pygame.K_DOWN:
-                        if len(songs) > 0 and currently_downloading == "":
-                            selection_id += 1
-                            if selection_id > len(songs)-1: selection_id = 0
-                            select_song(selection_id)
-                            menu_sfx["scroll"].stop()
-                            menu_sfx["scroll"].play()
-                    case pygame.K_RETURN:
-                        if len(songs) > 0 and currently_downloading == "":
-                            if os.path.exists(f"{profile_options["Customisation"]["content_folder"]}/Songs/{songs[selection_id][0]}") and not pygame.key.get_pressed()[pygame.K_LSHIFT]:
-                                master_data.append(["switch_scene", "song_selection"])
-                            else:
-                                menu_sfx["select"].stop()
-                                menu_sfx["select"].play()
-                                download_chart(songs[selection_id][0])
-                    case _: pass
+                if not searching:
+                    match event.key:
+                        case pygame.K_ESCAPE:
+                            connected = False
+                            thread = None
+                            send("sys", "disconnect")
+                            master_data.append(["switch_scene", "menu", [False, "content"]])
+                        case pygame.K_UP:
+                            if len(songs) > 0 and currently_downloading == "":
+                                selection_id -= 1
+                                if selection_id < 0: selection_id = len(songs)-1
+                                select_song(selection_id)
+                                menu_sfx["scroll"].stop()
+                                menu_sfx["scroll"].play()
+                        case pygame.K_DOWN:
+                            if len(songs) > 0 and currently_downloading == "":
+                                selection_id += 1
+                                if selection_id > len(songs)-1: selection_id = 0
+                                select_song(selection_id)
+                                menu_sfx["scroll"].stop()
+                                menu_sfx["scroll"].play()
+                        case pygame.K_RETURN:
+                            if len(songs) > 0 and currently_downloading == "":
+                                if os.path.exists(f"{profile_options["Customisation"]["content_folder"]}/Songs/{songs[selection_id][0]}") and not pygame.key.get_pressed()[pygame.K_LSHIFT]:
+                                    master_data.append(["switch_scene", "song_selection"])
+                                else:
+                                    menu_sfx["select"].stop()
+                                    menu_sfx["select"].play()
+                                    download_chart(songs[selection_id][0])
+                        case pygame.K_k:
+                            search = ""
+                            searching = True
+                            search_text.set_property("text", "Start Typing...")
+                            search_text.set_property("opacity", 255/2)
+                            camera.cancel_tween("search")
+                            camera.do_tween("search", search_text, "position:y", 20, 0.5, "expo", "out")
+                        case _: pass
+                else:
+                    match event.key:
+                        case pygame.K_ESCAPE:
+                            searching = False
+                            search_text.set_property("text", search.upper())
+                        case pygame.K_RETURN:
+                            if search == "":
+                                send("sql", f"SELECT * FROM songs")
+                                camera.cancel_tween("search")
+                                camera.do_tween("search", search_text, "position:y", -50, 0.5, "expo", "in")
+                            else: send("sql", f"SELECT * FROM songs\nWHERE title LIKE '%{search}%' OR artist LIKE '%{search}%'")
+                            searching = False
+                            if not search == "": search_text.set_property("text", search.upper())
+                        case pygame.K_BACKSPACE:
+                            if len(search) > 0:
+                                search = search[:-1]
+                                search_text.set_property("text", search.upper() + "|")
+                        case _:
+                            key_dict = {
+                                pygame.K_a: "a", pygame.K_b: "b", pygame.K_c: "c", pygame.K_d: "d", pygame.K_e: "e", pygame.K_f: "f", pygame.K_g: "g", pygame.K_h: "h", pygame.K_i: "i", pygame.K_j: "j", pygame.K_k: "k", pygame.K_l: "l", pygame.K_m: "m", pygame.K_n: "n", pygame.K_o: "o", pygame.K_p: "p", pygame.K_q: "q", pygame.K_r: "r", pygame.K_s: "s", pygame.K_t: "t", pygame.K_u: "u", pygame.K_v: "v", pygame.K_w: "w", pygame.K_x: "x", pygame.K_y: "y", pygame.K_z: "z",
+                                pygame.K_0: "0", pygame.K_1: "1", pygame.K_2: "2", pygame.K_3: "3", pygame.K_4: "4", pygame.K_5: "5", pygame.K_6: "6", pygame.K_7: "7", pygame.K_8: "8", pygame.K_9: "9",
+                                pygame.K_KP0: "0", pygame.K_KP1: "1", pygame.K_KP2: "2", pygame.K_KP3: "3", pygame.K_KP4: "4", pygame.K_KP5: "5", pygame.K_KP6: "6", pygame.K_KP7: "7", pygame.K_KP8: "8", pygame.K_KP9: "9",
+                                pygame.K_SPACE: " "
+                            }
+
+                            if event.key in key_dict:
+                                to_add = key_dict[event.key]
+                                search += to_add
+                                search_text.set_property("text", search.upper() + "|")
+                    if not searching: search_text.set_property("opacity", 255/2)
+                    else: search_text.set_property("opacity", 255)
+                    
         case pygame.VIDEORESIZE:
             camera.set_property("scale", [event.w/1280, event.h/720])
             camera.set_property("position", [(event.w-1280)/2,(event.h-720)/2])
@@ -377,7 +439,20 @@ def send(type, content = ""):
 #
 
 def load_songs(output):
+    global songs
+
+    if output == "": return
+
     global selection_id
+
+    if len(songs) > 0:
+        to_remove = []
+        for song in songs:
+            to_remove.append(song[1].get_property("tag"))
+            to_remove.append(song[2].get_property("tag"))
+            to_remove.append(song[3].get_property("tag"))
+        camera.remove_item_bulk(to_remove)
+    songs = []
     
     output_list = []
     output_list_0 = output.split("|")

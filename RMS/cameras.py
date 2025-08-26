@@ -60,12 +60,21 @@ class camera():
                     self.fonts[(f"{item.get_property("font")}_{item.get_property("font_size")}")] = pygame.font.Font(item.get_property("font"), int(item.get_property("font_size")))
 
         self.order_items()
-    
+
     def remove_item(self, tag):
         if not self.has_item(tag):
             print(f"[!] Tried to remove Item ({tag}), but it was not in Camera ({self.tag})")
             return
         self.items.pop(tag)
+        self.order_items()
+    
+    def remove_item_bulk(self, tags):
+        if len(tags) == 0: return
+        for tag in tags:
+            if not self.has_item(tag):
+                print(f"[!] Tried to remove Item ({tag}), but it was not in Camera ({self.tag})")
+                return
+            self.items.pop(tag)
         self.order_items()
     
     def set_property(self, property, value):
@@ -145,6 +154,7 @@ class camera():
                     tween.item.set_property(tween.property, tween.return_tween_value())
 
         for tag in self.ordered:
+            if tag not in self.items.keys(): continue
             item = self.items[tag]
             match item.get_type():
                 case "image":
