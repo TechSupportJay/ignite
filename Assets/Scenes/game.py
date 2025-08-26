@@ -146,7 +146,7 @@ def load_scripts(mid_song = True):
 
     if os.path.isfile(f"{songs_dir}/{song_name}/script.py"):
         add_script("", "song", f"{songs_dir}/{song_name}/script.py")
-        if not script[:1] == "_": print_names.append("* Song Script")
+        print_names.append("* Song Script")
     if len(os.listdir(f"{profile_options["Customisation"]["content_folder"]}/Scripts")) > 0:
         for script in os.listdir(f"{profile_options["Customisation"]["content_folder"]}/Scripts"):
             add_script("scr_", script.replace(".py", ""), f"{profile_options["Customisation"]["content_folder"]}/Scripts/{script}")

@@ -19,10 +19,10 @@
     },
     "chartist": {
         "font": "sub.ttf",
-        "font_size": 32,
+        "font_size": 20,
         "color": "#FFFFFF",
         "text_align": "center",
-        "position": [640,605] 
+        "position": [640,620] 
     },
     "difficulty": {
         "font": "default.ttf",

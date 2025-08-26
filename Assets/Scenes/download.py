@@ -78,6 +78,15 @@ def init(data = []):
     ui = json.load(open(skin_grab("Menus/Download/ui.json")))
     ui_texts = grab_json("texts.json", "Song Selection")
 
+    #
+
+    load = RMS.objects.image("load", skin_grab(f"Menus/Download/loading.png"))
+    load.set_property("size", [1280,720])
+    load.set_property("position", [1280/2,720/2])
+    camera.add_item(load)
+
+    scene.render_scene()
+
     # Online
 
     network_options = json.load(open(f"Data/{data[0]}/network.json"))
@@ -105,11 +114,10 @@ def init(data = []):
     for s in sfx:
         menu_sfx[s] = pygame.mixer.Sound(skin_grab(f"SFX/Menu/{s}.ogg"))
         menu_sfx[s].set_volume(profile_options["Audio"]["vol_sfx"] * profile_options["Audio"]["vol_master"])
-    
-    menu_sfx["select"].play()
 
     if connected:
-        # Load UI
+        menu_sfx["select"].play()
+
         background = RMS.objects.image("background", skin_grab(f"Menus/Download/background.png"))
         background.set_property("size", [1280,720])
         background.set_property("position", [1280/2,720/2])
@@ -191,6 +199,7 @@ def init(data = []):
         thread.start()
     else:
         pygame.mixer.music.stop()
+        menu_sfx["select"].stop()
         menu_sfx["error"].play()
         fancy_print("Unable to Connect", "Download Songs / Socket", "!")
         error = RMS.objects.image("error", skin_grab(f"Menus/Download/error.png"))
@@ -404,10 +413,12 @@ def connect(ip, port):
     global connected, thread
     
     try:
+        fancy_print(f"Attempting to Connect to Server\nIP: {ip}", "Download Songs / Socket", "i")
         client.connect((ip, port))
         return True
     except:
         pygame.mixer.music.stop()
+        menu_sfx["select"].stop()
         menu_sfx["error"].play()
         fancy_print("Unable to Connect", "Download Songs / Socket", "!")
         error = RMS.objects.image("error", skin_grab(f"Menus/Download/error.png"))

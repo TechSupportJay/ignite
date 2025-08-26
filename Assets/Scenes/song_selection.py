@@ -286,7 +286,7 @@ def load_songs(query = ""):
         i = 0
         for song in all_songs:
             valid_song = False
-            if query != "" and query not in get_from_meta(song, "name", song).lower() and query not in get_from_meta(song, "artist", song).lower():
+            if query != "" and query not in get_from_meta(song, "name", "song").lower() and query not in get_from_meta(song, "artist", "").lower():
                 pass
             elif not os.path.isfile(f"{songs_dir}/{song}/meta.json"):
                 fancy_print(f"{song}: No Meta Found", "Load Songs", "!")
