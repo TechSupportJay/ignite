@@ -601,9 +601,10 @@ def select_song(id):
 #
 
 def download_chart(id):
-    global currently_downloading, download, requested
+    global currently_downloading, download, requested, attempts
     
     currently_downloading = id
+    attempts = 0
 
     # Make Directories
     if not os.path.exists(f"{profile_options["Customisation"]["content_folder"]}/Songs/{id}"):
