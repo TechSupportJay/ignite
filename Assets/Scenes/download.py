@@ -248,6 +248,7 @@ def client_update():
                                 else: # Finished
                                     fancy_print(f"{split[0]} has finished downloading", f"Download: {currently_downloading}", "D")
                                     download[split[0]]["finished"] = True
+                                    attempts = 0
                                     write_file(split[0])
 
                                     match split[0]:
@@ -655,10 +656,8 @@ def continue_download(current):
 
     if current != "" and not download[current]["finished"]:
         if "content" not in download[current].keys(): send("download", f"{currently_downloading}|{current}")       
-        elif len(download[current]["content"]) % 2560000 or attempts >= 10:
+        elif len(download[current]["content"]) % 2560000 and attempts < 10:
             send("download", f"{currently_downloading}|{current}")
-            attempts = 0
-        else:
             attempts += 1
 
 def write_file(name):
