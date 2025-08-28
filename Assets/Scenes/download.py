@@ -40,8 +40,8 @@ download = {}
 charts = []
 ext = ""
 requested = ""
-request_fulfilled = False
 last_ping = 0
+attempts = 0
 
 search = ""
 search_text = None
@@ -58,7 +58,7 @@ def init(data = []):
     global scene, camera
     global current_profile, profile_options, skin_dir
     global header, ip, port, server, identifiers, thread, connected, client
-    global currently_downloading, download, requested, charts, ext, request_fulfilled, last_ping
+    global currently_downloading, download, requested, charts, ext, last_ping, attempts
     global ui, ui_texts
     global songs
     global menu_sfx
@@ -172,8 +172,8 @@ def init(data = []):
         requested = ""
         charts = []
         ext = ""
-        request_fulfilled = False
         last_ping = time.time() + 10
+        attempts = 0
 
         ###
 
@@ -209,7 +209,7 @@ def init(data = []):
         camera.add_item(error)
     
 def client_update():
-    global connected, currently_downloading, download, requested, charts, ext, request_fulfilled
+    global connected, currently_downloading, download, requested, charts, ext
 
     while connected:
         # Check for UTF-8
@@ -238,38 +238,61 @@ def client_update():
                     if currently_downloading != "":
                         split = message[1].split(" | ")
                         if not "content" in download[split[0]]:
-                            request_fulfilled = True
                             continue_download(split[0])
                         else:
                             if not download[split[0]]["finished"]:
-                                if len(download[split[0]]["content"]) < int(split[1]):
+                                if len(download[split[0]]["content"]) < int(split[1]): # Doesn't Match
                                     fancy_print(f"{split[0]} states it has finished downloading\nbut size does not match\n({len(download[split[0]]["content"])} < {split[1]})", f"Download: {currently_downloading}", "D")
                                     send("download", f"set_pos|{len(download[split[0]]["content"])}")
-                                    request_fulfilled = True
                                     continue_download(split[0])
-                                else:
+                                else: # Finished
                                     fancy_print(f"{split[0]} has finished downloading", f"Download: {currently_downloading}", "D")
                                     download[split[0]]["finished"] = True
-                                    request_fulfilled = True
-                                    continue_download(split[0])
+                                    write_file(split[0])
+
+                                    match split[0]:
+                                        case "meta": requested = charts[0]
+                                        case "audio": requested = "meta"
+                                        case _: 
+                                            if split[0] in charts:
+                                                current_index = charts.index(split[0])+1
+                                                if current_index >= len(charts):
+                                                    fancy_print(f"Download has completed", f"Download: {currently_downloading}", "D")
+                                                    camera.get_item("download_background").set_property("visible", False)
+                                                    camera.get_item("download_title").set_property("visible", False)
+                                                    camera.get_item("download_progress").set_property("visible", False)
+
+                                                    camera.cancel_tween("zoom_x")
+                                                    camera.cancel_tween("zoom_y")
+
+                                                    camera.set_property("zoom", [1.2,1.2])
+                                                    camera.do_tween("zoom_x", camera, "zoom:x", 1, 0.5, "cubic", "out")
+                                                    camera.do_tween("zoom_y", camera, "zoom:y", 1, 0.5, "cubic", "out")
+
+                                                    currently_downloading = ""
+                                                    menu_sfx["play"].play()
+                                                    return
+                                                else:
+                                                    requested = charts[current_index]
+                                                    camera.get_item("download_progress").set_property("text", f"Downloading Chart {current_index+1}/{len(charts)}...")
+
+                                    continue_download(requested)
                 case "dl_text":
                     if currently_downloading != "":
                         if not "content" in download[requested].keys(): download[requested]["content"] = message[1]
                         else: download[requested]["content"] += message[1]
                         
                         fancy_print(f"Recieved {len(message[1])/1000}KB of {requested}", f"Download: {currently_downloading}", "D")
-                        request_fulfilled = True
 
                         continue_download(requested)
                 case "charts":
-                    charts = message[1].split("|")
-                    request_fulfilled = True
-
+                    charts = []
+                    for chart in message[1].split("|"): charts.append(chart)
+                    fancy_print(f"Charts: {charts}", "Server", "D")
                     send("download", f"get_audio_ext|{currently_downloading}")                    
                 case "ext":
                     fancy_print(f"Audio Extension: {message[1]}", f"Server", "D")
                     ext = message[1]
-                    request_fulfilled = True
 
                     continue_download("audio")
         else:
@@ -278,9 +301,6 @@ def client_update():
                 else: download[requested]["content"] += message
                 fancy_print(f"Recieved {len(message)/1000}KB of {requested} (RAW)", f"Download: {currently_downloading}", "D")
 
-                time.sleep(0.05)
-
-                request_fulfilled = True
                 continue_download(requested)
 
 def update():
@@ -612,50 +632,18 @@ def download_chart(id):
     songs[selection_id][1].set_property("image_location", skin_grab(f"Menus/Download/tab_owned.png"))
 
     send("download", f"get_charts|{currently_downloading}")
-    
+
 def continue_download(current):
-    global requested, ext, request_fulfilled, currently_downloading
+    global requested, ext, currently_downloading, attempts
 
-    if not request_fulfilled: return
-    request_fulfilled = False
-
-    if current not in download:
+    if current not in download.keys():
         download[current] = {
-            "finished": False,
-            "content": ""
+            "finished": False
         }
     
-    if download[current]["finished"]:
-        write_file(current)
-        match current:
-            case "meta": current = charts[0]
-            case "audio": current = "meta"
-            case _: 
-                if current in charts:
-                    current_index = charts.index(current)+1
-                    if current_index >= len(charts):
-                        fancy_print(f"Download has completed", f"Download: {currently_downloading}", "D")
-                        camera.get_item("download_background").set_property("visible", False)
-                        camera.get_item("download_title").set_property("visible", False)
-                        camera.get_item("download_progress").set_property("visible", False)
-
-                        camera.cancel_tween("zoom_x")
-                        camera.cancel_tween("zoom_y")
-
-                        camera.set_property("zoom", [1.2,1.2])
-                        camera.do_tween("zoom_x", camera, "zoom:x", 1, 0.5, "cubic", "out")
-                        camera.do_tween("zoom_y", camera, "zoom:y", 1, 0.5, "cubic", "out")
-
-                        currently_downloading = ""
-                        menu_sfx["play"].play()
-                        return
-                    else:
-                        current = charts[current_index]
-                        camera.get_item("download_progress").set_property("text", f"Downloading Chart {current_index+1}/{len(charts)}...")
-    else:
-        match current:
-            case "audio": camera.get_item("download_progress").set_property("text", f"Downloading Audio...")
-            case "meta": camera.get_item("download_progress").set_property("text", f"Downloading Meta...")
+    match current:
+        case "audio": camera.get_item("download_progress").set_property("text", f"Downloading Audio...")
+        case "meta": camera.get_item("download_progress").set_property("text", f"Downloading Meta...")
 
     requested = current
 
@@ -665,9 +653,13 @@ def continue_download(current):
     camera.do_tween("progress_bump_x", camera.get_item("download_progress"), "scale:x", 1, 0.5, "back", "out")
     camera.do_tween("progress_bump_y", camera.get_item("download_progress"), "scale:y", 1, 0.5, "back", "out")
 
-    if not current in download: download[current] = {"finished": False}
     if current != "" and not download[current]["finished"]:
-        send("download", f"{currently_downloading}|{current}")
+        if "content" not in download[current].keys(): send("download", f"{currently_downloading}|{current}")       
+        elif len(download[current]["content"]) % 2560000 or attempts >= 10:
+            send("download", f"{currently_downloading}|{current}")
+            attempts = 0
+        else:
+            attempts += 1
 
 def write_file(name):
     if currently_downloading != "":
