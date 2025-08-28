@@ -134,9 +134,8 @@ def init(data = []):
     
     # Album
 
-    album_path = f"{profile_options["Customisation"]["content_folder"]}/Songs/{data[1]["folder"]}/album.png"
-    if not os.path.isfile(f"{profile_options["Customisation"]["content_folder"]}/Songs/{data[1]["folder"]}/album.png"):
-        album_path = skin_grab("Menus/SongSelect/cover.png")
+    album_path = f"{profile_options["Customisation"]["content_folder"]}/Songs/{data[1]["folder"]}/cover.png"
+    if not os.path.isfile(album_path): album_path = skin_grab("Menus/SongSelect/cover.png")
     album = RMS.objects.image("album", album_path)
     album.set_property("position", get_ui_property("album", "position", [0,0]))
     album.set_property("size", get_ui_property("album", "size", [50,50]))

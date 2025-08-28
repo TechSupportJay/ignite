@@ -282,45 +282,47 @@ def load_songs(query = ""):
 
     all_songs = next(os.walk(songs_dir), (None, None, []))[1]
 
-    if len(all_songs) > 0:
-        i = 0
-        for song in all_songs:
-            valid_song = False
-            if query != "" and query not in get_from_meta(song, "name", "song").lower() and query not in get_from_meta(song, "artist", "").lower():
-                pass
-            elif not os.path.isfile(f"{songs_dir}/{song}/meta.json"):
-                fancy_print(f"{song}: No Meta Found", "Load Songs", "!")
-            elif not os.path.isfile(f"{songs_dir}/{song}/audio.mp3") and not os.path.isfile(f"{songs_dir}/{song}/audio.wav") and not os.path.isfile(f"{songs_dir}/{song}/audio.ogg"):
-                fancy_print(f"{song}: No Audio File Found", "Load Songs", "!")
-            elif not os.path.exists(f"{songs_dir}/{song}/charts"):
-                fancy_print(f"{song}: No Charts Found", "Load Songs", "!")
-            else:
-                valid_song = True
-                make_song_tab(song, get_from_meta(song, "name", song), get_from_meta(song, "artist", "N/A"))
-            if not valid_song: all_songs.pop(i)
-            i += 1
-        del i
+    if not all_songs is None:
+        if len(all_songs) > 0:
+            i = 0
+            for song in all_songs:
+                valid_song = False
+                if query != "" and query not in get_from_meta(song, "name", "song").lower() and query not in get_from_meta(song, "artist", "").lower():
+                    pass
+                elif not os.path.isfile(f"{songs_dir}/{song}/meta.json"):
+                    fancy_print(f"{song}: No Meta Found", "Load Songs", "!")
+                elif not os.path.isfile(f"{songs_dir}/{song}/audio.mp3") and not os.path.isfile(f"{songs_dir}/{song}/audio.wav") and not os.path.isfile(f"{songs_dir}/{song}/audio.ogg"):
+                    fancy_print(f"{song}: No Audio File Found", "Load Songs", "!")
+                elif not os.path.exists(f"{songs_dir}/{song}/charts"):
+                    fancy_print(f"{song}: No Charts Found", "Load Songs", "!")
+                else:
+                    valid_song = True
+                    make_song_tab(song, get_from_meta(song, "name", song), get_from_meta(song, "artist", "N/A"))
+                if not valid_song: all_songs.pop(i)
+                i += 1
+            del i
+            selection_id = 0
+            select_song(selection_id)
+            return
+
+    are_songs = False
+
+    cam_items = list(camera.items.keys()).copy()
+
+    for item in cam_items:
+        camera.remove_item(item)
+
+    no_songs = RMS.objects.text("no_songs", "no songs... :(")
+    no_songs.set_property("font", skin_grab("Fonts/default.ttf"))
+    no_songs.set_property("font_size", 32)
+    no_songs.set_property("text_align", "center")
+    no_songs.set_property("position", [1280/2,720/2])
+
+    camera.add_item(no_songs)
+
+    return
+
     
-    if len(all_songs) == 0:
-        are_songs = False
-
-        cam_items = list(camera.items.keys()).copy()
-
-        for item in cam_items:
-            camera.remove_item(item)
-
-        no_songs = RMS.objects.text("no_songs", "no songs... :(")
-        no_songs.set_property("font", skin_grab("Fonts/default.ttf"))
-        no_songs.set_property("font_size", 32)
-        no_songs.set_property("text_align", "center")
-        no_songs.set_property("position", [1280/2,720/2])
-
-        camera.add_item(no_songs)
-
-        return
-
-    selection_id = 0
-    select_song(selection_id)
 
 def make_song_tab(id, display_name, artist):
     tab_bg = RMS.objects.image(f"tab_{id}", skin_grab(f"Menus/SongSelect/tab.png"))

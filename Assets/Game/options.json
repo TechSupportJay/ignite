@@ -20,7 +20,7 @@
     },
     "Customisation": {
         "skin": {"type": "list", "default": "default", "display": "Skin"},
-        "content_folder": {"type": "location", "default": "/mnt/3C1C05611C051792/Programming/Python/Ignite/ContentFolder/", "display": "Content Folder"}
+        "content_folder": {"type": "location", "default": "", "display": "Content Folder"}
     },
     "Audio": {
         "vol_master": {"type": "float", "default": 1.0, "display": "Master", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0},

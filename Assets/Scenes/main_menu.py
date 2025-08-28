@@ -105,6 +105,10 @@ def init(data = []):
     ui = json.load(open(skin_grab("Menus/MainMenu/ui.json")))
     fps_cap = profile_options["Video"]["fps_cap"]
 
+    if not os.path.exists(profile_options["Customisation"]["content_folder"]):
+        fancy_print(f"Content Folder Not Found!\nPath: {profile_options["Customisation"]["content_folder"]}", "Error", "!")
+        exit()
+
     ### SFX
 
     menu_sfx = {}
@@ -132,7 +136,7 @@ def init(data = []):
     camera.add_item(background)
 
     ### Version String
-    version = RMS.objects.text("version", "Version 0.9.3")
+    version = RMS.objects.text("version", "Version 0.9.4")
     version.set_property("font", skin_grab("Fonts/default.ttf"))
     version.set_property("font_size", 20)
     version.set_property("text_align", "center")
