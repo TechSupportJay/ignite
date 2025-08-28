@@ -209,7 +209,7 @@ def init(data = []):
         camera.add_item(error)
     
 def client_update():
-    global connected, currently_downloading, download, requested, charts, ext
+    global connected, currently_downloading, download, requested, charts, ext, attempts
 
     while connected:
         # Check for UTF-8
@@ -243,6 +243,7 @@ def client_update():
                             if not download[split[0]]["finished"]:
                                 if len(download[split[0]]["content"]) < int(split[1]): # Doesn't Match
                                     fancy_print(f"{split[0]} states it has finished downloading\nbut size does not match\n({len(download[split[0]]["content"])} < {split[1]})", f"Download: {currently_downloading}", "D")
+                                    attempts = 0
                                     send("download", f"set_pos|{len(download[split[0]]["content"])}")
                                     continue_download(split[0])
                                 else: # Finished
