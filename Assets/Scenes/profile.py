@@ -62,7 +62,7 @@ def handle_event(event):
         case pygame.KEYDOWN:
             match event.key:
                 case pygame.K_UP:
-                    if selection_index == 0: len(buttons)-1
+                    if selection_index == 0: selection_index = len(buttons)-1
                     else: selection_index -= 1
                     select_item(selection_index)
                     menu_sfx["scroll"].stop()
@@ -75,6 +75,7 @@ def handle_event(event):
                     menu_sfx["scroll"].play()
                 case pygame.K_RETURN:
                     if selection_index != len(buttons)-1:
+                        camera.set_property("visible", False)
                         fancy_print(f"Loading Profile: {options[selection_index]}", "Profile Selection", "i")
                         master_data.append(["set_profile", options[selection_index]])
                         master_data.append(["switch_scene", "menu", [True]])
@@ -128,10 +129,10 @@ def load_buttons(items):
     for item in items:
         if item == 0:
             button = RMS.objects.text("new_profile", "Create New Profile")
-            button.set_property("font", "Assets/Game/Default/Fonts/default.ttf")
+            button.set_property("font", "Assets/Game/Default/Fonts/sub.ttf")
         else:
             button = RMS.objects.text(f"btn_{i}", item)
-            button.set_property("font", "Assets/Game/Default/Fonts/sub.ttf")
+            button.set_property("font", "Assets/Game/Default/Fonts/default.ttf")
         button.set_property("font_size", 32)
         button.set_property("text_align", "center")
         button.set_property("position:x", 1280/2)

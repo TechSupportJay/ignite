@@ -48,7 +48,12 @@ menu_sfx = {}
 
 def skin_grab(item):
     if os.path.isfile(f"{skin_dir}/{item}"): return (f"{skin_dir}/{item}")
+    elif item[-4:] == ".ogg":
+        for ext in [".mp3", ".wav"]:
+            if os.path.isfile(f"{skin_dir}/{item.replace(".ogg", ext)}"): return f"{skin_dir}/{item.replace(".ogg", ext)}"
+        return (f"Assets/Game/Default/{item}")
     else: return (f"Assets/Game/Default/{item}")
+
 
 def grab_json(name, key):
     path = f"{skin_dir}/{name}"

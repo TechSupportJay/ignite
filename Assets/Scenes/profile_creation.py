@@ -233,5 +233,4 @@ def make_profile(name):
     if not os.path.exists("Content/Songs"): os.mkdir("Content/Songs")
     if not os.path.exists("Content/Skins"): os.mkdir("Content/Skins")
     if not os.path.exists("Content/Scripts"): os.mkdir("Content/Scripts")
-    if not os.path.exists("Content/Fonts"): os.mkdir("Content/Fonts")
     master_data.append(["switch_scene", "profile"])

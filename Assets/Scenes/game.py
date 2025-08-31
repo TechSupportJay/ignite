@@ -117,23 +117,34 @@ def add_script(prefix, tag, path):
     to_exec = f"class user_script_{prefix}{tag}(user_script_class_template):\n"
     for line in open((path), "r").readlines():
         to_exec += f"    {line}"
-    exec(f"{to_exec}\nsong_script_{prefix}{tag} = user_script_{prefix}{tag}()\nuser_scripts.append(song_script_{prefix}{tag})")
+    try:
+        exec(f"{to_exec}\nsong_script_{prefix}{tag} = user_script_{prefix}{tag}()\nuser_scripts.append(song_script_{prefix}{tag})")
+    except Exception as e:
+        if e: fancy_print(f"Couldn't import script: {tag}!\nException: {str(e)}", f"SCRIPT ERROR: {prefix}{tag}", "!")
+        menu_sfx["error"].stop()
+        menu_sfx["error"].play()
 
 def invoke_script_function(tag, data = []):
     if len(user_scripts) == 0: return
 
     for script in user_scripts:
-        match tag:
-            case "create": script.create()
-            case "destroy": script.destroy()
-            case "update": script.update(data[0])
-            case "step": script.step_hit()
-            case "beat": script.beat_hit()
-            case "note_hit": script.note_hit(data[0], data[1])
-            case "note_miss": script.note_miss(data[0])
-            case "song_start": script.song_start()
-            case "key_down": script.key_down(data[0])
-            case "key_up": script.key_up(data[0]) 
+        try:
+            match tag:
+                case "create": script.create()
+                case "destroy": script.destroy()
+                case "update": script.update(data[0])
+                case "step": script.step_hit()
+                case "beat": script.beat_hit()
+                case "note_hit": script.note_hit(data[0], data[1])
+                case "note_miss": script.note_miss(data[0])
+                case "song_start": script.song_start()
+                case "key_down": script.key_down(data[0])
+                case "key_up": script.key_up(data[0])
+        except Exception as e:
+            if e:
+                fancy_print(str(e), f"SCRIPT ERROR: {script.__class__.__name__}", "!")
+                menu_sfx["error"].stop()
+                menu_sfx["error"].play()
 
 def load_scripts(mid_song = True):
     fancy_print(f"Loading Scripts...", "Game", "i")
@@ -473,10 +484,11 @@ def update_hud_texts():
 def skin_grab(item):
     if os.path.isfile(f"{skin_dir}/{item}"): return (f"{skin_dir}/{item}")
     elif item[-4:] == ".ogg":
-        for ext in exts:
+        for ext in [".mp3", ".wav"]:
             if os.path.isfile(f"{skin_dir}/{item.replace(".ogg", ext)}"): return f"{skin_dir}/{item.replace(".ogg", ext)}"
         return (f"Assets/Game/Default/{item}")
     else: return (f"Assets/Game/Default/{item}")
+
 
 ### Time Functions
 
@@ -514,15 +526,16 @@ def step_hit():
 cam_bump_mod = 4
 
 def beat_hit():
-    if cur_beat % cam_bump_mod == 0 or cur_beat == 0:
-        camera.cancel_tween("cam_bump_x")
-        camera.cancel_tween("cam_bump_y")
+    if cam_bump_mod > 0:
+        if cur_beat % cam_bump_mod == 0 or cur_beat == 0:
+            camera.cancel_tween("cam_bump_x")
+            camera.cancel_tween("cam_bump_y")
 
-        camera.set_property("zoom", [1.025, 1.025])
+            camera.set_property("zoom", [1.025, 1.025])
 
-        camera.do_tween("cam_bump_x", camera, "zoom:x", 1.0, 0.85, "quad", "out")
-        camera.do_tween("cam_bump_y", camera, "zoom:y", 1.0, 0.85, "quad", "out")
-    
+            camera.do_tween("cam_bump_x", camera, "zoom:x", 1.0, 0.85, "quad", "out")
+            camera.do_tween("cam_bump_y", camera, "zoom:y", 1.0, 0.85, "quad", "out")
+        
     invoke_script_function("beat")
 
 # Score
@@ -596,6 +609,7 @@ def pause_press(index):
         case "restart":
             destroy()
             init(scene_data)
+            resize(pygame.display.get_window_size())
         case "end":
             if processed_notes == 0:
                 master_data.append(["switch_scene", "song_selection"])
@@ -918,6 +932,10 @@ def init(data):
 
     song_ended = False
 
+    # Window Caption
+
+    pygame.display.set_caption(f"{song_meta["name"]} - {song_meta["artist"]} ({song_difficulty})  •  Ignite")
+
     # Pause
 
     paused = False
@@ -929,7 +947,7 @@ def init(data):
 
     ### SFX
     menu_sfx = {}
-    sfx = ["scroll", "select", "back"]
+    sfx = ["scroll", "select", "back", "error"]
     for s in sfx:
         menu_sfx[s] = pygame.mixer.Sound(skin_grab(f"SFX/Menu/{s}.ogg"))
         menu_sfx[s].set_volume(profile_options["Audio"]["vol_sfx"] * profile_options["Audio"]["vol_master"])

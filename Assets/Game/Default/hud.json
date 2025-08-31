@@ -11,8 +11,8 @@
         "spacing": 10 
     },
     "sustain":{
-        "width": 40,
-        "tip": [40,25]
+        "width": 42,
+        "tip": [42,40]
     },
     "text": {
         "score": {

@@ -53,6 +53,16 @@ def switch_scene(tag, data = []):
             valid_scenes[current_scene].camera.set_property("zoom", [1.1,1.1])
             valid_scenes[current_scene].camera.do_tween("cam_x", valid_scenes[current_scene].camera, "zoom:x", 1, 0.75, "expo", "out")
             valid_scenes[current_scene].camera.do_tween("cam_y", valid_scenes[current_scene].camera, "zoom:y", 1, 0.75, "expo", "out")
+        
+        if current_scene not in ["game", "results", "profile", "create_profile"]:
+            prefix = ""
+            match current_scene:
+                case "menu": prefix = "Main Menu"
+                case "song_selection": prefix = "Singleplay"
+                case "options": prefix = "Options"
+                case "download": prefix = "Download Songs"
+            if prefix != "": pygame.display.set_caption(f"{prefix}  •  Ignite")
+            else: pygame.display.set_caption("Ignite")
 
 #
 
@@ -85,13 +95,6 @@ while True:
             valid_scenes[current_scene].resize(screen_size)
         else:
             valid_scenes[current_scene].handle_event(event)
-            match current_scene:
-                case "game":
-                    match event.type:
-                        case pygame.KEYDOWN:
-                            match event.key:
-                                case pygame.K_F7:
-                                    switch_scene("game") 
             match event.type:
                 case pygame.KEYDOWN:
                     match event.key:

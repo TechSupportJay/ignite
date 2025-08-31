@@ -7,14 +7,14 @@
     },
     "tab_name":
     {
-        "position": [30,11],
+        "position": [30,7],
         "font": "default",
-        "font_size": 32,
+        "font_size": 26,
         "color": "#FFFFFF"
     },
     "tab_artist":
     {
-        "position": [30,47],
+        "position": [30,37],
         "font": "sub",
         "font_size": 20,
         "color": "#FFFFFF"
@@ -22,12 +22,12 @@
 
     "album":
     {
-        "position": [200,200],
-        "size": [350,350]
+        "position": [245,245],
+        "size": [450,450]
     },
     "info_texts":
     {
-        "position": [25,380],
+        "position": [20,475],
         "font": "sub",
         "font_size": 26,
         "seperation": 30,

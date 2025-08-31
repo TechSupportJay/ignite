@@ -42,7 +42,7 @@ class camera():
 
         to_blit = pre_blit.render(item_ref.get_property("text"), True, item_ref.get_property("color"))
 
-        to_blit = pygame.transform.smoothscale_by(to_blit, [(item_ref.get_property("size")[0]) * (item_ref.get_property("scale")[0]) * self.scale[0] * self.zoom[0], (item_ref.get_property("size")[1]) * (item_ref.get_property("scale")[1]) * self.scale[1] * self.zoom[1]])
+        to_blit = pygame.transform.smoothscale_by(to_blit, [(item_ref.get_property("size")[0]) * (item_ref.get_property("scale")[0]), (item_ref.get_property("size")[1]) * (item_ref.get_property("scale")[1])])
         to_blit = pygame.transform.rotate(to_blit, item_ref.get_property("rotation"))
 
         return [to_blit.get_width(), to_blit.get_height()]

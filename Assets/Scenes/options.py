@@ -130,7 +130,7 @@ def init(data):
     #
 
     tooltip = RMS.objects.text("tooltip", "")
-    tooltip.set_property("font", skin_grab("Fonts/default.ttf"))
+    tooltip.set_property("font", skin_grab("Fonts/sub.ttf"))
     tooltip.set_property("font_size", 32)
     tooltip.set_property("text_align", "center")
     tooltip.set_property("position", [1280/2,650])
@@ -267,7 +267,12 @@ def resize(size):
 
 def skin_grab(item):
     if os.path.isfile(f"{skin_dir}/{item}"): return (f"{skin_dir}/{item}")
+    elif item[-4:] == ".ogg":
+        for ext in [".mp3", ".wav"]:
+            if os.path.isfile(f"{skin_dir}/{item.replace(".ogg", ext)}"): return f"{skin_dir}/{item.replace(".ogg", ext)}"
+        return (f"Assets/Game/Default/{item}")
     else: return (f"Assets/Game/Default/{item}")
+
 
 #
 
@@ -299,9 +304,10 @@ def make_section_header(section_name, index):
     else: header_text.set_property("position:x", 30)
 
 def load_section(section_index):
-    global cur_ref, valid_options
+    global cur_ref, valid_options, direction_held
 
     valid_options = []
+    direction_held[1] = False
     
     section_name = list(options_ref.keys())[section_index]
 
