@@ -1,6 +1,6 @@
 {
     "Gameplay": {
-        "keybinds": {"type": "scene", "default": false, "display": "Keybinds", "tooltip": "Modify your keybinds"},
+        "keybinds": {"type": "scene", "default": false, "display": "Keybinds...", "tooltip": "Modify your keybinds"},
         "botplay": {"type": "bool", "default": false, "display": "Botplay", "tooltip": "If enabled, player input will be disabled and the game will play itself."},
         "downscroll": {"type": "bool", "default": true, "display": "Downscroll", "tooltip": "If enabled, notes will scroll from the top of the screen to the bottom."},
         "ghost_tapping": {"type": "bool", "default": true, "display": "Ghost Tapping", "tooltip": "If enabled, you can press keys while there are no notes to hit."},
