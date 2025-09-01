@@ -110,7 +110,7 @@ def init(data = []):
         connected = False
     
     menu_sfx = {}
-    sfx = ["scroll", "select", "play", "back", "error"]
+    sfx = ["scroll", "select", "play", "back", "error", "type"]
     for s in sfx:
         menu_sfx[s] = pygame.mixer.Sound(skin_grab(f"SFX/Menu/{s}.ogg"))
         menu_sfx[s].set_volume(profile_options["Audio"]["vol_sfx"] * profile_options["Audio"]["vol_master"])
@@ -135,7 +135,7 @@ def init(data = []):
         download_title.set_property("font", skin_grab("Fonts/default.ttf"))
         download_title.set_property("font_size", 48)
         download_title.set_property("text_align", "center")
-        download_title.set_property("position", [1280/2,720/2-60])
+        download_title.set_property("position", [1280/2,720/2-45])
         download_title.set_property("priority", 100)
         download_title.set_property("visible", False)
         camera.add_item(download_title)
@@ -144,7 +144,7 @@ def init(data = []):
         download_progress.set_property("font", skin_grab("Fonts/sub.ttf"))
         download_progress.set_property("font_size", 32)
         download_progress.set_property("text_align", "center")
-        download_progress.set_property("position", [1280/2,720/2+10])
+        download_progress.set_property("position", [1280/2,720/2+5])
         download_progress.set_property("priority", 100)
         download_progress.set_property("visible", False)
         camera.add_item(download_progress)
@@ -363,6 +363,8 @@ def handle_event(event):
                         case pygame.K_ESCAPE:
                             searching = False
                             search_text.set_property("text", search.upper())
+                            menu_sfx["back"].stop()
+                            menu_sfx["back"].play()
                         case pygame.K_RETURN:
                             if search == "":
                                 send("sql", f"SELECT * FROM songs")
@@ -370,11 +372,15 @@ def handle_event(event):
                                 camera.do_tween("search", search_text, "position:y", -50, 0.5, "expo", "in")
                             else: send("sql", f"SELECT * FROM songs\nWHERE title LIKE '%{search}%' OR artist LIKE '%{search}%'")
                             searching = False
+                            menu_sfx["select"].stop()
+                            menu_sfx["select"].play()
                             if not search == "": search_text.set_property("text", search.upper())
                         case pygame.K_BACKSPACE:
                             if len(search) > 0:
                                 search = search[:-1]
                                 search_text.set_property("text", search.upper() + "|")
+                                menu_sfx["type"].stop()
+                                menu_sfx["type"].play()
                         case _:
                             key_dict = {
                                 pygame.K_a: "a", pygame.K_b: "b", pygame.K_c: "c", pygame.K_d: "d", pygame.K_e: "e", pygame.K_f: "f", pygame.K_g: "g", pygame.K_h: "h", pygame.K_i: "i", pygame.K_j: "j", pygame.K_k: "k", pygame.K_l: "l", pygame.K_m: "m", pygame.K_n: "n", pygame.K_o: "o", pygame.K_p: "p", pygame.K_q: "q", pygame.K_r: "r", pygame.K_s: "s", pygame.K_t: "t", pygame.K_u: "u", pygame.K_v: "v", pygame.K_w: "w", pygame.K_x: "x", pygame.K_y: "y", pygame.K_z: "z",
@@ -387,6 +393,8 @@ def handle_event(event):
                                 to_add = key_dict[event.key]
                                 search += to_add
                                 search_text.set_property("text", search.upper() + "|")
+                                menu_sfx["type"].stop()
+                                menu_sfx["type"].play()
                     if not searching: search_text.set_property("opacity", 255/2)
                     else: search_text.set_property("opacity", 255)
                     

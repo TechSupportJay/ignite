@@ -2,31 +2,31 @@
     "buttons": {
         "single":
         {
-            "position": [640, 350],
-            "inactive": [0.5,0.5],
-            "active": [0.6,0.6]
+            "position": [640, 390],
+            "inactive": [0.7,0.7],
+            "active": [0.8,0.8]
         },
         "lan":
-        {
-            "position": [640, 400],
-            "inactive": [0.5,0.5],
-            "active": [0.6,0.6]
-        },
-        "content":
         {
             "position": [640, 450],
             "inactive": [0.5,0.5],
             "active": [0.6,0.6]
         },
-        "options":
+        "content":
         {
             "position": [640, 500],
             "inactive": [0.5,0.5],
             "active": [0.6,0.6]
         },
-        "exit":
+        "options":
         {
             "position": [640, 550],
+            "inactive": [0.5,0.5],
+            "active": [0.6,0.6]
+        },
+        "exit":
+        {
+            "position": [640, 600],
             "inactive": [0.5,0.5],
             "active": [0.6,0.6]
         }
