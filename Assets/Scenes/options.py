@@ -28,6 +28,9 @@ option_index = 0
 valid_options = []
 cur_ref = {}
 
+skins = []
+skin_index = 0
+
 #
 
 menu_sfx = {}
@@ -93,6 +96,7 @@ def init(data):
     global section_index, option_index, menu_sfx
     global direction_held, last_tick, cur_ref
     global fps_cap
+    global skins, skin_index
 
     scene = RMS.scenes.scene(screen, "Options")
     camera = RMS.cameras.camera("Options", 1)
@@ -105,6 +109,12 @@ def init(data):
     skin_dir = f"{current_options["Customisation"]["content_folder"]}/Skins/{current_options["Customisation"]["skin"]}"
 
     fps_cap = current_options["Video"]["fps_cap"]
+    
+    #
+
+    skins = next(os.walk(f"{current_options["Customisation"]["content_folder"]}/Skins"), (None, None, []))[1]
+    skins.append("Default")
+    skin_index = skins.index(current_options["Customisation"]["skin"])
 
     ### Background
     background = RMS.objects.image("background", skin_grab(f"Menus/Options/background.png"))
@@ -273,7 +283,6 @@ def skin_grab(item):
         return (f"Assets/Game/Default/{item}")
     else: return (f"Assets/Game/Default/{item}")
 
-
 #
 
 def load_options():
@@ -320,7 +329,7 @@ def load_section(section_index):
             type = cur_ref[item]["type"]
             match type:
                 case "bool": camera.remove_item(f"toggle_{i}")
-                case "float" | "int" | "fps":
+                case "float" | "int" | "fps" | "skin":
                     camera.remove_item(f"left_{i}")
                     camera.remove_item(f"right_{i}")
                     camera.remove_item(f"text_{i}")
@@ -382,7 +391,7 @@ def make_option(section, option, index):
 
             camera.add_item(toggle_icon)
             to_tween.append(toggle_icon)
-        case "float" | "int" | "fps":
+        case "float" | "int" | "fps" | "skin":
             for side in ["left", "right"]:
                 side_icon = RMS.objects.image(f"{side}_{index}", skin_grab(f"Menus/Options/{side}.png"))
                 side_icon.set_property("position:x", 30 + right_side + 50)
@@ -418,6 +427,11 @@ def make_option(section, option, index):
 
             camera.add_item(text)
             to_tween.append(text)
+
+            if ref["type"] == "skin":
+                text.set_property("text_align", "left")
+                text.set_property("position:x", camera.get_item(f"left_{index}").get_property("position:x") + 30)
+                camera.get_item(f"right_{index}").set_property("position:x", (text.get_property("position:x") + camera.get_text_size(f"text_{index}")[0] + 30))
     
     i = 0
     for item in to_tween:
@@ -489,37 +503,47 @@ def select_option(index):
                 camera.do_tween(f"text_{i}_y", camera.get_item(f"text_{i}"), "position:y", camera.get_item(f"text_{i}").get_property("position:y") + y_offset, 0.5, "expo", "out")
 
 def option_input(index, input_type):
+    global skin_index
+    
     option = cur_ref[list(cur_ref.keys())[index]]
 
     match input_type:
         case "toggle":
-            if option["type"] != "bool": return
-            else:
-                if "value" in option.keys(): cur_ref[list(cur_ref.keys())[index]]["value"] = not option["value"]
-                else: cur_ref[list(cur_ref.keys())[index]]["value"] = not option["default"]
+            match option["type"]:
+                case "bool":
+                    if "value" in option.keys(): cur_ref[list(cur_ref.keys())[index]]["value"] = not option["value"]
+                    else: cur_ref[list(cur_ref.keys())[index]]["value"] = not option["default"]
 
-                toggled = skin_grab("Menus/Options/toggle_on.png")
-                sound = "select"
-                if not cur_ref[list(cur_ref.keys())[index]]["value"]:
-                    toggled = skin_grab("Menus/Options/toggle_off.png")
-                    sound = "back"
-                
-                play_sfx(sound)
+                    toggled = skin_grab("Menus/Options/toggle_on.png")
+                    sound = "select"
+                    if not cur_ref[list(cur_ref.keys())[index]]["value"]:
+                        toggled = skin_grab("Menus/Options/toggle_off.png")
+                        sound = "back"
+                    
+                    play_sfx(sound)
 
-                camera.get_item(f"toggle_{index}").set_property("image_location", toggled)
+                    camera.get_item(f"toggle_{index}").set_property("image_location", toggled)
 
-                # Tween
+                    # Tween
 
-                camera.cancel_tween(f"scale_toggle_{index}_x")
-                camera.cancel_tween(f"scale_toggle_{index}_y")
-                
-                camera.get_item(f"toggle_{index}").set_property("scale", [0.9,0.9])
+                    camera.cancel_tween(f"scale_toggle_{index}_x")
+                    camera.cancel_tween(f"scale_toggle_{index}_y")
+                    
+                    camera.get_item(f"toggle_{index}").set_property("scale", [0.9,0.9])
 
-                camera.do_tween(f"scale_toggle_{index}_x", camera.get_item(f"toggle_{index}"), "scale:x", 1, 0.3, "expo", "out")
-                camera.do_tween(f"scale_toggle_{index}_y", camera.get_item(f"toggle_{index}"), "scale:y", 1, 0.3, "expo", "out")
+                    camera.do_tween(f"scale_toggle_{index}_x", camera.get_item(f"toggle_{index}"), "scale:x", 1, 0.3, "expo", "out")
+                    camera.do_tween(f"scale_toggle_{index}_y", camera.get_item(f"toggle_{index}"), "scale:y", 1, 0.3, "expo", "out")
+                case "scene":
+                    if list(cur_ref.keys())[index] == "keybinds":
+                        save_options()
+                        menu_sfx["select"].stop()
+                        menu_sfx["select"].play()
+                        master_data.append(["switch_scene", "binds"])
+                    
+
         case "left" | "right":
-            if option["type"] not in ["int", "float", "fps"]: return
-            else:
+            if option["type"] not in ["int", "float", "fps", "skin"]: return
+            elif option["type"] != "skin":
                 incr = 0
 
                 if option["type"] in ["int", "fps"] and "increment" not in option.keys(): incr = 1
@@ -581,6 +605,35 @@ def option_input(index, input_type):
 
                 camera.do_tween(f"scale_text_{index}_x", camera.get_item(f"text_{index}"), "scale:x", 1.0, 0.5, "back", "out")
                 camera.do_tween(f"scale_text_{index}_y", camera.get_item(f"text_{index}"), "scale:y", 1.0, 0.5, "back", "out")
+            else:
+                if input_type == "left":
+                    if skin_index == 0: skin_index = len(skins)-1
+                    else: skin_index -= 1
+                else:
+                    if skin_index == len(skins)-1: skin_index = 0
+                    else: skin_index += 1
+                
+                camera.get_item(f"text_{index}").set_property("text", skins[skin_index])
+
+                current = option["default"]
+                if "value" in cur_ref[list(cur_ref.keys())[index]].keys(): current = skins[skin_index]
+
+                cur_ref[list(cur_ref.keys())[index]]["value"] = current
+
+                #
+
+                move_amt = 5
+                orig = (camera.get_item(f"text_{index}").get_property("position:x") + camera.get_text_size(f"text_{index}")[0] + 30)
+                if input_type == "left":
+                    move_amt *= -1
+                    orig = camera.get_text_size(f"option_{index}")[0] + 80
+                    camera.cancel_tween(f"x_right_{index}")
+                    camera.get_item(f"right_{index}").set_property("position:x", (camera.get_item(f"text_{index}").get_property("position:x") + camera.get_text_size(f"text_{index}")[0] + 30))
+
+                camera.cancel_tween(f"x_{input_type}_{index}")
+                camera.get_item(f"{input_type}_{index}").set_property("position:x", orig + move_amt)
+                camera.do_tween(f"x_{input_type}_{index}", camera.get_item(f"{input_type}_{index}"), "position:x", orig, 0.5, "back", "out")
+
         case "reset":
             value = option["default"]
             cur_ref[list(cur_ref.keys())[index]]["value"] = value
@@ -607,7 +660,8 @@ def save_options():
     for section in options_ref.keys():
         file[section] = {}
         for option in options_ref[section].keys():
-            if "value" in options_ref[section][option].keys(): file[section][option] = options_ref[section][option]["value"]
+            if option == "keybinds": continue
+            elif "value" in options_ref[section][option].keys(): file[section][option] = options_ref[section][option]["value"]
             else: file[section][option] = options_ref[section][option]["default"]
     
     to_save = open(f"Data/{current_profile}/options.json", "w")

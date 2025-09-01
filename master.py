@@ -1,7 +1,8 @@
 # Imports
 import pygame, time
 import Assets.Scenes.game, Assets.Scenes.results
-import Assets.Scenes.main_menu, Assets.Scenes.song_selection, Assets.Scenes.options
+import Assets.Scenes.main_menu, Assets.Scenes.song_selection
+import Assets.Scenes.options, Assets.Scenes.binds
 import Assets.Scenes.profile, Assets.Scenes.profile_creation
 import Assets.Scenes.download
 
@@ -27,7 +28,8 @@ valid_scenes = {
     "results": Assets.Scenes.results,
     "download": Assets.Scenes.download,
     "profile": Assets.Scenes.profile,
-    "create_profile": Assets.Scenes.profile_creation
+    "create_profile": Assets.Scenes.profile_creation,
+    "binds": Assets.Scenes.binds
 }
 
 

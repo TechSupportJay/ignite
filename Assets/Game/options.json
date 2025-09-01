@@ -1,5 +1,6 @@
 {
     "Gameplay": {
+        "keybinds": {"type": "scene", "default": false, "display": "Keybinds", "tooltip": "Modify your keybinds"},
         "botplay": {"type": "bool", "default": false, "display": "Botplay", "tooltip": "If enabled, player input will be disabled and the game will play itself."},
         "downscroll": {"type": "bool", "default": true, "display": "Downscroll", "tooltip": "If enabled, notes will scroll from the top of the screen to the bottom."},
         "ghost_tapping": {"type": "bool", "default": true, "display": "Ghost Tapping", "tooltip": "If enabled, you can press keys while there are no notes to hit."},
@@ -19,8 +20,8 @@
         "rank_f": {"type": "float", "default": 0.5, "display": "F", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0, "tooltip": "Changes the accuracy required for F rank."}
     },
     "Customisation": {
-        "skin": {"type": "list", "default": "default", "display": "Skin"},
-        "content_folder": {"type": "location", "default": "", "display": "Content Folder"}
+        "skin": {"type": "skin", "default": "default", "display": "Skin"},
+        "content_folder": {"type": "none", "default": "Content", "display": "Content Folder"}
     },
     "Audio": {
         "vol_master": {"type": "float", "default": 1.0, "display": "Master", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0},
