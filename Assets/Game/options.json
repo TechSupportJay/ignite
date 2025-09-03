@@ -20,18 +20,18 @@
         "rank_f": {"type": "float", "default": 0.5, "display": "F", "suffix": "%", "increment": 0.01, "min": 0.00, "max": 1.0, "tooltip": "Changes the accuracy required for F rank."}
     },
     "Customisation": {
-        "skin": {"type": "skin", "default": "default", "display": "Skin"},
+        "skin": {"type": "skin", "default": "Default", "display": "Skin"},
         "content_folder": {"type": "none", "default": "Content", "display": "Content Folder"}
     },
     "Audio": {
-        "vol_master": {"type": "float", "default": 1.0, "display": "Master", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0},
-        "vol_music": {"type": "float", "default": 1.0, "display": "Music", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0},
-        "vol_menu": {"type": "float", "default": 0.5, "display": "Menu Music", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0},
-        "vol_hitsound": {"type": "float", "default": 0.75, "display": "Hitsound", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0},
-        "vol_miss": {"type": "float", "default": 0.75, "display": "Miss Sound", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0},
-        "vol_sfx": {"type": "float", "default": 0.5, "display": "Other SFX", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0},
+        "vol_master": {"type": "float", "default": 1.0, "display": "Master", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0, "tooltip": "Changes the volume of everything"},
+        "vol_music": {"type": "float", "default": 1.0, "display": "Music", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0, "tooltip": "Changes the volume of the music during gameplay"},
+        "vol_menu": {"type": "float", "default": 1.0, "display": "Menu Music", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0, "tooltip": "Changes the volume of the music in the menus"},
+        "vol_hitsound": {"type": "float", "default": 1.0, "display": "Hitsound", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0, "tooltip": "Changes the volume of the sound that plays when a note is hit"},
+        "vol_miss": {"type": "float", "default": 1.0, "display": "Miss Sound", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0, "tooltip": "Changes the volume of the sound that plays when a note is missed"},
+        "vol_sfx": {"type": "float", "default": 1.0, "display": "Other SFX", "suffix": "%", "increment": 0.05, "min": 0.00, "max": 1.0, "tooltip": "Changes the volume of other sound effects, such as those that play in the menus"},
 
-        "offset": {"type": "float", "default": 0.5, "display": "Offset", "suffix": "s", "increment": 0.01, "tooltip": "Changes the delay at which audio is played."}
+        "offset": {"type": "float", "default": 0, "display": "Offset", "suffix": "ms", "increment": 0.005, "tooltip": "Changes the delay at which audio is played."}
     },
     "Video": {
         "fps_cap": {"type": "fps", "default": 60, "display": "FPS Cap", "increment": 5, "min": 0, "tooltip": "Changes the framerate limit."}

@@ -36,6 +36,10 @@ current_binds = []
 selection_index = 0
 current_texts = []
 
+#
+
+return_to = "options"
+
 # Master Functions
 
 def init(data = []):
@@ -45,6 +49,7 @@ def init(data = []):
     global menu_sfx
     global current_count, entering_binds, current_binds
     global selection_index, current_texts
+    global return_to
 
     scene = RMS.scenes.scene(screen, "Template")
     camera = RMS.cameras.camera("Binds", 1)
@@ -75,6 +80,8 @@ def init(data = []):
     
     selection_index = 0
     current_texts = []
+
+    return_to = data[1]
 
     # Main Camera
 
@@ -157,7 +164,7 @@ def handle_event(event):
                     case pygame.K_ESCAPE:
                         save_binds()
                         menu_sfx["back"].play()
-                        master_data.append(["switch_scene", "options"])
+                        master_data.append(["switch_scene", return_to])
                     case pygame.K_LEFT:
                         if current_count > 1:
                             current_count -= 1
@@ -300,15 +307,29 @@ def load_binds(count):
     selection_index = 0
 
     if len(current_texts) > 0: camera.remove_item_bulk(current_texts)
+    elif camera.has_item("press_enter"): camera.remove_item("press_enter")
     current_texts = []
 
-    if str(count) not in controls: return
-    elif len(controls[str(count)]) == 0: return
+    has_keys = True
+
+    if str(count) not in controls: has_keys = False
+    elif len(controls[str(count)]) == 0: has_keys = False
+
+    if not has_keys:
+        press_enter = RMS.objects.text("press_enter", f"Press [ENTER] to create a New Bindset for {str(count)}K")
+        press_enter.set_property("font", skin_grab("Fonts/sub.ttf"))
+        press_enter.set_property("font_size", 32)
+        press_enter.set_property("position:x", 30)
+        press_enter.set_property("position:y", 120)
+
+        camera.add_item(press_enter)
+        
+        return
 
     for bind_set in controls[str(count)]:
         binds_string = ""
         for bind in bind_set: binds_string += f"{bind.upper()}     "
-        binds_string = binds_string[:-5]
+        binds_string = f"{i+1}. {binds_string[:-5]}"
 
         set_text = RMS.objects.text(f"set_text_{i}", binds_string)
 

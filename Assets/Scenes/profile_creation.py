@@ -205,16 +205,8 @@ def make_profile(name):
 
     # Controls - Temporary
 
-    controls = {
-        "4": [["d", "f", "j", "k"], ["left", "down", "up", "right"]],
-        "6": [["s", "d", "f", "j", "k", "l"]],
-        "7": [["s", "d", "f", "space", "j", "k", "l"]],
-        "8": [["a", "s", "d", "f", "h", "j", "k", "l"]],
-        "9": [["a", "s", "d", "f", "space", "h", "j", "k", "l"]]
-    }
-
     f = open(f"Data/{name}/controls.json", "w")
-    f.write(json.dumps(controls))
+    f.write("{}")
     f.close()
 
     # Network - Temporary

@@ -1,4 +1,4 @@
-import pygame, time, RMS.easing
+import pygame, time, RMS.easing, os
 
 pygame.font.init()
 
@@ -24,9 +24,14 @@ class camera():
 
         self.tween_man = tween_manager()
 
+        #
+
+        self.cache_image("Assets/missing.png")
+
     def cache_image(self, path):
         if path not in self.textures.keys():
-            self.textures[path] = pygame.image.load(path).convert_alpha()
+            if not os.path.isfile(path): self.textures[path] = pygame.image.load("Assets/missing.png").convert()
+            else: self.textures[path] = pygame.image.load(path).convert_alpha()
     
     def cache_image_bulk(self, path_list):
         for item in path_list: self.cache_image(item)
@@ -54,7 +59,7 @@ class camera():
 
         match item.get_type():
             case "image":
-               self. cache_image(item.get_property("image_location"))
+               self.cache_image(item.get_property("image_location"))
             case "text":
                 if (f"{item.get_property("font")}_{item.get_property("font_size")}") not in self.fonts.keys():
                     self.fonts[(f"{item.get_property("font")}_{item.get_property("font_size")}")] = pygame.font.Font(item.get_property("font"), int(item.get_property("font_size")))

@@ -421,10 +421,10 @@ def process_time(difference):
 def key_handle(index, down):
     strum_handle(index, down)
     if down:
-        invoke_script_function("key_down", [index])
+        if has_created: invoke_script_function("key_down", [index])
         process_hits(index+1, cur_time)
     else:
-        invoke_script_function("key_up", [index])
+        if has_created: invoke_script_function("key_up", [index])
 
 def process_sustains(time_in, dt):
     global pass_pointers, player_stats, is_sus, perf_score
@@ -462,7 +462,7 @@ def process_sustains(time_in, dt):
                         perf_score += int(1000*(time_in/(chart[i][pass_pointers[i]]["t"] + chart[i][pass_pointers[i]]["l"])))
 
                         pass_pointers[i] += 1
-                        show_rating("miss")
+                        show_rating("early")
 
                         invoke_script_function("note_miss", [i])
                     continue
@@ -623,7 +623,7 @@ def pause_press(index):
                     "misses": player_stats["misses"],
                     "rank": player_stats["rank"],
                     "folder": song_name,
-                    "difficulty": song_difficulty
+                    "difficulty": f"[INCOMPLETE] {song_difficulty}"
                 }])
 
 
@@ -699,6 +699,21 @@ def init(data):
     chart_raw = json.load(open(f"{songs_dir}/{data[0]}/charts/{data[1]}.json"))
     if "lanes" in chart_raw ["meta"].keys(): note_count = chart_raw["meta"]["lanes"]
     else: note_count = 4
+
+    #
+
+    has_keys = True
+
+    if str(note_count) not in controls.keys(): has_keys = False
+    elif controls[str(note_count)] == []: has_keys = False
+
+    if not has_keys:
+        fancy_print(f"No Controls for {note_count}k!\nLoading Key Binds scene...", "Game", "!")
+        master_data.append(["switch_scene", "binds", "song_selection"])
+        paused = True
+        return
+
+    #
 
     skin_dir = f"{profile_options["Customisation"]["content_folder"]}/Skins/{profile_options["Customisation"]["skin"]}"
 
@@ -782,7 +797,7 @@ def init(data):
 
     # Objects
         
-    for rat in ["perf", "okay", "bad", "miss"]: camera.cache_image(skin_grab(f"Ratings/{rat}.png"))
+    for rat in ["perf", "okay", "bad", "miss", "early"]: camera.cache_image(skin_grab(f"Ratings/{rat}.png"))
 
     ### Background
 
@@ -797,6 +812,16 @@ def init(data):
     ### Notes
     skin_hud = json.load(open(skin_grab(f"hud.json")))
     skin_notes = json.load(open(skin_grab(f"notes.json")))
+
+    if not str(note_count) in skin_notes["notes"].keys():
+        skin_notes["notes"][str(note_count)] = []
+        for i in range(note_count):
+            skin_notes["notes"][str(note_count)].append("fallback")
+    
+    if not str(note_count) in skin_notes["sustain"].keys():
+        skin_notes["sustain"][str(note_count)] = []
+        for i in range(note_count):
+            skin_notes["sustain"][str(note_count)].append("fallback")
 
     ### Cache Images
 

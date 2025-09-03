@@ -136,7 +136,7 @@ def init(data = []):
     camera.add_item(background)
 
     ### Version String
-    version = RMS.objects.text("version", "Version 0.11.1")
+    version = RMS.objects.text("version", "Version 0.11.2")
     version.set_property("font", skin_grab("Fonts/default.ttf"))
     version.set_property("font_size", 20)
     version.set_property("text_align", "center")
@@ -311,6 +311,11 @@ def handle_event(event):
                         next_beat -= 4
                     else:
                         press_button(buttons[selected_index][0].get_property("tag").replace("btn_", ""))
+                case pygame.K_ESCAPE:
+                    pygame.mixer.music.stop()
+                    menu_sfx["back"].stop()
+                    menu_sfx["back"].play()
+                    master_data.append(["switch_scene", "profile"])
         case pygame.VIDEORESIZE:
             camera.set_property("scale", [event.w/1280, event.h/720])
             camera.set_property("position", [(event.w-1280)/2,(event.h-720)/2])

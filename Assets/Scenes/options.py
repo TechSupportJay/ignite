@@ -114,7 +114,8 @@ def init(data):
 
     skins = next(os.walk(f"{current_options["Customisation"]["content_folder"]}/Skins"), (None, None, []))[1]
     skins.append("Default")
-    skin_index = skins.index(current_options["Customisation"]["skin"])
+    if current_options["Customisation"]["skin"] in skins: skin_index = skins.index(current_options["Customisation"]["skin"])
+    else: skin_index = 0
 
     ### Background
     background = RMS.objects.image("background", skin_grab(f"Menus/Options/background.png"))
@@ -501,6 +502,10 @@ def select_option(index):
                 camera.do_tween(f"left_{i}_y", camera.get_item(f"left_{i}"), "position:y", camera.get_item(f"left_{i}").get_property("position:y") + y_offset, 0.5, "expo", "out")
                 camera.do_tween(f"right_{i}_y", camera.get_item(f"right_{i}"), "position:y", camera.get_item(f"right_{i}").get_property("position:y") + y_offset, 0.5, "expo", "out")
                 camera.do_tween(f"text_{i}_y", camera.get_item(f"text_{i}"), "position:y", camera.get_item(f"text_{i}").get_property("position:y") + y_offset, 0.5, "expo", "out")
+            case "skin":
+                camera.get_item(f"left_{i}").set_property("opacity", opacity)
+                camera.get_item(f"right_{i}").set_property("opacity", opacity)
+                camera.get_item(f"text_{i}").set_property("opacity", opacity)     
 
 def option_input(index, input_type):
     global skin_index
@@ -538,7 +543,7 @@ def option_input(index, input_type):
                         save_options()
                         menu_sfx["select"].stop()
                         menu_sfx["select"].play()
-                        master_data.append(["switch_scene", "binds"])
+                        master_data.append(["switch_scene", "binds", "options"])
                     
 
         case "left" | "right":
